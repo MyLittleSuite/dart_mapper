@@ -1,3 +1,0 @@
-dependency_overrides:
-  dart_mapper:
-    path: ../dart_mapper
