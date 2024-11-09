@@ -23,26 +23,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:dart_mapper_example/freezed/models/credentials.dart';
+import 'package:dart_mapper_example/freezed/models/user.dart';
+import 'package:dart_mapper_example/freezed/models/user_jto.dart';
 
-extension ClassElementExtension on ClassElement {
-  ConstructorElement get primaryConstructor {
-    final constructor = (constructors
-          ..sort(
-            (a, b) => a.parameters.length.compareTo(b.parameters.length) * -1,
-          ))
-        .firstOrNull;
-    if (constructor == null) {
-      throw InvalidGenerationSourceError(
-        '$name has no constructors.',
-        element: this,
-        todo: 'Please, specify a valid constructor.',
-      );
-    }
+part 'freezed_mapper.g.dart';
 
-    return constructor;
-  }
+@Mapper()
+abstract class FreezedMapper {
+  UserJTO toUserJTO(User user);
 
-  List<VariableElement> get fieldElements => primaryConstructor.parameters;
+  User toUser(UserJTO userJTO);
+
+  AnonCredentials toAnonCredentials(Credentials credentials);
+
+  AnonCredentials toAnonFromUser(User user);
+
+  UserCredentials toUserCredentials(User user);
 }

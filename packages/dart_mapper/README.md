@@ -63,3 +63,13 @@ Run the following command to generate the barrel files:
 ```shell
 dart run build_runner build --delete-conflicting-outputs
 ```
+
+### Freezed
+
+If you are using freezed, you need to add the following params into the build.yaml file:
+```yaml
+global_options:
+  freezed:
+    runs_before:
+      - dart_mapper_generator
+```

@@ -69,24 +69,27 @@ class BindingsAnalyzer extends Analyzer {
         for (final sourceClassParam in sourceClass.fieldElements) {
           final targetClassParamName =
               renamingMap[sourceClassParam.name] ?? sourceClassParam.name;
+          final targetParamType = targetParam[targetClassParamName]?.type;
 
-          final sourceField = Field.from(
-            name: sourceClassParam.name,
-            type: sourceClassParam.type,
-            instance: Instance(name: sourceMethodParam.name),
-            required: sourceMethodParam.isRequired,
-          );
-          final targetField = Field.from(
-            name: targetClassParamName,
-            type: targetParam[targetClassParamName]!.type,
-          );
+          if (targetParamType != null) {
+            final sourceField = Field.from(
+              name: sourceClassParam.name,
+              type: sourceClassParam.type,
+              instance: Instance(name: sourceMethodParam.name),
+              required: sourceMethodParam.isRequired,
+            );
+            final targetField = Field.from(
+              name: targetClassParamName,
+              type: targetParamType,
+            );
 
-          bindings.add(Binding(
-            source: sourceField,
-            target: targetField,
-            ignored: ignoredTargets.contains(targetClassParamName),
-            extraMappingMethod: _extraMappingMethod(sourceField, targetField),
-          ));
+            bindings.add(Binding(
+              source: sourceField,
+              target: targetField,
+              ignored: ignoredTargets.contains(targetClassParamName),
+              extraMappingMethod: _extraMappingMethod(sourceField, targetField),
+            ));
+          }
         }
       }
 

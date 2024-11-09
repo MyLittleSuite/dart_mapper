@@ -23,26 +23,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-extension ClassElementExtension on ClassElement {
-  ConstructorElement get primaryConstructor {
-    final constructor = (constructors
-          ..sort(
-            (a, b) => a.parameters.length.compareTo(b.parameters.length) * -1,
-          ))
-        .firstOrNull;
-    if (constructor == null) {
-      throw InvalidGenerationSourceError(
-        '$name has no constructors.',
-        element: this,
-        todo: 'Please, specify a valid constructor.',
-      );
-    }
+part 'credentials.freezed.dart';
 
-    return constructor;
-  }
+@freezed
+class Credentials with _$Credentials {
+  const factory Credentials.anon() = AnonCredentials;
 
-  List<VariableElement> get fieldElements => primaryConstructor.parameters;
+  const factory Credentials.user({
+    required String name,
+    required String password,
+  }) = UserCredentials;
 }

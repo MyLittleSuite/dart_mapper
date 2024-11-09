@@ -6,3 +6,4 @@
 .fvm/
 
 **/*.g.dart
+**/*.freezed.dart

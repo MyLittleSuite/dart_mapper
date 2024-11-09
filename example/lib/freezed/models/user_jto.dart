@@ -23,26 +23,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+class UserJTO {
+  final String name;
+  final String password;
 
-extension ClassElementExtension on ClassElement {
-  ConstructorElement get primaryConstructor {
-    final constructor = (constructors
-          ..sort(
-            (a, b) => a.parameters.length.compareTo(b.parameters.length) * -1,
-          ))
-        .firstOrNull;
-    if (constructor == null) {
-      throw InvalidGenerationSourceError(
-        '$name has no constructors.',
-        element: this,
-        todo: 'Please, specify a valid constructor.',
-      );
-    }
+  UserJTO({
+    required this.name,
+    required this.password,
+  });
 
-    return constructor;
+  factory UserJTO.fromJson(Map<String, dynamic> json) {
+    return UserJTO(
+      name: json['name'],
+      password: json['password'],
+    );
   }
 
-  List<VariableElement> get fieldElements => primaryConstructor.parameters;
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'password': password,
+    };
+  }
 }
