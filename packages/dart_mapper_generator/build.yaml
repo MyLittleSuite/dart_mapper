@@ -1,0 +1,8 @@
+builders:
+  dart_mapper_generator:
+    import: "package:dart_mapper_generator/dart_mapper_generator.dart"
+    builder_factories: ["dartMapperBuilder"]
+    build_extensions: { ".dart": [".dart_mapper.g.part"] }
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
