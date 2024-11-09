@@ -1,0 +1,16 @@
+name: dart_runner
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dart-lang/setup-dart@v1
+      - name: Install dependencies
+        run: dart pub get
+        working-directory: packages/dart_runner
+      - name: Run tests
+        run: dart test
+        working-directory: packages/dart_runner
