@@ -42,10 +42,23 @@ extension DartTypeExtension on DartType {
         'Duration',
       }.contains(getDisplayString(withNullability: false));
 
-  List<DartType>? get asGenerics => (this as ParameterizedType?)?.typeArguments;
+  List<DartType>? get asGenerics {
+    if (this is ParameterizedType) {
+      return (this as ParameterizedType).typeArguments;
+    }
+
+    return null;
+  }
 
   String get humanReadable => getDisplayString(withNullability: false)
       .replaceAll('<', 'Of')
       .replaceAll('>', '')
       .replaceAll(', ', 'And');
+
+  String get displayString => getDisplayString(withNullability: false);
+
+  String get builtBuilderClass {
+    final isNullable = getDisplayString(withNullability: true).endsWith('?');
+    return [displayString, 'Builder', if (isNullable) '?'].join();
+  }
 }

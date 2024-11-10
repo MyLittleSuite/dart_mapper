@@ -23,40 +23,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:dart_mapper_example/built_value/models/review.dart';
+import 'package:dart_mapper_example/built_value/models/review_dto.dart';
+import 'package:dart_mapper_example/built_value/models/user.dart';
+import 'package:dart_mapper_example/built_value/models/user_dto.dart';
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
-    }
+part 'built_value_mapper.g.dart';
 
-    return this as ClassElement;
-  }
+@Mapper()
+abstract class BuiltValueMapper {
+  Review toReview(ReviewDTO reviewDto);
 
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
-
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
+  ReviewDTO toReviewDTO(Review review);
 }

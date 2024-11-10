@@ -31,6 +31,7 @@ class PrimitiveField extends Field {
     required super.type,
     super.instance,
     super.required = false,
+    super.nullable = false,
   });
 
   @override
@@ -38,6 +39,7 @@ class PrimitiveField extends Field {
       'name: $name, '
       'type: $type, '
       'required: $required, '
+      'nullable: $nullable, '
       'instance: $instance'
       '}';
 }

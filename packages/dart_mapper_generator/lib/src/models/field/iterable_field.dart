@@ -34,6 +34,7 @@ class IterableField extends Field {
     this.item,
     super.instance,
     super.required = false,
+    super.nullable = false,
   });
 
   @override
@@ -42,6 +43,7 @@ class IterableField extends Field {
       'type: $type, '
       'item: $item, '
       'required: $required, '
+      'nullable: $nullable, '
       'instance: $instance'
       '}';
 }

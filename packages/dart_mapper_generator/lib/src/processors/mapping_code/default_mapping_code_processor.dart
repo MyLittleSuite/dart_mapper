@@ -26,12 +26,13 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/misc/expressions.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:source_gen/source_gen.dart';
 
-class MappingCodeProcessor extends ComponentProcessor<Code> {
-  const MappingCodeProcessor();
+class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
+  const DefaultMappingCodeProcessor();
 
   @override
   Code process(ProcessorContext context) {
@@ -52,23 +53,46 @@ class MappingCodeProcessor extends ComponentProcessor<Code> {
 
     for (final parameter in targetConstructor.parameters) {
       final binding = context.currentMethod.fromTarget(parameter.name);
-      if (binding == null) {
+      if (parameter.isRequired && binding == null) {
         throw InvalidGenerationSourceError(
-          'No relation found for ${parameter.name} in method ${method.name}.',
+          'No relation found for required \'${parameter.name}\' '
+          'in method \'${context.mapperClass.name}.${method.name}\'.',
           element: targetClass,
         );
       }
 
-      final sourceExpression = binding.expression(BindingExpressionType.source);
-      if (parameter.isNamed) {
-        namedArguments[parameter.name] = sourceExpression;
-      } else {
-        positionalArguments.add(sourceExpression);
+      if (!parameter.isOptional &&
+          binding?.source.nullable == true &&
+          binding?.target.nullable == false) {
+        throw InvalidGenerationSourceError(
+          'Target field \'${parameter.name}\' '
+          'in class \'${targetClass.name}\', '
+          'method \'${method.name}\' in class \'${context.mapperClass.name}\', '
+          'requires a non-optional source field.',
+          element: targetClass,
+        );
+      }
+
+      final sourceExpression = binding?.expression(
+        BindingExpressionType.source,
+      );
+      if (sourceExpression != null) {
+        if (parameter.isNamed) {
+          namedArguments[parameter.name] = sourceExpression;
+        } else {
+          positionalArguments.add(sourceExpression);
+        }
       }
     }
 
     return Block(
       (builder) {
+        if (method.optionalReturn) {
+          for (final parameter in method.parameters) {
+            builder.addExpression(earlyReturnIfNull(parameter.field.name));
+          }
+        }
+
         builder.addExpression(
           declareFinal(targetVariableName).assign(
             refer(targetConstructor.displayName).newInstance(

@@ -23,40 +23,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:built_value/built_value.dart';
+import 'package:dart_mapper_example/built_value/models/user_dto.dart';
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
-    }
+part 'review_dto.g.dart';
 
-    return this as ClassElement;
-  }
+@BuiltValue()
+abstract class ReviewDTO implements Built<ReviewDTO, ReviewDTOBuilder> {
+  @BuiltValueField(wireName: r'id')
+  String get id;
 
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
-    }
-  }
+  @BuiltValueField(wireName: r'text')
+  String? get text;
 
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
+  @BuiltValueField(wireName: r'user')
+  UserDTO? get user;
 
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
+/*
+  @BuiltValueField(wireName: r'thumbsUp')
+  List<UserDTO>? get thumbsUp;*/
+
+  ReviewDTO._();
+
+  factory ReviewDTO([void updates(ReviewDTOBuilder b)]) = _$ReviewDTO;
 }

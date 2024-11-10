@@ -28,11 +28,11 @@ import 'package:dart_mapper_generator/src/models/field/field.dart';
 
 class MappingParameter {
   final Field field;
-  final bool isOptional;
+  final bool isNullable;
 
   MappingParameter({
     required this.field,
-    required this.isOptional,
+    required this.isNullable,
   });
 
   factory MappingParameter.from(ParameterElement element) => MappingParameter(
@@ -40,12 +40,12 @@ class MappingParameter {
           name: element.name,
           type: element.type,
         ),
-        isOptional: element.isOptional,
+        isNullable: element.isOptional,
       );
 
   @override
   String toString() => 'MappingParameter{'
       'field: $field, '
-      'isOptional: $isOptional'
+      'isOptional: $isNullable'
       '}';
 }

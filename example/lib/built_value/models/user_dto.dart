@@ -23,40 +23,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:built_value/built_value.dart';
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
-    }
+part 'user_dto.g.dart';
 
-    return this as ClassElement;
-  }
+@BuiltValue()
+abstract class UserDTO implements Built<UserDTO, UserDTOBuilder> {
+  @BuiltValueField(wireName: r'id')
+  String get id;
 
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
-    }
-  }
+  @BuiltValueField(wireName: r'username')
+  String? get username;
 
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
+  UserDTO._();
 
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
+  factory UserDTO([void updates(UserDTOBuilder b)]) = _$UserDTO;
+
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(UserDTOBuilder b) => b;
 }

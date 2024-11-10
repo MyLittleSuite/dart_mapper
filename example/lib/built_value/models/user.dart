@@ -23,40 +23,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
-    }
+part 'user.freezed.dart';
 
-    return this as ClassElement;
-  }
-
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
-
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
+@freezed
+class User with _$User {
+  const factory User({
+    required String id,
+    String? username,
+  }) = _User;
 }

@@ -43,12 +43,14 @@ abstract class Field {
   final DartType type;
   final Instance? instance;
   final bool required;
+  final bool nullable;
 
   const Field({
     required this.name,
     required this.type,
     this.instance,
     this.required = false,
+    this.nullable = false,
   });
 
   factory Field.from({
@@ -56,6 +58,7 @@ abstract class Field {
     required DartType type,
     Instance? instance,
     bool required = false,
+    bool nullable = false,
   }) {
     final genericTypes = type.asGenerics;
 
@@ -65,6 +68,7 @@ abstract class Field {
         type: type,
         instance: instance,
         required: required,
+        nullable: nullable,
       );
     } else if (type.isIterable) {
       return IterableField(
@@ -73,6 +77,7 @@ abstract class Field {
         instance: instance,
         item: genericTypes != null ? _buildGenericField(genericTypes[0]) : null,
         required: required,
+        nullable: nullable,
       );
     } else if (type.isMap) {
       final genericTypes = (type as ParameterizedType?)?.typeArguments;
@@ -85,9 +90,10 @@ abstract class Field {
             genericTypes != null ? _buildGenericField(genericTypes[1]) : null,
         instance: instance,
         required: required,
+        nullable: nullable,
       );
     } else {
-      final nestedFields = type.element!.classElement.fieldElements
+      final nestedFields = type.element?.classElementOrNull?.getters
           .map(
             (field) => Field.from(
               name: field.name,
@@ -100,9 +106,10 @@ abstract class Field {
       return NestedField(
         name: name,
         type: type,
-        fields: nestedFields,
+        fields: nestedFields ?? [],
         instance: instance,
         required: required,
+        nullable: nullable,
       );
     }
   }
@@ -117,15 +124,17 @@ abstract class Field {
         type: type,
         instance: instance,
         required: true,
+        nullable: type.element?.isNullable == true,
       );
     } else {
-      final nestedFields = type.element!.classElement.fieldElements
+      final nestedFields = type.element!.classElement.constructorParameters
           .map(
             (field) => Field.from(
               name: field.name,
               type: field.type,
               instance: instance,
               required: true,
+              nullable: field.isNullable,
             ),
           )
           .toList(growable: false);

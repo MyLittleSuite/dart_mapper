@@ -44,5 +44,40 @@ extension ClassElementExtension on ClassElement {
     return constructor;
   }
 
-  List<VariableElement> get fieldElements => primaryConstructor.parameters;
+  List<VariableElement> get constructorParameters =>
+      primaryConstructor.parameters;
+
+  List<VariableElement> get getters {
+    final allSuperclasses = allSupertypes
+        .where((element) => !element.isDartCoreObject)
+        .map((element) => element.element)
+        .toList(growable: false);
+
+    final allAccessors = allSuperclasses.expand((element) => element.accessors);
+    final accessorMap = {
+      for (final accessor in allAccessors) accessor.displayName: accessor
+    };
+
+    return [
+      ...fields,
+      ...allSuperclasses.expand((element) => element.fields).where((field) {
+        final abstract = accessorMap[field.displayName]?.isAbstract ?? false;
+        return !field.isStatic && !field.isConst && !abstract;
+      }),
+    ];
+  }
+
+  VariableElement? getFieldOrGetter(String name) {
+    final field = fields.where((element) => element.name == name).firstOrNull;
+    if (field != null) {
+      return field;
+    }
+
+    final getter = getters.where((element) => element.name == name).firstOrNull;
+    if (getter != null) {
+      return getter;
+    }
+
+    return null;
+  }
 }

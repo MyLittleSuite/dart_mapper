@@ -23,40 +23,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+class StrategyDispatcher<K, V> {
+  final Map<K, V> _strategies;
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
-    }
+  const StrategyDispatcher([this._strategies = const {}]);
 
-    return this as ClassElement;
+  void register(K key, V value) {
+    _strategies[key] = value;
   }
 
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
+  V get(K key) {
+    final strategy = _strategies[key];
+    if (strategy == null) {
+      throw Exception('No strategy found for key \'$key\'');
     }
+
+    return strategy;
   }
-
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
-
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
 }
