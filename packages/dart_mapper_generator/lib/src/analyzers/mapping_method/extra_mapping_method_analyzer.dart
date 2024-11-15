@@ -108,6 +108,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     return MappingMethod(
       name: _generateUniqueName(
         [sourceField],
+        targetField.nullable,
         targetField.type,
       ),
       returnType: targetField.type,
@@ -125,12 +126,21 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
 
   static String _generateUniqueName(
     List<Field> parameters,
+    bool nullable,
     DartType? returnType,
   ) {
     return [
       '_map',
-      parameters.map((param) => param.name.toCapitalised()).join('And'),
+      parameters
+          .map(
+            (param) => [
+              if (param.nullable) 'Nullable',
+              param.name.toCapitalised(),
+            ].join(),
+          )
+          .join('And'),
       'To',
+      if (nullable) 'Nullable',
       returnType?.humanReadable ?? 'Void',
     ].join();
   }

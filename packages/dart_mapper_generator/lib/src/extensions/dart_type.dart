@@ -26,7 +26,19 @@
 import 'package:analyzer/dart/element/type.dart';
 
 extension DartTypeExtension on DartType {
-  bool get isIterable => isDartCoreList || isDartCoreSet || isDartCoreIterable;
+  bool get isList =>
+      isDartCoreList ||
+      {
+        'BuiltList',
+      }.contains(className);
+
+  bool get isSet =>
+      isDartCoreSet ||
+      {
+        'BuiltSet',
+      }.contains(className);
+
+  bool get isIterable => isList || isSet || isDartCoreIterable;
 
   bool get isMap => isDartCoreMap;
 
@@ -40,7 +52,7 @@ extension DartTypeExtension on DartType {
       {
         'DateTime',
         'Duration',
-      }.contains(getDisplayString(withNullability: false));
+      }.contains(className);
 
   List<DartType>? get asGenerics {
     if (this is ParameterizedType) {
@@ -54,6 +66,9 @@ extension DartTypeExtension on DartType {
       .replaceAll('<', 'Of')
       .replaceAll('>', '')
       .replaceAll(', ', 'And');
+
+  String get className => getDisplayString(withNullability: false)
+      .replaceAll(RegExp(r'<[^]*>?'), '');
 
   String get displayString => getDisplayString(withNullability: false);
 

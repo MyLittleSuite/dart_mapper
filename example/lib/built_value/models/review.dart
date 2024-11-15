@@ -35,5 +35,6 @@ class Review with _$Review {
     String? text,
     User? user,
     List<User>? thumbsUp,
+    Set<User>? thumbsDown,
   }) = _Review;
 }

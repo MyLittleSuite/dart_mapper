@@ -127,7 +127,7 @@ abstract class Field {
         nullable: type.element?.isNullable == true,
       );
     } else {
-      final nestedFields = type.element!.classElement.constructorParameters
+      final nestedFields = type.element?.classElementOrNull?.getters
           .map(
             (field) => Field.from(
               name: field.name,
@@ -142,7 +142,7 @@ abstract class Field {
       return NestedField(
         name: name,
         type: type,
-        fields: nestedFields,
+        fields: nestedFields ?? [],
       );
     }
   }

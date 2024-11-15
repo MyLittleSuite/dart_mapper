@@ -23,30 +23,32 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:built_collection/built_collection.dart';
-import 'package:built_value/built_value.dart';
-import 'package:dart_mapper_example/built_value/models/user_dto.dart';
+import 'package:code_builder/code_builder.dart' hide Field;
+import 'package:dart_mapper_generator/src/models/field/field.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
+import 'package:meta/meta.dart';
 
-part 'review_dto.g.dart';
+class ExpressionContext {
+  final Field field;
+  final MappingMethod? extraMappingMethod;
 
-@BuiltValue()
-abstract class ReviewDTO implements Built<ReviewDTO, ReviewDTOBuilder> {
-  @BuiltValueField(wireName: r'id')
-  String get id;
+  const ExpressionContext({
+    required this.field,
+    this.extraMappingMethod,
+  });
+}
 
-  @BuiltValueField(wireName: r'text')
-  String? get text;
+abstract class ExpressionFactory {
+  const ExpressionFactory();
 
-  @BuiltValueField(wireName: r'user')
-  UserDTO? get user;
+  Expression create(ExpressionContext context);
 
-  @BuiltValueField(wireName: r'thumbsUp')
-  BuiltList<UserDTO>? get thumbsUp;
+  @protected
+  Expression basic(Field field) {
+    if (field.instance != null) {
+      return refer(field.instance!.name).property(field.name);
+    }
 
-  @BuiltValueField(wireName: r'thumbsDown')
-  BuiltSet<UserDTO>? get thumbsDown;
-
-  ReviewDTO._();
-
-  factory ReviewDTO([void updates(ReviewDTOBuilder b)]) = _$ReviewDTO;
+    return refer(field.name);
+  }
 }

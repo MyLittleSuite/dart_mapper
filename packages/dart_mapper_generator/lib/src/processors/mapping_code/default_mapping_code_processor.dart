@@ -26,13 +26,20 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/expressions.dart';
-import 'package:dart_mapper_generator/src/models/binding.dart';
+import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
+import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 import 'package:source_gen/source_gen.dart';
 
 class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
-  const DefaultMappingCodeProcessor();
+  final StrategyDispatcher<MappingBehavior, ExpressionFactory>
+      expressionStrategyDispatcher;
+
+  const DefaultMappingCodeProcessor({
+    required this.expressionStrategyDispatcher,
+  });
 
   @override
   Code process(ProcessorContext context) {
@@ -73,9 +80,14 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
         );
       }
 
-      final sourceExpression = binding?.expression(
-        BindingExpressionType.source,
-      );
+      final sourceExpression = binding != null
+          ? expressionStrategyDispatcher.get(method.behavior).create(
+                ExpressionContext(
+                  field: binding.source,
+                  extraMappingMethod: binding.extraMappingMethod,
+                ),
+              )
+          : null;
       if (sourceExpression != null) {
         if (parameter.isNamed) {
           namedArguments[parameter.name] = sourceExpression;
