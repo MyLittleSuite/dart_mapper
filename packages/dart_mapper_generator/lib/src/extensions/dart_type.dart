@@ -26,7 +26,19 @@
 import 'package:analyzer/dart/element/type.dart';
 
 extension DartTypeExtension on DartType {
-  bool get isIterable => isDartCoreList || isDartCoreSet || isDartCoreIterable;
+  bool get isList =>
+      isDartCoreList ||
+      {
+        'BuiltList',
+      }.contains(className);
+
+  bool get isSet =>
+      isDartCoreSet ||
+      {
+        'BuiltSet',
+      }.contains(className);
+
+  bool get isIterable => isList || isSet || isDartCoreIterable;
 
   bool get isMap => isDartCoreMap;
 
@@ -40,12 +52,28 @@ extension DartTypeExtension on DartType {
       {
         'DateTime',
         'Duration',
-      }.contains(getDisplayString(withNullability: false));
+      }.contains(className);
 
-  List<DartType>? get asGenerics => (this as ParameterizedType?)?.typeArguments;
+  List<DartType>? get asGenerics {
+    if (this is ParameterizedType) {
+      return (this as ParameterizedType).typeArguments;
+    }
+
+    return null;
+  }
 
   String get humanReadable => getDisplayString(withNullability: false)
       .replaceAll('<', 'Of')
       .replaceAll('>', '')
       .replaceAll(', ', 'And');
+
+  String get className => getDisplayString(withNullability: false)
+      .replaceAll(RegExp(r'<[^]*>?'), '');
+
+  String get displayString => getDisplayString(withNullability: false);
+
+  String get builtBuilderClass {
+    final isNullable = getDisplayString(withNullability: true).endsWith('?');
+    return [displayString, 'Builder', if (isNullable) '?'].join();
+  }
 }

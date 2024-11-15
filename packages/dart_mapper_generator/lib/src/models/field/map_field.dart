@@ -36,6 +36,7 @@ class MapField extends Field {
     this.value,
     super.instance,
     super.required = false,
+    super.nullable = false,
   });
 
   @override
@@ -45,6 +46,7 @@ class MapField extends Field {
       'key: $key, '
       'value: $value,'
       'required: $required, '
+      'nullable: $nullable, '
       'instance: $instance'
       '}';
 }

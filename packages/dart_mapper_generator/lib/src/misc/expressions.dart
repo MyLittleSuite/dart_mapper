@@ -23,40 +23,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:code_builder/code_builder.dart';
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
-    }
+Expression earlyReturnIfNull(String name) =>
+    CodeExpression(Code('if ($name == null) return null'));
 
-    return this as ClassElement;
+Expression builderClosure(List<(String, Expression)> expressions) {
+  Expression closure = CodeExpression(Code('(b) => b'));
+  for (final (name, expression) in expressions) {
+    closure = closure.cascade(name).assign(expression);
   }
-
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
-
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
+  return closure;
 }

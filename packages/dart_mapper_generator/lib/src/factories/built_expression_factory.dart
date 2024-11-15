@@ -23,38 +23,42 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
 
-class Binding {
-  final Field source;
-  final Field target;
-  final bool ignored;
-  final MappingMethod? extraMappingMethod;
+class BuiltExpressionFactory extends ExpressionFactory {
+  final ExpressionFactory defaultFactory;
 
-  Binding({
-    required this.source,
-    required this.target,
-    this.ignored = false,
-    this.extraMappingMethod,
-  }) /* : assert(target.required && ignored,
-            'Target field \'${target.name}\' must be required') TODO:*/
-  ;
-
-  Iterable<MappingMethod> get mappingMethods sync* {
-    if (extraMappingMethod != null) {
-      yield extraMappingMethod!;
-
-      yield* extraMappingMethod!.bindings
-          .expand((binding) => binding.mappingMethods);
-    }
-  }
+  const BuiltExpressionFactory({
+    required this.defaultFactory,
+  });
 
   @override
-  String toString() => 'Binding{'
-      'source: $source, '
-      'target: $target, '
-      'ignored: $ignored, '
-      'extraMappingMethod: $extraMappingMethod'
-      '}';
+  Expression create(ExpressionContext context) {
+    if (context.field is IterableField) {
+      final basicExpression = super.basic(context.field);
+      final isSet = context.field.type.isSet;
+
+      if (context.field.type.isList ||
+          context.field.type.isDartCoreIterable ||
+          isSet) {
+        final cloneExpression = refer(
+          isSet ? 'SetBuilder' : 'ListBuilder',
+        ).call(
+          [defaultFactory.create(context).ifNullThen(literal(isSet ? {} : []))],
+        );
+
+        return (context.field.nullable)
+            ? basicExpression.notEqualTo(literalNull).conditional(
+                  cloneExpression,
+                  literalNull,
+                )
+            : cloneExpression;
+      }
+    }
+
+    return defaultFactory.create(context);
+  }
 }

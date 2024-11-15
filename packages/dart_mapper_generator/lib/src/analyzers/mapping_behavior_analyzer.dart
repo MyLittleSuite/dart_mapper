@@ -23,10 +23,35 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/contexts/field_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
-abstract class Analyzer<T> {
-  const Analyzer();
+class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
+  static const _imports = {
+    'package:built_value/built_value.dart',
+  };
 
-  T analyze(AnalyzerContext context);
+  @override
+  MappingBehavior analyze(AnalyzerContext context) {
+    final targetType = switch (context) {
+      FieldAnalyzerContext() => context.field.type,
+      MethodAnalyzerContext() => context.method.returnType,
+      _ => throw ArgumentError(
+          'MappingBehaviorAnalyzer context is not handled.',
+        ),
+    };
+
+    final targetClass = targetType.element!.classElement;
+    final foundSupertype = targetClass.allSupertypes
+        .where((type) => _imports.contains(type.element.source.uri.toString()))
+        .firstOrNull;
+
+    return foundSupertype != null
+        ? MappingBehavior.built
+        : MappingBehavior.standard;
+  }
 }

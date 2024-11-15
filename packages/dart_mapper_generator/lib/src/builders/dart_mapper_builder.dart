@@ -24,24 +24,66 @@
  */
 
 import 'package:build/build.dart';
+import 'package:dart_mapper_generator/src/analyzers/binding/built_bindings_analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/binding/standard_mapping_method_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/bindings_analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/mapping_behavior_analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/mapping_method/extra_mapping_method_analyzer.dart';
 import 'package:dart_mapper_generator/src/dart_mapper_generator.dart';
+import 'package:dart_mapper_generator/src/factories/built_expression_factory.dart';
+import 'package:dart_mapper_generator/src/factories/default_expression_factory.dart';
+import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/mapper_processor.dart';
-import 'package:dart_mapper_generator/src/processors/mapping_code_processor.dart';
+import 'package:dart_mapper_generator/src/processors/mapping_code/built_mapping_code_processor.dart';
+import 'package:dart_mapper_generator/src/processors/mapping_code/default_mapping_code_processor.dart';
 import 'package:dart_mapper_generator/src/processors/mapping_processor.dart';
+import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 import 'package:source_gen/source_gen.dart';
 
-Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) =>
-    SharedPartBuilder(
-      [
-        DartMapperGenerator(
-          mapperProcessor: MapperProcessor(
-            methodProcessor: MappingProcessor(
-              methodCodeProcessor: MappingCodeProcessor(),
-            ),
+Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
+  final expressionStrategyDispatcher = StrategyDispatcher({
+    MappingBehavior.built: BuiltExpressionFactory(
+      defaultFactory: DefaultExpressionFactory(),
+    ),
+    MappingBehavior.standard: DefaultExpressionFactory(),
+  });
+
+  final methodCodeDispatcher = StrategyDispatcher({
+    MappingBehavior.built: BuiltMappingCodeProcessor(
+      expressionStrategyDispatcher: expressionStrategyDispatcher,
+    ),
+    MappingBehavior.standard: DefaultMappingCodeProcessor(
+      expressionStrategyDispatcher: expressionStrategyDispatcher,
+    ),
+  });
+
+  final mappingMethodDispatcher = StrategyDispatcher({
+    MappingBehavior.built: BuiltBindingsAnalyzer(
+      extraMappingMethodAnalyzer: ExtraMappingMethodAnalyzer(
+        mappingBehaviorAnalyzer: MappingBehaviorAnalyzer(),
+      ),
+    ),
+    MappingBehavior.standard: StandardBindingsAnalyzer(
+      extraMappingMethodAnalyzer: ExtraMappingMethodAnalyzer(
+        mappingBehaviorAnalyzer: MappingBehaviorAnalyzer(),
+      ),
+    ),
+  });
+
+  return SharedPartBuilder(
+    [
+      DartMapperGenerator(
+        mapperProcessor: MapperProcessor(
+          methodProcessor: MappingProcessor(
+            methodCodeDispatcher: methodCodeDispatcher,
           ),
-          analyzer: BindingsAnalyzer(),
         ),
-      ],
-      'dart_mapper',
-    );
+        analyzer: BindingsAnalyzer(
+          mappingBehaviorAnalyzer: MappingBehaviorAnalyzer(),
+          mappingMethodDispatcher: mappingMethodDispatcher,
+        ),
+      ),
+    ],
+    'dart_mapper',
+  );
+}

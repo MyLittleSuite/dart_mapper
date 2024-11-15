@@ -24,15 +24,19 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
+import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
+import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 
 class MappingProcessor extends ComponentProcessor<Method> {
-  final ComponentProcessor<Code> methodCodeProcessor;
+  final StrategyDispatcher<MappingBehavior, ComponentProcessor<Code>>
+      methodCodeDispatcher;
 
   const MappingProcessor({
-    required this.methodCodeProcessor,
+    required this.methodCodeDispatcher,
   });
 
   @override
@@ -44,8 +48,8 @@ class MappingProcessor extends ComponentProcessor<Method> {
     }
 
     final method = context.currentMethod;
-    final requiredParameters = method.parameters.where((p) => !p.isOptional);
-    final optionalParameters = method.parameters.where((p) => p.isOptional);
+    final requiredParameters = method.parameters.where((p) => !p.isNullable);
+    final optionalParameters = method.parameters.where((p) => p.isNullable);
 
     return Method(
       (builder) {
@@ -58,7 +62,7 @@ class MappingProcessor extends ComponentProcessor<Method> {
           ..requiredParameters.addAll(_processParameters(requiredParameters))
           ..optionalParameters.addAll(_processParameters(optionalParameters))
           ..returns = _processReturns(method)
-          ..body = methodCodeProcessor.process(context);
+          ..body = methodCodeDispatcher.get(method.behavior).process(context);
       },
     );
   }
@@ -70,10 +74,24 @@ class MappingProcessor extends ComponentProcessor<Method> {
         (p) => Parameter(
           (b) => b
             ..name = p.field.name
-            ..type = refer(p.field.type.element!.name!),
+            ..type = refer(
+              p.field.type.getDisplayString(withNullability: p.field.nullable),
+            ),
         ),
       );
 
-  Reference _processReturns(MappingMethod method) =>
-      refer(method.returnType!.element!.name!);
+  Reference _processReturns(MappingMethod method) {
+    final returnType = method.returnType;
+    if (returnType == null) {
+      return refer('void');
+    }
+
+    if (!method.isOverride && method.behavior == MappingBehavior.built) {
+      return refer(returnType.builtBuilderClass);
+    }
+
+    return refer(
+      returnType.getDisplayString(withNullability: method.optionalReturn),
+    );
+  }
 }

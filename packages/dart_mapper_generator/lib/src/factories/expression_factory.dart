@@ -23,40 +23,32 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:code_builder/code_builder.dart' hide Field;
+import 'package:dart_mapper_generator/src/models/field/field.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
+import 'package:meta/meta.dart';
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
+class ExpressionContext {
+  final Field field;
+  final MappingMethod? extraMappingMethod;
+
+  const ExpressionContext({
+    required this.field,
+    this.extraMappingMethod,
+  });
+}
+
+abstract class ExpressionFactory {
+  const ExpressionFactory();
+
+  Expression create(ExpressionContext context);
+
+  @protected
+  Expression basic(Field field) {
+    if (field.instance != null) {
+      return refer(field.instance!.name).property(field.name);
     }
 
-    return this as ClassElement;
+    return refer(field.name);
   }
-
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
-
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
 }

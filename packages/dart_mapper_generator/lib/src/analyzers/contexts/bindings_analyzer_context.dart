@@ -23,40 +23,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 
-extension ClassElementExtension on Element {
-  ClassElement get classElement {
-    if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
-      );
-    }
+class BindingsAnalyzerContext extends MethodAnalyzerContext {
+  const BindingsAnalyzerContext({
+    required super.mapperAnnotation,
+    required super.mapperClass,
+    required super.method,
+  });
 
-    return this as ClassElement;
-  }
+  Map<String, String> get renamingMap => MappingAnnotation.load(method)
+      .where((annotation) => annotation.source != null)
+      .toList(growable: false)
+      .asMap()
+      .map((_, element) => MapEntry(element.source!, element.target));
 
-  ClassElement? get classElementOrNull {
-    try {
-      return classElement;
-    } catch (_) {
-      return null;
-    }
-  }
+  Map<String, String> get renamingMapReversed =>
+      renamingMap.map((key, value) => MapEntry(value, key));
 
-  bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
-        _ => false,
-      };
-
-  bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        _ => false,
-      };
+  Set<String> get ignoredTargets => MappingAnnotation.load(method)
+      .where((annotation) => annotation.ignore)
+      .map((annotation) => annotation.target)
+      .toSet();
 }

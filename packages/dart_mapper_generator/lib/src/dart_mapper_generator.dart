@@ -28,6 +28,7 @@ import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:dart_style/dart_style.dart';
@@ -60,8 +61,7 @@ class DartMapperGenerator extends GeneratorForAnnotation<Mapper> {
     final bindings = analyzer.analyze(
       AnalyzerContext(
         mapperAnnotation: mapperAnnotation,
-        methods: element.methods,
-        classElement: element,
+        mapperClass: element,
       ),
     );
 

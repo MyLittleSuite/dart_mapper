@@ -34,6 +34,7 @@ class NestedField extends Field {
     required this.fields,
     super.instance,
     super.required = false,
+    super.nullable = false,
   });
 
   @override
@@ -41,6 +42,7 @@ class NestedField extends Field {
       'name: $name, '
       'type: $type, '
       'required: $required, '
+      'nullable: $nullable, '
       'fields: $fields, '
       'instance: $instance'
       '}';
