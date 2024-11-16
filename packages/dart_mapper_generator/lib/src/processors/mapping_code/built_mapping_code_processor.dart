@@ -54,9 +54,6 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
     final targetClass = method.returnType!.element!.classElement;
     final targetConstructor = targetClass.primaryConstructor;
 
-    final targetVariableName = 'result';
-    final targetVariableRef = refer(targetVariableName);
-
     return Block(
       (builder) {
         if (method.optionalReturn) {
@@ -100,11 +97,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
               ]);
         }
 
-        builder.addExpression(
-          declareFinal(targetVariableName).assign(targetInstance),
-        );
-
-        builder.addExpression(targetVariableRef.returned);
+        builder.addExpression(targetInstance.returned);
       },
     );
   }

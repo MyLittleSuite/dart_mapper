@@ -27,12 +27,16 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/extensions/enum_element.dart';
+import 'package:dart_mapper_generator/src/models/field/enum_field.dart';
 import 'package:dart_mapper_generator/src/models/field/iterable_field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_field.dart';
 import 'package:dart_mapper_generator/src/models/field/nested_field.dart';
 import 'package:dart_mapper_generator/src/models/field/primitive_field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
+import 'package:strings/strings.dart';
 
+export 'enum_field.dart';
 export 'iterable_field.dart';
 export 'map_field.dart';
 export 'nested_field.dart';
@@ -92,6 +96,27 @@ abstract class Field {
         required: required,
         nullable: nullable,
       );
+    } else if (type.isEnum) {
+      final values = type.element?.enumElementOrNull?.values
+          .map(
+            (value) => PrimitiveField(
+              name: value.name,
+              type: type,
+              instance: Instance(name: type.displayString),
+              required: required,
+              nullable: nullable,
+            ),
+          )
+          .toList(growable: false);
+
+      return EnumField(
+        name: name,
+        type: type,
+        values: values ?? [],
+        instance: instance,
+        required: required,
+        nullable: nullable,
+      );
     } else {
       final nestedFields = type.element?.classElementOrNull?.getters
           .map(
@@ -115,7 +140,8 @@ abstract class Field {
   }
 
   static Field _buildGenericField(DartType type) {
-    final name = type.getDisplayString(withNullability: false);
+    final name =
+        type.getDisplayString(withNullability: false).toCamelCase(lower: true);
     final instance = Instance(name: name);
 
     if (type.isPrimitive) {
@@ -124,7 +150,28 @@ abstract class Field {
         type: type,
         instance: instance,
         required: true,
-        nullable: type.element?.isNullable == true,
+        nullable: type.isNullable,
+      );
+    } else if (type.isEnum) {
+      final values = type.element?.enumElementOrNull?.values
+          .map(
+            (value) => PrimitiveField(
+              name: value.name,
+              type: type,
+              instance: Instance(name: type.displayString),
+              required: true,
+              nullable: type.isNullable,
+            ),
+          )
+          .toList(growable: false);
+
+      return EnumField(
+        name: name,
+        type: type,
+        values: values ?? [],
+        instance: instance,
+        required: true,
+        nullable: type.isNullable,
       );
     } else {
       final nestedFields = type.element?.classElementOrNull?.getters
@@ -134,7 +181,7 @@ abstract class Field {
               type: field.type,
               instance: instance,
               required: true,
-              nullable: field.isNullable,
+              nullable: field.type.isNullable,
             ),
           )
           .toList(growable: false);

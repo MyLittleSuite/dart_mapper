@@ -23,8 +23,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/value_mapping.dart';
+class EnumExpressionFactory extends ExpressionFactory {
+  final ExpressionFactory defaultFactory;
+
+  EnumExpressionFactory({
+    required this.defaultFactory,
+  });
+
+  @override
+  Expression create(ExpressionContext context) {
+    if (context.field.type.isPrimitive) {
+      final name = context.field.name;
+      return literal(num.tryParse(name) ?? name);
+    }
+
+    return defaultFactory.create(context);
+  }
+}

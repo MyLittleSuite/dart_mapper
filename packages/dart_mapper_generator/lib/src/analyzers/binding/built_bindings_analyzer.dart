@@ -28,6 +28,7 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.da
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
@@ -78,14 +79,14 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
             name: sourceClassParamName,
             type: sourceClassParam.type,
             required: sourceClassParam.isRequired,
-            nullable: sourceClassParam.isNullable,
+            nullable: sourceClassParam.type.isNullable,
             instance: Instance(name: sourceMethodParam.name),
           );
           final targetField = Field.from(
             name: targetGetter.name,
             type: targetGetter.type,
             required: targetGetter.isRequired,
-            nullable: targetGetter.isNullable,
+            nullable: targetGetter.type.isNullable,
           );
 
           final extraMappingMethod = extraMappingMethodAnalyzer.analyze(

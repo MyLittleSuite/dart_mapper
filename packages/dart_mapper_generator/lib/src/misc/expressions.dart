@@ -28,6 +28,28 @@ import 'package:code_builder/code_builder.dart';
 Expression earlyReturnIfNull(String name) =>
     CodeExpression(Code('if ($name == null) return null'));
 
+Expression throwArgumentErrorIfNull(String name) => CodeExpression(
+      Code(
+        'if ($name == null) throw ArgumentError.notNull(\'The argument \$$name must not be null.\')',
+      ),
+    );
+
+Expression throwArgumentError(String message) =>
+    CodeExpression(Code('throw ArgumentError(\'$message\')'));
+
+Expression ifValueReturns(
+        String name, Expression rightSize, Expression returnValue) =>
+    CodeExpression(Block.of(
+      [
+        Code('if ('),
+        Code(name),
+        Code('=='),
+        rightSize.code,
+        Code(')'),
+        returnValue.returned.code,
+      ],
+    ));
+
 Expression builderClosure(List<(String, Expression)> expressions) {
   Expression closure = CodeExpression(Code('(b) => b'));
   for (final (name, expression) in expressions) {

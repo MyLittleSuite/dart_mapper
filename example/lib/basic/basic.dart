@@ -27,23 +27,35 @@ import 'package:dart_mapper/dart_mapper.dart';
 
 part 'basic.g.dart';
 
+enum BasicEnum { first, second, third, fifth }
+
+enum AnotherBasicEnum { first, second, third, fourth }
+
 class BasicObject {
   final String name;
   final int age;
+  final BasicEnum type;
+  final List<BasicEnum> types;
 
   BasicObject(
     this.name,
     this.age,
+    this.type,
+    this.types,
   );
 }
 
 class AnotherBasicObject {
   final String name;
   final int age;
+  final AnotherBasicEnum type;
+  final List<AnotherBasicEnum> types;
 
   const AnotherBasicObject(
     this.name,
     this.age,
+    this.type,
+    this.types,
   );
 }
 

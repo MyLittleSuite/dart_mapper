@@ -46,4 +46,13 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
       .where((annotation) => annotation.ignore)
       .map((annotation) => annotation.target)
       .toSet();
+
+  Map<String, String> get enumValues => Map.fromEntries(
+        ValueMappingAnnotation.load(method).map(
+          (element) => MapEntry(element.source, element.target),
+        ),
+      );
+
+  Map<String, String> get enumValuesReversed =>
+      enumValues.map((key, value) => MapEntry(value, key));
 }

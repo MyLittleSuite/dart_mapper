@@ -23,8 +23,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+import 'package:dart_mapper_generator/src/models/field/field.dart';
 
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/value_mapping.dart';
+class EnumField extends Field {
+  final List<Field> values;
+
+  EnumField({
+    required super.name,
+    required super.type,
+    required this.values,
+    super.instance,
+    super.required = false,
+    super.nullable = false,
+  });
+
+  @override
+  String toString() => 'EnumField{'
+      'name: $name, '
+      'type: $type, '
+      'required: $required, '
+      'nullable: $nullable, '
+      'values: $values, '
+      'instance: $instance'
+      '}';
+}

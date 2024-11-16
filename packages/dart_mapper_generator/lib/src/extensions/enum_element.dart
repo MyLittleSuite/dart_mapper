@@ -23,8 +23,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+import 'package:analyzer/dart/element/element.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/value_mapping.dart';
+extension EnumElementExtension on EnumElement {
+  List<FieldElement> get values =>
+      fields.where((element) => !element.type.isList).toList(growable: false);
+
+  FieldElement? getValue(Object value) =>
+      values.where((element) => element.name == value).firstOrNull;
+}

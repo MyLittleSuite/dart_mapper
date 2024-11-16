@@ -23,8 +23,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+enum EnumSource {
+  element1,
+  element2,
+  element41,
+}
 
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/value_mapping.dart';
+enum EnumTarget {
+  element1,
+  element2,
+  element14,
+}
