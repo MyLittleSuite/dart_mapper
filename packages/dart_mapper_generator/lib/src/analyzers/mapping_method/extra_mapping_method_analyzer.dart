@@ -52,29 +52,20 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     final source = context.source;
     final target = context.target;
 
-    final sourceField = switch (source) {
-      NestedField() => source,
-      IterableField(:final item) when item is NestedField => item,
-      MapField() => throw UnimplementedError("Map is not currently supported"),
-      _ => null,
-    };
-    final targetField = switch (target) {
-      NestedField() => target,
-      IterableField(:final item) when item is NestedField => item,
-      MapField() => throw UnimplementedError("Map is not currently supported"),
-      _ => null,
-    };
+    final sourceField = _extractGeneric(source);
+    final targetField = _extractGeneric(target);
 
     if (targetField == null || sourceField == null) {
       return null;
     }
 
+    final sourceFields = _getNestedFields(sourceField);
+    final targetFields = _getNestedFields(targetField);
+
     final bindings = <Binding>[];
-    for (final targetField in targetField.fields) {
-      final field = sourceField.fields
-          .where(
-            (sourceField) => sourceField.name == targetField.name,
-          )
+    for (final targetField in targetFields) {
+      final field = sourceFields
+          .where((sourceField) => sourceField.name == targetField.name)
           .firstOrNull;
 
       if (field != null) {
@@ -124,6 +115,22 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     );
   }
 
+  static Field? _extractGeneric(Field field) => switch (field) {
+        NestedField() => field,
+        EnumField() => field,
+        IterableField(:final item) when item is NestedField => item,
+        IterableField(:final item) when item is EnumField => item,
+        MapField() =>
+          throw UnimplementedError("Map is not currently supported"),
+        _ => null,
+      };
+
+  static List<Field> _getNestedFields(Field field) => switch (field) {
+        NestedField(:final fields) => fields,
+        EnumField(:final values) => values,
+        _ => [],
+      };
+
   static String _generateUniqueName(
     List<Field> parameters,
     bool nullable,
@@ -135,7 +142,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
           .map(
             (param) => [
               if (param.nullable) 'Nullable',
-              param.name.toCapitalised(),
+              param.type.displayString.toCapitalised(),
             ].join(),
           )
           .join('And'),

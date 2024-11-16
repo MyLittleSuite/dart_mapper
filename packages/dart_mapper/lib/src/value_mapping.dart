@@ -23,8 +23,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+class ValueMapping {
+  final String target;
+  final String source;
 
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/value_mapping.dart';
+  const ValueMapping({
+    required this.target,
+    required this.source,
+  });
+}

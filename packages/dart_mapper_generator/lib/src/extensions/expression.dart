@@ -23,8 +23,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+import 'package:code_builder/code_builder.dart';
 
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/value_mapping.dart';
+extension ExpressionExtension on Expression {
+  Expression arrowReturn(Expression expression) =>
+      assign(literal('')).greaterThan(literal(expression));
+}

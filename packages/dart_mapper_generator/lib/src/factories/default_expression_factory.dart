@@ -61,7 +61,7 @@ class DefaultExpressionFactory extends ExpressionFactory {
       } else if (context.field.type.isDartCoreIterable) {
         return cloneExpression;
       }
-    } else if (context.field is NestedField &&
+    } else if ((context.field is NestedField || context.field is EnumField) &&
         context.extraMappingMethod != null) {
       // {extraMappingMethod.name}(source)
       return CodeExpression(Code(context.extraMappingMethod!.name)).call([

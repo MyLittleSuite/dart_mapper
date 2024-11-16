@@ -52,8 +52,6 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
     final method = context.currentMethod;
     final targetClass = method.returnType!.element!.classElement;
     final targetConstructor = targetClass.primaryConstructor;
-    final targetVariableName = 'result';
-    final targetVariableRef = refer(targetVariableName);
 
     final positionalArguments = <Expression>[];
     final namedArguments = <String, Expression>{};
@@ -106,15 +104,13 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
         }
 
         builder.addExpression(
-          declareFinal(targetVariableName).assign(
-            refer(targetConstructor.displayName).newInstance(
-              positionalArguments,
-              namedArguments,
-            ),
-          ),
+          refer(targetConstructor.displayName)
+              .newInstance(
+                positionalArguments,
+                namedArguments,
+              )
+              .returned,
         );
-
-        builder.addExpression(targetVariableRef.returned);
       },
     );
   }

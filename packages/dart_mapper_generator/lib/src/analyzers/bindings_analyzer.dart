@@ -27,6 +27,8 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/bindings.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
@@ -73,14 +75,16 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
             name: method.name,
             isOverride: true,
             returnType: method.returnType,
+            optionalReturn: method.returnType.isNullable,
             parameters: method.parameters
                 .map(
                   (param) => MappingParameter(
                     field: Field.from(
                       name: param.name,
                       type: param.type,
+                      nullable: param.isNullable,
                     ),
-                    isNullable: param.isOptional,
+                    isNullable: param.isNullable,
                   ),
                 )
                 .toList(growable: false),

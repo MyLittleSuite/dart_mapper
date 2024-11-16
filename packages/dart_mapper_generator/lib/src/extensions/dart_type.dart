@@ -24,6 +24,7 @@
  */
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/extensions/element.dart';
 
 extension DartTypeExtension on DartType {
   bool get isList =>
@@ -41,6 +42,8 @@ extension DartTypeExtension on DartType {
   bool get isIterable => isList || isSet || isDartCoreIterable;
 
   bool get isMap => isDartCoreMap;
+
+  bool get isEnum => element?.enumElementOrNull != null;
 
   bool get isPrimitive =>
       isDartCoreBool ||
@@ -72,8 +75,8 @@ extension DartTypeExtension on DartType {
 
   String get displayString => getDisplayString(withNullability: false);
 
-  String get builtBuilderClass {
-    final isNullable = getDisplayString(withNullability: true).endsWith('?');
-    return [displayString, 'Builder', if (isNullable) '?'].join();
-  }
+  String get builtBuilderClass =>
+      [displayString, 'Builder', if (isNullable) '?'].join();
+
+  bool get isNullable => getDisplayString(withNullability: true).endsWith('?');
 }

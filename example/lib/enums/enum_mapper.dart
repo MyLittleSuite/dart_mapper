@@ -23,33 +23,40 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
 import 'package:dart_mapper/dart_mapper.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:dart_mapper_example/enums/enums.dart';
 
-extension MapperAnnotation on Mapper {
-  static Mapper load(ConstantReader annotation) => Mapper(
-        implementationName: annotation.peek("implementationName")!.stringValue,
-      );
-}
+part 'enum_mapper.g.dart';
 
-extension MappingAnnotation on Mapping {
-  static Iterable<Mapping> load(MethodElement method) =>
-      TypeChecker.fromRuntime(Mapping).annotationsOf(method).map(
-            (annotation) => Mapping(
-              source: annotation.getField('source')?.toStringValue(),
-              target: annotation.getField('target')!.toStringValue()!,
-              ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
-            ),
-          );
-}
+@Mapper()
+abstract class EnumMapper {
+  EnumTarget toTarget(EnumSource source);
 
-extension ValueMappingAnnotation on ValueMapping {
-  static Iterable<ValueMapping> load(MethodElement method) =>
-      TypeChecker.fromRuntime(ValueMapping).annotationsOf(method).map(
-            (annotation) => ValueMapping(
-              source: annotation.getField('source')!.toStringValue()!,
-              target: annotation.getField('target')!.toStringValue()!,
-            ),
-          );
+  @ValueMapping(target: 'element14', source: 'element41')
+  EnumTarget toTargetCustom(EnumSource source);
+
+  EnumTarget toTargetWithSourceString(String source);
+
+  String toStringTargetWithEnumSource(EnumSource source);
+
+  @ValueMapping(target: 'element1', source: '1')
+  @ValueMapping(target: 'element2', source: '2')
+  @ValueMapping(target: 'element14', source: '14')
+  EnumTarget toTargetWithSourceInt(int source);
+
+  @ValueMapping(target: 'element1', source: '1')
+  @ValueMapping(target: 'element2', source: '2')
+  @ValueMapping(target: 'element14', source: '14')
+  EnumTarget? toNullableTargetWithSourceInt(int source);
+
+  @ValueMapping(target: '1', source: 'element1')
+  @ValueMapping(target: '2', source: 'element2')
+  @ValueMapping(target: '41', source: 'element41')
+  int toIntTargetWithEnumSource(EnumSource source);
+
+  EnumTarget toTargetWithNullableSource(EnumSource? source);
+
+  EnumTarget? toTargetNullable(EnumSource source);
+
+  EnumTarget? toTargetNullableBoth(EnumSource? source);
 }

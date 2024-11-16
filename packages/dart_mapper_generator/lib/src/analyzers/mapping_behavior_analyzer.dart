@@ -27,16 +27,21 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/field_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
 class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
-  static const _imports = {
+  static const _builtImports = {
     'package:built_value/built_value.dart',
   };
 
   @override
   MappingBehavior analyze(AnalyzerContext context) {
+    final sourceParams = switch (context) {
+      MethodAnalyzerContext() => context.method.parameters,
+      _ => null,
+    };
     final targetType = switch (context) {
       FieldAnalyzerContext() => context.field.type,
       MethodAnalyzerContext() => context.method.returnType,
@@ -45,9 +50,15 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
         ),
     };
 
-    final targetClass = targetType.element!.classElement;
-    final foundSupertype = targetClass.allSupertypes
-        .where((type) => _imports.contains(type.element.source.uri.toString()))
+    if (targetType.isEnum ||
+        sourceParams?.where((param) => param.type.isEnum).isNotEmpty == true) {
+      return MappingBehavior.enums;
+    }
+
+    final targetInterface = targetType.element!.interfaceElementOrNull;
+    final foundSupertype = (targetInterface?.allSupertypes ?? [])
+        .where((type) =>
+            _builtImports.contains(type.element.source.uri.toString()))
         .firstOrNull;
 
     return foundSupertype != null

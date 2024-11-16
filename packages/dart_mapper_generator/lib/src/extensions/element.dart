@@ -24,15 +24,13 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 
-extension ClassElementExtension on Element {
+extension ElementExtension on Element {
   ClassElement get classElement {
     if (this is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '$displayName is not a class.',
-        element: this,
-        todo: 'Please, specify a valid class.',
+      throw UnsupportedError(
+        '$displayName is not a class. This is a ${runtimeType.toString()}.',
       );
     }
 
@@ -47,16 +45,52 @@ extension ClassElementExtension on Element {
     }
   }
 
+  EnumElement get enumElement {
+    if (this is! EnumElement) {
+      throw UnsupportedError(
+        '$displayName is not an enum. This is a ${runtimeType.toString()}.',
+      );
+    }
+
+    return this as EnumElement;
+  }
+
+  EnumElement? get enumElementOrNull {
+    try {
+      return enumElement;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  InterfaceElement get interfaceElement {
+    if (this is! InterfaceElement) {
+      throw UnsupportedError(
+        '$displayName is not an interface. This is a ${runtimeType.toString()}.',
+      );
+    }
+
+    return this as InterfaceElement;
+  }
+
+  InterfaceElement? get interfaceElementOrNull {
+    try {
+      return interfaceElement;
+    } catch (_) {
+      return null;
+    }
+  }
+
   bool get isRequired => switch (this) {
         ParameterElement(:final isRequired) => isRequired,
         _ => false,
       };
 
   bool get isNullable => switch (this) {
-        ParameterElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
-        FieldElement(:final type) =>
-          type.getDisplayString(withNullability: true).endsWith('?'),
+        ParameterElement(:final isOptional, :final type) =>
+          isOptional || type.isNullable,
+        FieldElement(:final type) => type.isNullable,
+        InterfaceElement(:final thisType) => thisType.isNullable,
         _ => false,
       };
 }

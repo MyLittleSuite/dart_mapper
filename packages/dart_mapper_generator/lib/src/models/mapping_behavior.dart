@@ -26,4 +26,5 @@
 enum MappingBehavior {
   standard,
   built,
+  enums,
 }
