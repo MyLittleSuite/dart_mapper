@@ -25,33 +25,45 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:dart_mapper/dart_mapper.dart';
-import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
+import 'package:dart_mapper_generator/src/models/mapper/constructor/mapper_constructor_parameter.dart';
 
-class AnalyzerContext {
-  final Mapper mapperAnnotation;
-  final Set<MapperUsage> mapperUsages;
-  final ClassElement mapperClass;
+class MapperConstructor {
+  final String name;
+  final List<MapperConstructorParameter> parameters;
+  final bool isConst;
 
-  const AnalyzerContext({
-    required this.mapperAnnotation,
-    this.mapperUsages = const {},
-    required this.mapperClass,
+  const MapperConstructor._({
+    required this.name,
+    this.parameters = const [],
+    this.isConst = false,
   });
 
-  MapperUsage? findUsage(DartType returnType, List<DartType> parameters) =>
-      mapperUsages
-          .where(
-            (usage) =>
-                usage.returnType == returnType &&
-                usage.parameters.length == parameters.length &&
-                usage.parameters.every(
-                  (parameter) =>
-                      parameters.any((param) => param == parameter.field.type),
-                ),
-          )
-          .firstOrNull;
+  factory MapperConstructor.fromConstructor(ConstructorElement element) =>
+      MapperConstructor._(
+        name: element.name,
+        parameters: element.parameters
+            .map((param) => MapperConstructorParameter.fromDartType(param.type))
+            .toList(growable: false),
+        isConst: element.isConst,
+      );
 
-  Iterable<MethodElement> get mappingMethods =>
-      mapperClass.methods.where((method) => method.isAbstract);
+  factory MapperConstructor.fromUses(
+    String name,
+    Set<Object> types, {
+    bool isConst = false,
+  }) =>
+      MapperConstructor._(
+        name: name,
+        parameters: types
+            .whereType<DartType>()
+            .map((type) => MapperConstructorParameter.fromDartType(type))
+            .toList(growable: false),
+        isConst: isConst,
+      );
+
+  @override
+  String toString() => 'MapperConstructor{'
+      'name: $name, '
+      'parameters: $parameters'
+      '}';
 }

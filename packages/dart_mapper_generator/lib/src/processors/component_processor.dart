@@ -26,7 +26,8 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 
 class ProcessorContext {
   final Mapper mapperAnnotation;
@@ -38,10 +39,13 @@ class ProcessorContext {
   });
 
   Iterable<MappingMethod> get mappingMethods => mapperClass.mappingMethods;
+
+  Iterable<InternalMappingMethod> get internalMappingMethods =>
+      mappingMethods.whereType<InternalMappingMethod>();
 }
 
 class ProcessorMethodContext extends ProcessorContext {
-  final MappingMethod currentMethod;
+  final InternalMappingMethod currentMethod;
 
   const ProcessorMethodContext({
     required super.mapperAnnotation,

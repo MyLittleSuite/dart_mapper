@@ -34,7 +34,6 @@ import 'package:dart_mapper_generator/src/models/field/map_field.dart';
 import 'package:dart_mapper_generator/src/models/field/nested_field.dart';
 import 'package:dart_mapper_generator/src/models/field/primitive_field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
-import 'package:strings/strings.dart';
 
 export 'enum_field.dart';
 export 'iterable_field.dart';
@@ -140,8 +139,7 @@ abstract class Field {
   }
 
   static Field _buildGenericField(DartType type) {
-    final name =
-        type.getDisplayString(withNullability: false).toCamelCase(lower: true);
+    final name = type.parameterName;
     final instance = Instance(name: name);
 
     if (type.isPrimitive) {

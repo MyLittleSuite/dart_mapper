@@ -23,24 +23,31 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper_generator/src/models/mapper/mapper_constructor.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/constructor/mapper_constructor.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapper_instance_field.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 
 class MapperClass {
   final String name;
+  final List<MapperInstanceField> instanceFields;
   final List<MapperConstructor> constructors;
   final List<MappingMethod> _mappingMethods;
 
   const MapperClass({
     required this.name,
+    this.instanceFields = const [],
     this.constructors = const [],
     List<MappingMethod> mappingMethods = const [],
   }) : _mappingMethods = mappingMethods;
 
   Iterable<MappingMethod> get mappingMethods sync* {
-    yield* _mappingMethods;
+    final internalMappingMethods =
+        _mappingMethods.whereType<InternalMappingMethod>();
 
-    for (final method in _mappingMethods) {
+    yield* internalMappingMethods;
+
+    for (final method in internalMappingMethods) {
       yield* method.bindings.expand((binding) => binding.mappingMethods);
     }
   }

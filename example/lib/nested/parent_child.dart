@@ -23,16 +23,56 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:dart_mapper/dart_mapper.dart';
 
-class MethodAnalyzerContext extends AnalyzerContext {
-  final MethodElement method;
+part 'parent_child.g.dart';
 
-  const MethodAnalyzerContext({
-    required super.mapperAnnotation,
-    required super.mapperUsages,
-    required super.mapperClass,
-    required this.method,
-  });
+class ParentTarget {
+  final ChildTarget childTarget;
+  final List<ChildTarget> childrenTarget;
+  final String parentProperty;
+
+  ParentTarget(
+    this.childTarget,
+    this.childrenTarget,
+    this.parentProperty,
+  );
+}
+
+class ChildTarget {
+  final String property;
+
+  ChildTarget(this.property);
+}
+
+class ParentSource {
+  final ChildSource childSource;
+  final List<ChildSource> childrenSource;
+  final String parentProperty;
+
+  ParentSource(
+    this.childSource,
+    this.childrenSource,
+    this.parentProperty,
+  );
+}
+
+class ChildSource {
+  final String property;
+
+  ChildSource(this.property);
+}
+
+@Mapper()
+abstract class ChildMapper {
+  ChildTarget toChildTarget(ChildSource model);
+}
+
+@Mapper(uses: {ChildMapper})
+abstract class ParentMapper {
+  const ParentMapper();
+
+  @Mapping(target: 'childTarget', source: 'childSource')
+  @Mapping(target: 'childrenTarget', source: 'childrenSource')
+  ParentTarget toParentTarget(ParentSource model);
 }

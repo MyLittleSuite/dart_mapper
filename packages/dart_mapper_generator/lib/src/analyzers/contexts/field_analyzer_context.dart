@@ -31,6 +31,7 @@ class FieldAnalyzerContext extends AnalyzerContext {
 
   const FieldAnalyzerContext({
     required super.mapperAnnotation,
+    required super.mapperUsages,
     required super.mapperClass,
     required this.field,
   });

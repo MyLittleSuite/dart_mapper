@@ -25,6 +25,7 @@
 
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:strings/strings.dart';
 
 extension DartTypeExtension on DartType {
   bool get isList =>
@@ -79,4 +80,7 @@ extension DartTypeExtension on DartType {
       [displayString, 'Builder', if (isNullable) '?'].join();
 
   bool get isNullable => getDisplayString(withNullability: true).endsWith('?');
+
+  String get parameterName =>
+      displayString.toSnakeCase().toCamelCase(lower: true);
 }

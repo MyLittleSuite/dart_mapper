@@ -30,6 +30,7 @@ import 'package:dart_mapper_generator/src/analyzers/binding/standard_mapping_met
 import 'package:dart_mapper_generator/src/analyzers/bindings_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/mapping_behavior_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/mapping_method/extra_mapping_method_analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/uses_analyzer.dart';
 import 'package:dart_mapper_generator/src/dart_mapper_generator.dart';
 import 'package:dart_mapper_generator/src/factories/built_expression_factory.dart';
 import 'package:dart_mapper_generator/src/factories/default_expression_factory.dart';
@@ -89,6 +90,7 @@ Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
           ),
         ),
         analyzer: BindingsAnalyzer(
+          mapperUsageAnalyzer: UsesAnalyzer(),
           mappingBehaviorAnalyzer: MappingBehaviorAnalyzer(),
           mappingMethodDispatcher: mappingMethodDispatcher,
         ),

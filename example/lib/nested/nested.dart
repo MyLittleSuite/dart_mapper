@@ -27,38 +27,56 @@ import 'package:dart_mapper/dart_mapper.dart';
 
 part 'nested.g.dart';
 
-class ParentTarget {
-  final ChildTarget childTarget;
+class SourceA {
+  final String property;
+  final SourceB b;
 
-  ParentTarget(this.childTarget);
+  SourceA(this.property, this.b);
 }
 
-class ChildTarget {
+class SourceB {
+  final String property;
+  final SourceC c;
+
+  SourceB(this.property, this.c);
+}
+
+class SourceC {
   final String property;
 
-  ChildTarget(this.property);
+  SourceC(this.property);
 }
 
-class ParentSource {
-  final ChildSource childSource;
+class TargetA {
+  final String property;
+  final TargetB b;
 
-  ParentSource(this.childSource);
+  TargetA(this.property, this.b);
 }
 
-class ChildSource {
+class TargetB {
+  final String property;
+  final TargetC c;
+
+  TargetB(this.property, this.c);
+}
+
+class TargetC {
   final String property;
 
-  ChildSource(this.property);
+  TargetC(this.property);
+}
+
+@Mapper(uses: {CMapper})
+abstract class AMapper {
+  TargetA toTargetA(SourceA model);
+
+  SourceA toSourceA(TargetA model);
 }
 
 @Mapper()
-abstract class ChildMapper {
-  ChildTarget toChildTarget(ChildSource model);
-}
+abstract class CMapper {
+  TargetC toTargetC(SourceC model);
 
-// TODO: @Mapper(uses: [ChildMapper])
-@Mapper()
-abstract class ParentMapper {
-  @Mapping(source: 'childSource', target: 'childTarget')
-  ParentTarget toParentTarget(ParentSource model);
+  SourceC toSourceC(TargetC model);
 }

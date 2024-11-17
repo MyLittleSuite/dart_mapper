@@ -25,8 +25,8 @@
 
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
@@ -80,7 +80,7 @@ class MappingProcessor extends ComponentProcessor<Method> {
         ),
       );
 
-  Reference _processReturns(MappingMethod method) {
+  Reference _processReturns(InternalMappingMethod method) {
     final returnType = method.returnType;
     if (returnType == null) {
       return refer('void');

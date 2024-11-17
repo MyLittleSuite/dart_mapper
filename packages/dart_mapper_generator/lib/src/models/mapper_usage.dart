@@ -23,35 +23,47 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:dart_mapper/dart_mapper.dart';
-import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
 
-class AnalyzerContext {
-  final Mapper mapperAnnotation;
-  final Set<MapperUsage> mapperUsages;
-  final ClassElement mapperClass;
+class MapperUsage {
+  final String mapperName;
+  final DartType mapperType;
+  final DartType returnType;
+  final String functionName;
+  final List<MappingParameter> parameters;
 
-  const AnalyzerContext({
-    required this.mapperAnnotation,
-    this.mapperUsages = const {},
-    required this.mapperClass,
+  MapperUsage({
+    required this.mapperName,
+    required this.mapperType,
+    required this.returnType,
+    required this.functionName,
+    required this.parameters,
   });
 
-  MapperUsage? findUsage(DartType returnType, List<DartType> parameters) =>
-      mapperUsages
-          .where(
-            (usage) =>
-                usage.returnType == returnType &&
-                usage.parameters.length == parameters.length &&
-                usage.parameters.every(
-                  (parameter) =>
-                      parameters.any((param) => param == parameter.field.type),
-                ),
-          )
-          .firstOrNull;
+  @override
+  String toString() => 'MapperUsage{'
+      'mapperName: $mapperName, '
+      'mapperType: $mapperType, '
+      'returnType: $returnType, '
+      'functionName: $functionName, '
+      'parameters: $parameters'
+      '}';
 
-  Iterable<MethodElement> get mappingMethods =>
-      mapperClass.methods.where((method) => method.isAbstract);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MapperUsage &&
+          runtimeType == other.runtimeType &&
+          mapperType == other.mapperType &&
+          returnType == other.returnType &&
+          functionName == other.functionName &&
+          parameters == other.parameters;
+
+  @override
+  int get hashCode =>
+      mapperType.hashCode ^
+      returnType.hashCode ^
+      functionName.hashCode ^
+      parameters.hashCode;
 }

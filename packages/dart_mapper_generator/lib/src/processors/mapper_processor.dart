@@ -24,6 +24,7 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 
@@ -48,8 +49,9 @@ class MapperProcessor extends ComponentProcessor<Class> {
         ])
         ..name = className
         ..extend = refer(mapperClass.name)
+        ..fields.addAll(_generateInstanceField(mapperClass))
         ..constructors.addAll(_generateConstructors(mapperClass))
-        ..methods.addAll(context.mappingMethods.toSet().map(
+        ..methods.addAll(context.internalMappingMethods.toSet().map(
               (method) => methodProcessor.process(ProcessorMethodContext(
                 mapperAnnotation: annotation,
                 mapperClass: mapperClass,
@@ -59,10 +61,32 @@ class MapperProcessor extends ComponentProcessor<Class> {
     );
   }
 
+  Iterable<Field> _generateInstanceField(MapperClass element) =>
+      element.instanceFields.map(
+        (field) => Field(
+          (b) => b
+            ..name = field.name
+            ..type = refer(field.type.displayString)
+            ..modifier = FieldModifier.final$,
+        ),
+      );
+
   Iterable<Constructor> _generateConstructors(MapperClass element) =>
       element.constructors.map(
         (constructor) => Constructor(
-          (builder) => builder..constant = constructor.isConst,
+          (builder) => builder
+            ..constant = constructor.isConst
+            ..optionalParameters.addAll(
+              constructor.parameters.map(
+                (parameter) => Parameter(
+                  (b) => b
+                    ..name = parameter.name
+                    ..toThis = true
+                    ..named = true
+                    ..required = parameter.required,
+                ),
+              ),
+            ),
         ),
       );
 }

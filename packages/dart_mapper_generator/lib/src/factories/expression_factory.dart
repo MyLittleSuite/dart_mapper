@@ -25,7 +25,7 @@
 
 import 'package:code_builder/code_builder.dart' hide Field;
 import 'package:dart_mapper_generator/src/models/field/field.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 import 'package:meta/meta.dart';
 
 class ExpressionContext {

@@ -29,7 +29,14 @@ import 'package:source_gen/source_gen.dart';
 
 extension MapperAnnotation on Mapper {
   static Mapper load(ConstantReader annotation) => Mapper(
-        implementationName: annotation.peek("implementationName")!.stringValue,
+        implementationName: annotation.peek('implementationName')!.stringValue,
+        uses: annotation
+            .peek('uses')
+            ?.setValue
+            .map((e) => e.toTypeValue())
+            .where((type) => type != null)
+            .whereType<Object>()
+            .toSet(),
       );
 }
 

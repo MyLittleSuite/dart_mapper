@@ -23,16 +23,35 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 
-class MethodAnalyzerContext extends AnalyzerContext {
-  final MethodElement method;
+class MapperConstructorParameter {
+  final String name;
+  final DartType type;
+  final bool required;
+  final bool nullable;
 
-  const MethodAnalyzerContext({
-    required super.mapperAnnotation,
-    required super.mapperUsages,
-    required super.mapperClass,
-    required this.method,
+  MapperConstructorParameter._({
+    required this.name,
+    required this.type,
+    this.required = false,
+    this.nullable = false,
   });
+
+  factory MapperConstructorParameter.fromDartType(DartType type) =>
+      MapperConstructorParameter._(
+        name: type.parameterName,
+        type: type,
+        required: !type.isNullable,
+        nullable: type.isNullable,
+      );
+
+  @override
+  String toString() => 'MapperConstructorParameter{'
+      'name: $name, '
+      'type: $type, '
+      'required: $required, '
+      'nullable: $nullable'
+      '}';
 }
