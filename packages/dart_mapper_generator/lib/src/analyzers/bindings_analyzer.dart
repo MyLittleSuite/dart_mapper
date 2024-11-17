@@ -32,31 +32,39 @@ import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/bindings.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
+import 'package:dart_mapper_generator/src/models/mapper/constructor/mapper_constructor.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapper_constructor.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapper_instance_field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 
 class BindingsAnalyzer extends Analyzer<Bindings> {
+  final Analyzer<Set<MapperUsage>> mapperUsageAnalyzer;
   final Analyzer<MappingBehavior> mappingBehaviorAnalyzer;
   final StrategyDispatcher<MappingBehavior, Analyzer<List<Binding>>>
       mappingMethodDispatcher;
 
   BindingsAnalyzer({
+    required this.mapperUsageAnalyzer,
     required this.mappingBehaviorAnalyzer,
     required this.mappingMethodDispatcher,
   });
 
   @override
   Bindings analyze(AnalyzerContext context) {
+    final mapperUsages = mapperUsageAnalyzer.analyze(context);
+
     final mappingMethods = context.mappingMethods.fold(
       <MappingMethod>[],
       (accumulator, method) {
         final mappingBehavior = mappingBehaviorAnalyzer.analyze(
           MethodAnalyzerContext(
             mapperAnnotation: context.mapperAnnotation,
+            mapperUsages: mapperUsages,
             mapperClass: context.mapperClass,
             method: method,
           ),
@@ -66,12 +74,13 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
             .get(mappingBehavior)
             .analyze(BindingsAnalyzerContext(
               mapperAnnotation: context.mapperAnnotation,
+              mapperUsages: mapperUsages,
               mapperClass: context.mapperClass,
               method: method,
             ));
 
         return accumulator
-          ..add(MappingMethod(
+          ..add(InternalMappingMethod(
             name: method.name,
             isOverride: true,
             returnType: method.returnType,
@@ -97,11 +106,35 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
     return Bindings(
       mapperClass: MapperClass(
         name: context.mapperClass.name,
-        constructors: context.mapperClass.constructors
-            .map((constructor) => MapperConstructor.from(constructor))
-            .toList(growable: false),
+        instanceFields: _createInstanceFields(context),
+        constructors: _createMapperConstructors(context),
         mappingMethods: mappingMethods,
       ),
     );
+  }
+
+  List<MapperInstanceField> _createInstanceFields(AnalyzerContext context) =>
+      context.mapperAnnotation.uses
+          ?.map((field) => MapperInstanceField.fromUse(field))
+          .toList(growable: false) ??
+      [];
+
+  List<MapperConstructor> _createMapperConstructors(AnalyzerContext context) {
+    final parentConstructors = context.mapperClass.constructors
+        .map((constructor) => MapperConstructor.fromConstructor(constructor))
+        .toList(growable: false);
+
+    final uses = context.mapperAnnotation.uses;
+    if (uses != null && uses.isNotEmpty) {
+      return [
+        MapperConstructor.fromUses(
+          context.mapperClass.name,
+          uses,
+          isConst: parentConstructors.any((constructor) => constructor.isConst),
+        ),
+      ];
+    }
+
+    return parentConstructors;
   }
 }

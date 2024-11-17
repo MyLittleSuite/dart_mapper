@@ -27,9 +27,11 @@ class Mapper {
   static const String classNameKey = '<CLASS_NAME>';
 
   final String implementationName;
+  final Set<Object>? uses;
 
   const Mapper({
     this.implementationName = '${classNameKey}Impl',
+    this.uses,
   });
 
   String getImplementationName(String className) =>

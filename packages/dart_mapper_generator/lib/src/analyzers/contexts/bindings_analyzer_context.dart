@@ -29,6 +29,7 @@ import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 class BindingsAnalyzerContext extends MethodAnalyzerContext {
   const BindingsAnalyzerContext({
     required super.mapperAnnotation,
+    required super.mapperUsages,
     required super.mapperClass,
     required super.method,
   });

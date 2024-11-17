@@ -23,16 +23,34 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 
-class MethodAnalyzerContext extends AnalyzerContext {
-  final MethodElement method;
+class MapperInstanceField {
+  final String name;
+  final DartType type;
 
-  const MethodAnalyzerContext({
-    required super.mapperAnnotation,
-    required super.mapperUsages,
-    required super.mapperClass,
-    required this.method,
+  MapperInstanceField._({
+    required this.name,
+    required this.type,
   });
+
+  factory MapperInstanceField.fromUse(Object type) {
+    assert(
+      type is DartType,
+      'type should be a DartType. Please declare it with no instantiation!',
+    );
+
+    final dartType = type as DartType;
+    return MapperInstanceField._(
+      type: dartType,
+      name: dartType.parameterName,
+    );
+  }
+
+  @override
+  String toString() => 'MapperInstanceField{'
+      'name: $name, '
+      'type: $type'
+      '}';
 }

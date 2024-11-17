@@ -23,16 +23,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
-class MethodAnalyzerContext extends AnalyzerContext {
-  final MethodElement method;
+class ExternalMappingMethod extends MappingMethod {
+  final MapperUsage mapperUsage;
 
-  const MethodAnalyzerContext({
-    required super.mapperAnnotation,
-    required super.mapperUsages,
-    required super.mapperClass,
-    required this.method,
-  });
+  ExternalMappingMethod({
+    required this.mapperUsage,
+  }) : super(
+          name: [
+            mapperUsage.mapperName,
+            '.',
+            mapperUsage.functionName,
+          ].join(),
+        );
 }

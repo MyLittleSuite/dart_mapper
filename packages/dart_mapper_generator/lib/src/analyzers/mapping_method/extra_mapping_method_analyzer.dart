@@ -31,8 +31,11 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_con
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:strings/strings.dart';
 
@@ -62,6 +65,19 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     final sourceFields = _getNestedFields(sourceField);
     final targetFields = _getNestedFields(targetField);
 
+    final mapperUsage = _findCorrectExternalUsage(
+      context: context,
+      source: source,
+      target: target,
+      sourceField: sourceField,
+      targetField: targetField,
+      sourceFields: sourceFields,
+      targetFields: targetFields,
+    );
+    if (mapperUsage != null) {
+      return ExternalMappingMethod(mapperUsage: mapperUsage);
+    }
+
     final bindings = <Binding>[];
     for (final targetField in targetFields) {
       final field = sourceFields
@@ -72,6 +88,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         final extraMappingMethod = analyze(
           FieldsAnalyzerContext(
             mapperAnnotation: context.mapperAnnotation,
+            mapperUsages: context.mapperUsages,
             mapperClass: context.mapperClass,
             source: field,
             target: targetField,
@@ -91,12 +108,13 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     final behavior = mappingBehaviorAnalyzer.analyze(
       FieldAnalyzerContext(
         mapperAnnotation: context.mapperAnnotation,
+        mapperUsages: context.mapperUsages,
         mapperClass: context.mapperClass,
         field: targetField,
       ),
     );
 
-    return MappingMethod(
+    return InternalMappingMethod(
       name: _generateUniqueName(
         [sourceField],
         targetField.nullable,
@@ -113,6 +131,54 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
       bindings: bindings,
       behavior: behavior,
     );
+  }
+
+  static MapperUsage? _findCorrectExternalUsage({
+    required AnalyzerContext context,
+    required Field source,
+    required Field target,
+    required Field sourceField,
+    required Field targetField,
+    required List<Field> sourceFields,
+    required List<Field> targetFields,
+  }) {
+    var mapperUsage = context.findUsage(target.type, [source.type]);
+    if (mapperUsage != null) {
+      return mapperUsage;
+    }
+
+    mapperUsage = context.findUsage(target.type, [sourceField.type]);
+    if (mapperUsage != null) {
+      return mapperUsage;
+    }
+
+    mapperUsage = context.findUsage(
+      target.type,
+      sourceFields.map((field) => field.type).toList(growable: false),
+    );
+    if (mapperUsage != null) {
+      return mapperUsage;
+    }
+
+    mapperUsage = context.findUsage(targetField.type, [source.type]);
+    if (mapperUsage != null) {
+      return mapperUsage;
+    }
+
+    mapperUsage = context.findUsage(targetField.type, [sourceField.type]);
+    if (mapperUsage != null) {
+      return mapperUsage;
+    }
+
+    mapperUsage = context.findUsage(
+      targetField.type,
+      sourceFields.map((field) => field.type).toList(growable: false),
+    );
+    if (mapperUsage != null) {
+      return mapperUsage;
+    }
+
+    return null;
   }
 
   static Field? _extractGeneric(Field field) => switch (field) {

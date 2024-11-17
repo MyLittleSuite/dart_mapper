@@ -23,34 +23,41 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/models/binding.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
-class MapperConstructor {
-  final String name;
-  final List<String> parameters;
-  final bool isConst;
+class InternalMappingMethod extends MappingMethod {
+  final bool isOverride;
+  final DartType? returnType;
+  final bool optionalReturn;
+  final List<MappingParameter> parameters;
+  final List<Binding> bindings;
+  final MappingBehavior behavior;
 
-  const MapperConstructor._({
-    required this.name,
+  const InternalMappingMethod({
+    required super.name,
+    this.isOverride = false,
+    this.returnType,
+    this.optionalReturn = false,
+    this.behavior = MappingBehavior.standard,
     this.parameters = const [],
-    this.isConst = false,
+    this.bindings = const [],
   });
 
-  factory MapperConstructor.from(ConstructorElement element) =>
-      MapperConstructor._(
-        name: element.name,
-        parameters: element.parameters
-            .map((parameter) =>
-                parameter.type.getDisplayString(withNullability: false))
-            .toList(
-              growable: false,
-            ),
-        isConst: element.isConst,
-      );
+  Binding? fromTarget(String target) =>
+      bindings.where((b) => b.target.name == target).firstOrNull;
 
   @override
-  String toString() => 'MapperConstructor{'
+  String toString() => 'MappingMethod{'
       'name: $name, '
-      'parameters: $parameters'
+      'isOverride: $isOverride, '
+      'returnType: $returnType, '
+      'optionalReturn: $optionalReturn, '
+      'behavior: $behavior, '
+      'parameters: $parameters, '
+      'bindings: $bindings'
       '}';
 }

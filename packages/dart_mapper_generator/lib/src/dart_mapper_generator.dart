@@ -30,13 +30,14 @@ import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
+import 'package:dart_mapper_generator/src/models/bindings.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:source_gen/source_gen.dart';
 
 class DartMapperGenerator extends GeneratorForAnnotation<Mapper> {
   final ComponentProcessor<Class> mapperProcessor;
-  final Analyzer analyzer;
+  final Analyzer<Bindings> analyzer;
 
   const DartMapperGenerator({
     required this.mapperProcessor,
