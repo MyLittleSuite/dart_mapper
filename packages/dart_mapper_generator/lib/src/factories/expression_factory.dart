@@ -28,12 +28,21 @@ import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 import 'package:meta/meta.dart';
 
+enum FieldOrigin {
+  source,
+  target,
+}
+
 class ExpressionContext {
   final Field field;
+  final FieldOrigin origin;
+  final MappingMethod currentMethod;
   final MappingMethod? extraMappingMethod;
 
   const ExpressionContext({
     required this.field,
+    required this.origin,
+    required this.currentMethod,
     this.extraMappingMethod,
   });
 }

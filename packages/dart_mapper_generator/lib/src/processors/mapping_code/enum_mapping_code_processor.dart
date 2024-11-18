@@ -63,10 +63,18 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
 
         for (final binding in method.bindings) {
           final sourceValue = expressionFactory.create(
-            ExpressionContext(field: binding.source),
+            ExpressionContext(
+              field: binding.source,
+              origin: FieldOrigin.source,
+              currentMethod: method,
+            ),
           );
           final targetValue = expressionFactory.create(
-            ExpressionContext(field: binding.target),
+            ExpressionContext(
+              field: binding.target,
+              origin: FieldOrigin.target,
+              currentMethod: method,
+            ),
           );
 
           builder.addExpression(

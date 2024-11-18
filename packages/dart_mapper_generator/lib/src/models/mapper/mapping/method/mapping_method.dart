@@ -23,16 +23,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/type.dart';
+
 class MappingMethod {
   final String name;
+  final DartType? returnType;
+  final bool optionalReturn;
 
   const MappingMethod({
     required this.name,
+    this.returnType,
+    this.optionalReturn = false,
   });
 
   @override
   String toString() => 'MappingMethod{'
-      'name: $name'
+      'name: $name, '
+      'returnType: $returnType, '
+      'optionalReturn: $optionalReturn'
       '}';
 
   @override

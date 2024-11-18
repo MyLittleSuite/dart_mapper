@@ -106,6 +106,8 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
       expressionStrategyDispatcher.get(method.behavior).create(
             ExpressionContext(
               field: binding.source,
+              origin: FieldOrigin.source,
+              currentMethod: method,
               extraMappingMethod: binding.extraMappingMethod,
             ),
           );

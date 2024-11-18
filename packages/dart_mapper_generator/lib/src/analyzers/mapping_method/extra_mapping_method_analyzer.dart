@@ -58,10 +58,6 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     final sourceField = _extractGeneric(source);
     final targetField = _extractGeneric(target);
 
-    if (targetField == null || sourceField == null) {
-      return null;
-    }
-
     final sourceFields = _getNestedFields(sourceField);
     final targetFields = _getNestedFields(targetField);
 
@@ -76,6 +72,10 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     );
     if (mapperUsage != null) {
       return ExternalMappingMethod(mapperUsage: mapperUsage);
+    }
+
+    if (targetField == null || sourceField == null) {
+      return null;
     }
 
     final bindings = <Binding>[];
@@ -137,43 +137,53 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     required AnalyzerContext context,
     required Field source,
     required Field target,
-    required Field sourceField,
-    required Field targetField,
-    required List<Field> sourceFields,
-    required List<Field> targetFields,
+    Field? sourceField,
+    Field? targetField,
+    List<Field>? sourceFields,
+    List<Field>? targetFields,
   }) {
     var mapperUsage = context.findUsage(target.type, [source.type]);
     if (mapperUsage != null) {
       return mapperUsage;
     }
 
-    mapperUsage = context.findUsage(target.type, [sourceField.type]);
+    mapperUsage = sourceField != null
+        ? context.findUsage(target.type, [sourceField.type])
+        : null;
     if (mapperUsage != null) {
       return mapperUsage;
     }
 
-    mapperUsage = context.findUsage(
-      target.type,
-      sourceFields.map((field) => field.type).toList(growable: false),
-    );
+    mapperUsage = sourceFields != null
+        ? context.findUsage(
+            target.type,
+            sourceFields.map((field) => field.type).toList(growable: false),
+          )
+        : null;
     if (mapperUsage != null) {
       return mapperUsage;
     }
 
-    mapperUsage = context.findUsage(targetField.type, [source.type]);
+    mapperUsage = targetField != null
+        ? context.findUsage(targetField.type, [source.type])
+        : null;
     if (mapperUsage != null) {
       return mapperUsage;
     }
 
-    mapperUsage = context.findUsage(targetField.type, [sourceField.type]);
+    mapperUsage = targetField != null && sourceField != null
+        ? context.findUsage(targetField.type, [sourceField.type])
+        : null;
     if (mapperUsage != null) {
       return mapperUsage;
     }
 
-    mapperUsage = context.findUsage(
-      targetField.type,
-      sourceFields.map((field) => field.type).toList(growable: false),
-    );
+    mapperUsage = targetField != null && sourceFields != null
+        ? context.findUsage(
+            targetField.type,
+            sourceFields.map((field) => field.type).toList(growable: false),
+          )
+        : null;
     if (mapperUsage != null) {
       return mapperUsage;
     }
@@ -181,7 +191,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     return null;
   }
 
-  static Field? _extractGeneric(Field field) => switch (field) {
+  static Field? _extractGeneric(Field? field) => switch (field) {
         NestedField() => field,
         EnumField() => field,
         IterableField(:final item) when item is NestedField => item,
@@ -191,7 +201,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         _ => null,
       };
 
-  static List<Field> _getNestedFields(Field field) => switch (field) {
+  static List<Field> _getNestedFields(Field? field) => switch (field) {
         NestedField(:final fields) => fields,
         EnumField(:final values) => values,
         _ => [],

@@ -35,12 +35,29 @@ import 'package:dart_mapper_example/built_value/models/user_dto.dart';
 part 'built_value_mapper.g.dart';
 
 @Mapper()
+abstract class AlertTypeMapper {
+  const AlertTypeMapper();
+
+  @ValueMapping(target: 'missingPhoneNumber', source: '1')
+  @ValueMapping(target: 'missingEmail', source: '2')
+  AlertType? fromRaw(int? raw);
+
+  @ValueMapping(target: '1', source: 'missingPhoneNumber')
+  @ValueMapping(target: '2', source: 'missingEmail')
+  int? toRaw(AlertType? raw);
+}
+
+@Mapper(uses: {AlertTypeMapper})
 abstract class BuiltValueMapper {
+  const BuiltValueMapper();
+
   Review toReview(ReviewDTO reviewDto);
 
   ReviewDTO toReviewDTO(Review review);
 
+  @Mapping(target: 'type', source: 'actionType')
   Alert toAlert(AlertInfo alertInfo);
 
+  @Mapping(target: 'actionType', source: 'type')
   AlertInfo toAlertInfo(Alert alert);
 }

@@ -23,7 +23,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
@@ -31,8 +30,6 @@ import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
 class InternalMappingMethod extends MappingMethod {
   final bool isOverride;
-  final DartType? returnType;
-  final bool optionalReturn;
   final List<MappingParameter> parameters;
   final List<Binding> bindings;
   final MappingBehavior behavior;
@@ -40,8 +37,8 @@ class InternalMappingMethod extends MappingMethod {
   const InternalMappingMethod({
     required super.name,
     this.isOverride = false,
-    this.returnType,
-    this.optionalReturn = false,
+    super.returnType,
+    super.optionalReturn = false,
     this.behavior = MappingBehavior.standard,
     this.parameters = const [],
     this.bindings = const [],

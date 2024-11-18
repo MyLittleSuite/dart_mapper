@@ -37,6 +37,25 @@ class EnumExpressionFactory extends ExpressionFactory {
   @override
   Expression create(ExpressionContext context) {
     if (context.field.type.isPrimitive) {
+      if (context.origin == FieldOrigin.target) {
+        if (context.field.type.isDartCoreInt) {
+          return (context.currentMethod.optionalReturn
+                  ? refer('int.tryParse')
+                  : refer('int.parse'))
+              .call([literal(context.field.name)]);
+        } else if (context.field.type.isDartCoreDouble) {
+          return (context.currentMethod.optionalReturn
+                  ? refer('double.tryParse')
+                  : refer('double.parse'))
+              .call([literal(context.field.name)]);
+        } else if (context.field.type.isDartCoreNum) {
+          return (context.currentMethod.optionalReturn
+                  ? refer('num.tryParse')
+                  : refer('num.parse'))
+              .call([literal(context.field.name)]);
+        }
+      }
+
       final name = context.field.name;
       return literal(num.tryParse(name) ?? name);
     }

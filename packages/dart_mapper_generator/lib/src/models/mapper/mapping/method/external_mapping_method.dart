@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
@@ -37,5 +38,7 @@ class ExternalMappingMethod extends MappingMethod {
             '.',
             mapperUsage.functionName,
           ].join(),
+          returnType: mapperUsage.returnType,
+          optionalReturn: mapperUsage.returnType.isNullable,
         );
 }
