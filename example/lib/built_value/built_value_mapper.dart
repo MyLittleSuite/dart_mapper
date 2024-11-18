@@ -25,6 +25,8 @@
 
 import 'package:built_collection/built_collection.dart';
 import 'package:dart_mapper/dart_mapper.dart';
+import 'package:dart_mapper_example/built_value/models/alert.dart';
+import 'package:dart_mapper_example/built_value/models/alert_info.dart';
 import 'package:dart_mapper_example/built_value/models/review.dart';
 import 'package:dart_mapper_example/built_value/models/review_dto.dart';
 import 'package:dart_mapper_example/built_value/models/user.dart';
@@ -37,4 +39,8 @@ abstract class BuiltValueMapper {
   Review toReview(ReviewDTO reviewDto);
 
   ReviewDTO toReviewDTO(Review review);
+
+  Alert toAlert(AlertInfo alertInfo);
+
+  AlertInfo toAlertInfo(Alert alert);
 }

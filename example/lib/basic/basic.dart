@@ -36,12 +36,14 @@ class BasicObject {
   final int age;
   final BasicEnum type;
   final List<BasicEnum> types;
+  final DateTime dateTime;
 
   BasicObject(
     this.name,
     this.age,
     this.type,
     this.types,
+    this.dateTime,
   );
 }
 
@@ -50,12 +52,14 @@ class AnotherBasicObject {
   final int age;
   final AnotherBasicEnum type;
   final List<AnotherBasicEnum> types;
+  final DateTime dateTime;
 
   const AnotherBasicObject(
     this.name,
     this.age,
     this.type,
     this.types,
+    this.dateTime,
   );
 }
 
