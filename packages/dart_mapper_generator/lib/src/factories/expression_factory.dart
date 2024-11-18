@@ -26,7 +26,6 @@
 import 'package:code_builder/code_builder.dart' hide Field;
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
-import 'package:meta/meta.dart';
 
 enum FieldOrigin {
   source,
@@ -52,7 +51,6 @@ abstract class ExpressionFactory {
 
   Expression create(ExpressionContext context);
 
-  @protected
   Expression basic(Field field) {
     if (field.instance != null) {
       return refer(field.instance!.name).property(field.name);

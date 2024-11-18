@@ -1,7 +1,7 @@
 ## 0.2.1
 
 - Enhance enum mapping function reusing from other mappers.
-- Set meta dependency as any.
+- Remove meta dependency.
 
 ## 0.2.0
 
