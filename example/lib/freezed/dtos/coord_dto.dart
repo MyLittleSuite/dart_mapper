@@ -23,35 +23,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/dart_mapper.dart';
-import 'package:dart_mapper_example/freezed/dtos/city_dto.dart';
-import 'package:dart_mapper_example/freezed/dtos/coord_dto.dart';
-import 'package:dart_mapper_example/freezed/models/another_user.dart';
-import 'package:dart_mapper_example/freezed/models/city.dart';
-import 'package:dart_mapper_example/freezed/models/coord.dart';
-import 'package:dart_mapper_example/freezed/models/credentials.dart';
-import 'package:dart_mapper_example/freezed/models/user.dart';
-import 'package:dart_mapper_example/freezed/models/user_jto.dart';
+import 'package:dart_mapper_example/freezed/dtos/dto.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'freezed_mapper.g.dart';
+part 'coord_dto.freezed.dart';
+part 'coord_dto.g.dart';
 
-@Mapper()
-abstract class FreezedMapper {
-  UserJTO toUserJTO(User user);
+/// The CoordDTO
+@freezed
+class CoordDTO extends DTO with _$CoordDTO {
+  /// The helper factory method to generate the CoordDTO constructor
+  factory CoordDTO({
+    required double lat,
+    required double lon,
+  }) = CoordDTOData;
 
-  User toUser(UserJTO userJTO);
-
-  AnonCredentials toAnonCredentials(Credentials credentials);
-
-  AnonCredentials toAnonFromUser(User user);
-
-  UserCredentials toUserCredentials(User user);
-
-  AnotherUser toAnotherUser(User user);
-
-  User toUserFromAnotherOne(AnotherUser anotherUser);
-
-  City toCity(CityDTO dto);
-
-  CityDTO toCityDTO(City city);
+  /// Factory method to generate a CoordDTO object starting from a json map of string,value
+  factory CoordDTO.fromJson(Map<String, dynamic> json) =>
+      _$CoordDTOFromJson(json);
 }

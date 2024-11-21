@@ -23,35 +23,23 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/dart_mapper.dart';
-import 'package:dart_mapper_example/freezed/dtos/city_dto.dart';
-import 'package:dart_mapper_example/freezed/dtos/coord_dto.dart';
-import 'package:dart_mapper_example/freezed/models/another_user.dart';
-import 'package:dart_mapper_example/freezed/models/city.dart';
 import 'package:dart_mapper_example/freezed/models/coord.dart';
-import 'package:dart_mapper_example/freezed/models/credentials.dart';
-import 'package:dart_mapper_example/freezed/models/user.dart';
-import 'package:dart_mapper_example/freezed/models/user_jto.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'freezed_mapper.g.dart';
+part 'city.freezed.dart';
 
-@Mapper()
-abstract class FreezedMapper {
-  UserJTO toUserJTO(User user);
-
-  User toUser(UserJTO userJTO);
-
-  AnonCredentials toAnonCredentials(Credentials credentials);
-
-  AnonCredentials toAnonFromUser(User user);
-
-  UserCredentials toUserCredentials(User user);
-
-  AnotherUser toAnotherUser(User user);
-
-  User toUserFromAnotherOne(AnotherUser anotherUser);
-
-  City toCity(CityDTO dto);
-
-  CityDTO toCityDTO(City city);
+/// The City model
+@freezed
+class City with _$City {
+  /// The helper factory method to generate the City constructor
+  factory City({
+    required int id,
+    required String name,
+    required Coord coord,
+    required String country,
+    required int population,
+    required int timezone,
+    required int sunrise,
+    required int sunset,
+  }) = CityData;
 }

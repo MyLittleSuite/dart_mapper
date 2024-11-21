@@ -23,35 +23,29 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/dart_mapper.dart';
-import 'package:dart_mapper_example/freezed/dtos/city_dto.dart';
 import 'package:dart_mapper_example/freezed/dtos/coord_dto.dart';
-import 'package:dart_mapper_example/freezed/models/another_user.dart';
-import 'package:dart_mapper_example/freezed/models/city.dart';
-import 'package:dart_mapper_example/freezed/models/coord.dart';
-import 'package:dart_mapper_example/freezed/models/credentials.dart';
-import 'package:dart_mapper_example/freezed/models/user.dart';
-import 'package:dart_mapper_example/freezed/models/user_jto.dart';
+import 'package:dart_mapper_example/freezed/dtos/dto.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'freezed_mapper.g.dart';
+part 'city_dto.freezed.dart';
+part 'city_dto.g.dart';
 
-@Mapper()
-abstract class FreezedMapper {
-  UserJTO toUserJTO(User user);
+/// The CityDTO
+@freezed
+class CityDTO extends DTO with _$CityDTO {
+  /// The helper factory method to generate the CityDTO constructor
+  factory CityDTO({
+    required int id,
+    required String name,
+    required CoordDTO coord,
+    required String country,
+    required int population,
+    required int timezone,
+    required int sunrise,
+    required int sunset,
+  }) = CityDTOData;
 
-  User toUser(UserJTO userJTO);
-
-  AnonCredentials toAnonCredentials(Credentials credentials);
-
-  AnonCredentials toAnonFromUser(User user);
-
-  UserCredentials toUserCredentials(User user);
-
-  AnotherUser toAnotherUser(User user);
-
-  User toUserFromAnotherOne(AnotherUser anotherUser);
-
-  City toCity(CityDTO dto);
-
-  CityDTO toCityDTO(City city);
+  /// Factory method to generate a CityDTO object starting from a json map of string,value
+  factory CityDTO.fromJson(Map<String, dynamic> json) =>
+      _$CityDTOFromJson(json);
 }

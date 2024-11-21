@@ -27,6 +27,13 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
 
 extension ClassElementExtension on ClassElement {
+  static const _ignoreGetters = {
+    'copyWith',
+    'toString',
+    'hashCode',
+    'runtimeType',
+  };
+
   ConstructorElement get primaryConstructor {
     final constructor = (constructors
           ..sort(
@@ -64,7 +71,9 @@ extension ClassElementExtension on ClassElement {
         final abstract = accessorMap[field.displayName]?.isAbstract ?? false;
         return !field.isStatic && !field.isConst && !abstract;
       }),
-    ];
+    ]
+        .where((element) => !_ignoreGetters.contains(element.name))
+        .toList(growable: false);
   }
 
   VariableElement? getFieldOrGetter(String name) {

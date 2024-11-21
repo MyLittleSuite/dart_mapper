@@ -23,35 +23,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/dart_mapper.dart';
-import 'package:dart_mapper_example/freezed/dtos/city_dto.dart';
-import 'package:dart_mapper_example/freezed/dtos/coord_dto.dart';
-import 'package:dart_mapper_example/freezed/models/another_user.dart';
-import 'package:dart_mapper_example/freezed/models/city.dart';
-import 'package:dart_mapper_example/freezed/models/coord.dart';
-import 'package:dart_mapper_example/freezed/models/credentials.dart';
-import 'package:dart_mapper_example/freezed/models/user.dart';
-import 'package:dart_mapper_example/freezed/models/user_jto.dart';
-
-part 'freezed_mapper.g.dart';
-
-@Mapper()
-abstract class FreezedMapper {
-  UserJTO toUserJTO(User user);
-
-  User toUser(UserJTO userJTO);
-
-  AnonCredentials toAnonCredentials(Credentials credentials);
-
-  AnonCredentials toAnonFromUser(User user);
-
-  UserCredentials toUserCredentials(User user);
-
-  AnotherUser toAnotherUser(User user);
-
-  User toUserFromAnotherOne(AnotherUser anotherUser);
-
-  City toCity(CityDTO dto);
-
-  CityDTO toCityDTO(City city);
+abstract class DTO {
+  const DTO();
 }
