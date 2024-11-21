@@ -1,3 +1,8 @@
+## 0.2.2
+
+- Auto skipping copyWith, toString, hashCode, runtimeType from getters.
+- Fix support for first level ignoring mapping.
+
 ## 0.2.1
 
 - Enhance enum mapping function reusing from other mappers.
