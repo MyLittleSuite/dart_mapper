@@ -31,36 +31,42 @@ class ParentTarget {
   final ChildTarget childTarget;
   final List<ChildTarget> childrenTarget;
   final String parentProperty;
+  final String? ignoredProperty;
 
   ParentTarget(
     this.childTarget,
     this.childrenTarget,
     this.parentProperty,
+    this.ignoredProperty,
   );
 }
 
 class ChildTarget {
   final String property;
+  final String? ignoredProperty;
 
-  ChildTarget(this.property);
+  ChildTarget(this.property, this.ignoredProperty);
 }
 
 class ParentSource {
   final ChildSource childSource;
   final List<ChildSource> childrenSource;
   final String parentProperty;
+  final String? ignoredProperty;
 
   ParentSource(
     this.childSource,
     this.childrenSource,
     this.parentProperty,
+    this.ignoredProperty,
   );
 }
 
 class ChildSource {
   final String property;
+  final String? ignoredProperty;
 
-  ChildSource(this.property);
+  ChildSource(this.property, this.ignoredProperty);
 }
 
 @Mapper()
@@ -74,5 +80,8 @@ abstract class ParentMapper {
 
   @Mapping(target: 'childTarget', source: 'childSource')
   @Mapping(target: 'childrenTarget', source: 'childrenSource')
+  @Mapping(target: 'ignoredProperty', ignore: true)
+  @Mapping(target: 'childSource.ignoredProperty', ignore: true)
+  @Mapping(target: 'childrenSource.ignoredProperty', ignore: true)
   ParentTarget toParentTarget(ParentSource model);
 }

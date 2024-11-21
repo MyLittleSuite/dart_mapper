@@ -37,6 +37,7 @@ class BasicObject {
   final BasicEnum type;
   final List<BasicEnum> types;
   final DateTime dateTime;
+  final int? ignoreField;
 
   BasicObject(
     this.name,
@@ -44,6 +45,7 @@ class BasicObject {
     this.type,
     this.types,
     this.dateTime,
+    this.ignoreField,
   );
 }
 
@@ -53,19 +55,23 @@ class AnotherBasicObject {
   final AnotherBasicEnum type;
   final List<AnotherBasicEnum> types;
   final DateTime dateTime;
+  final int? ignoreField;
 
   const AnotherBasicObject(
     this.name,
     this.age,
     this.type,
     this.types,
-    this.dateTime,
-  );
+    this.dateTime, {
+    this.ignoreField,
+  });
 }
 
 @Mapper()
 abstract class BasicMapper {
+  @Mapping(target: 'ignoreField', ignore: true)
   AnotherBasicObject toAnotherBasicObject(BasicObject basicObject);
 
+  @Mapping(target: 'ignoreField', ignore: true)
   BasicObject toBasicObject(AnotherBasicObject anotherBasicObject);
 }

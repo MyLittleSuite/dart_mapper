@@ -31,7 +31,7 @@ import 'package:dart_mapper_generator/src/models/field/field.dart';
 class DefaultExpressionFactory extends ExpressionFactory {
   @override
   Expression create(ExpressionContext context) {
-    final basicExpression = super.basic(context.field);
+    final basicExpression = super.basic(context);
 
     if (context.field is MapField) {
       return basicExpression.property('map').call([

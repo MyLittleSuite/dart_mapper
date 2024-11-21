@@ -108,6 +108,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
               field: binding.source,
               origin: FieldOrigin.source,
               currentMethod: method,
+              ignored: binding.ignored,
               extraMappingMethod: binding.extraMappingMethod,
             ),
           );

@@ -38,7 +38,7 @@ class BuiltExpressionFactory extends ExpressionFactory {
   @override
   Expression create(ExpressionContext context) {
     if (context.field is IterableField) {
-      final basicExpression = super.basic(context.field);
+      final basicExpression = super.basic(context);
       final isSet = context.field.type.isSet;
 
       if (context.field.type.isList ||

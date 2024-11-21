@@ -36,12 +36,14 @@ class ExpressionContext {
   final Field field;
   final FieldOrigin origin;
   final MappingMethod currentMethod;
+  final bool ignored;
   final MappingMethod? extraMappingMethod;
 
   const ExpressionContext({
     required this.field,
     required this.origin,
     required this.currentMethod,
+    this.ignored = false,
     this.extraMappingMethod,
   });
 }
@@ -51,11 +53,21 @@ abstract class ExpressionFactory {
 
   Expression create(ExpressionContext context);
 
-  Expression basic(Field field) {
-    if (field.instance != null) {
-      return refer(field.instance!.name).property(field.name);
+  Expression basic(ExpressionContext context) {
+    if (!context.field.nullable && context.ignored) {
+      throw ArgumentError(
+        'Field ${context.field.name} is not nullable and ignored, mapping function ${context.currentMethod.name}.',
+      );
     }
 
-    return refer(field.name);
+    if (context.field.nullable && context.ignored) {
+      return literalNull;
+    }
+
+    if (context.field.instance != null) {
+      return refer(context.field.instance!.name).property(context.field.name);
+    }
+
+    return refer(context.field.name);
   }
 }
