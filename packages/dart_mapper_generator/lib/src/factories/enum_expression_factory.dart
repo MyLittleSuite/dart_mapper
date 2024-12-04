@@ -25,6 +25,7 @@
 
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 
 class EnumExpressionFactory extends ExpressionFactory {
@@ -39,20 +40,17 @@ class EnumExpressionFactory extends ExpressionFactory {
     if (context.field.type.isPrimitive) {
       if (context.origin == FieldOrigin.target) {
         if (context.field.type.isDartCoreInt) {
-          return (context.currentMethod.optionalReturn
-                  ? refer('int.tryParse')
-                  : refer('int.parse'))
-              .call([literal(context.field.name)]);
+          return literal(context.field.name).stringToInt(
+            nullable: context.currentMethod.optionalReturn,
+          );
         } else if (context.field.type.isDartCoreDouble) {
-          return (context.currentMethod.optionalReturn
-                  ? refer('double.tryParse')
-                  : refer('double.parse'))
-              .call([literal(context.field.name)]);
+          return literal(context.field.name).stringToDouble(
+            nullable: context.currentMethod.optionalReturn,
+          );
         } else if (context.field.type.isDartCoreNum) {
-          return (context.currentMethod.optionalReturn
-                  ? refer('num.tryParse')
-                  : refer('num.parse'))
-              .call([literal(context.field.name)]);
+          return literal(context.field.name).stringToNum(
+            nullable: context.currentMethod.optionalReturn,
+          );
         }
       }
 
