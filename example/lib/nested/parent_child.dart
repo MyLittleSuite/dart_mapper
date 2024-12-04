@@ -30,6 +30,8 @@ part 'parent_child.g.dart';
 class ParentTarget {
   final ChildTarget childTarget;
   final List<ChildTarget> childrenTarget;
+  final ChildTarget? nullableChildTarget;
+  final List<ChildTarget?> nullableChildrenTarget;
   final String parentProperty;
   final String? ignoredProperty;
 
@@ -37,8 +39,10 @@ class ParentTarget {
     this.childTarget,
     this.childrenTarget,
     this.parentProperty,
-    this.ignoredProperty,
-  );
+    this.ignoredProperty, {
+    this.nullableChildTarget,
+    this.nullableChildrenTarget = const [],
+  });
 }
 
 class ChildTarget {
@@ -51,6 +55,8 @@ class ChildTarget {
 class ParentSource {
   final ChildSource childSource;
   final List<ChildSource> childrenSource;
+  final ChildSource? nullableChildSource;
+  final List<ChildSource?> nullableChildrenSource;
   final String parentProperty;
   final String? ignoredProperty;
 
@@ -58,8 +64,10 @@ class ParentSource {
     this.childSource,
     this.childrenSource,
     this.parentProperty,
-    this.ignoredProperty,
-  );
+    this.ignoredProperty, {
+    this.nullableChildSource,
+    this.nullableChildrenSource = const [],
+  });
 }
 
 class ChildSource {
@@ -72,6 +80,8 @@ class ChildSource {
 @Mapper()
 abstract class ChildMapper {
   ChildTarget toChildTarget(ChildSource model);
+
+  ChildTarget? toChildTargetNullable(ChildSource? model);
 }
 
 @Mapper(uses: {ChildMapper})
@@ -80,6 +90,8 @@ abstract class ParentMapper {
 
   @Mapping(target: 'childTarget', source: 'childSource')
   @Mapping(target: 'childrenTarget', source: 'childrenSource')
+  @Mapping(target: 'nullableChildTarget', source: 'nullableChildSource')
+  @Mapping(target: 'nullableChildrenTarget', source: 'nullableChildrenSource')
   @Mapping(target: 'ignoredProperty', ignore: true)
   @Mapping(target: 'childSource.ignoredProperty', ignore: true)
   @Mapping(target: 'childrenSource.ignoredProperty', ignore: true)

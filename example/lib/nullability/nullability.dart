@@ -22,18 +22,23 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+import 'package:dart_mapper/dart_mapper.dart';
 
-import 'package:code_builder/code_builder.dart';
+part 'nullability.g.dart';
 
-extension ExpressionExtension on Expression {
-  Expression arrowReturn(Expression expression) =>
-      assign(literal('')).greaterThan(literal(expression));
+class Nullable {
+  final String? value;
 
-  Expression conditionalNull(Expression whenTrue) =>
-      notEqualTo(literalNull).conditional(literal(whenTrue), literalNull);
+  const Nullable(this.value);
+}
 
-  Expression propertyToList({bool growable = true}) =>
-      property('toList').call([], {'growable': literal(growable)});
+class NotNullable {
+  final String value;
 
-  Expression propertyToSet() => property('toSet').call([]);
+  const NotNullable(this.value);
+}
+
+@Mapper()
+abstract class NullabilityMapper {
+  Nullable toNullable(NotNullable notNullable);
 }

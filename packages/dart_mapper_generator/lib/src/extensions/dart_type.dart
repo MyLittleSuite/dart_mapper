@@ -83,4 +83,13 @@ extension DartTypeExtension on DartType {
 
   String get parameterName =>
       displayString.toSnakeCase().toCamelCase(lower: true);
+
+  bool same(DartType other, {bool useNullability = true}) {
+    if (useNullability) {
+      return this == other;
+    }
+
+    return (element?.librarySource?.uri == other.element?.librarySource?.uri) &&
+        (displayString == other.displayString);
+  }
 }
