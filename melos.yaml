@@ -1,0 +1,22 @@
+name: dart_mapper
+
+packages:
+  - packages/dart_mapper
+  - packages/dart_mapper_generator
+
+scripts:
+  generate-example-code:
+    description: Generate example code
+    steps:
+      - cd example
+      - fvm install
+      - fvm flutter pub get
+      - fvm dart run build_runner build --delete-conflicting-outputs
+
+  analyze-example-code:
+    description: Analyze example code
+    steps:
+      - cd example
+      - fvm install
+      - fvm flutter pub get
+      - fvm dart analyze
