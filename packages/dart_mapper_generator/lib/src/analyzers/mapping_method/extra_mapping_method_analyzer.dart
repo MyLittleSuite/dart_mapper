@@ -142,13 +142,22 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     List<Field>? sourceFields,
     List<Field>? targetFields,
   }) {
-    var mapperUsage = context.findUsage(target.type, [source.type]);
+    var mapperUsage = context.findUsage(
+      target.type,
+      [source.type],
+      useNullabilityForParams: false,
+      useNullabilityForReturn: false,
+    );
     if (mapperUsage != null) {
       return mapperUsage;
     }
 
     mapperUsage = sourceField != null
-        ? context.findUsage(target.type, [sourceField.type])
+        ? context.findUsage(
+            target.type,
+            [sourceField.type],
+            useNullabilityForReturn: false,
+          )
         : null;
     if (mapperUsage != null) {
       return mapperUsage;
@@ -158,6 +167,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         ? context.findUsage(
             target.type,
             sourceFields.map((field) => field.type).toList(growable: false),
+            useNullabilityForReturn: false,
           )
         : null;
     if (mapperUsage != null) {
@@ -165,14 +175,21 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     }
 
     mapperUsage = targetField != null
-        ? context.findUsage(targetField.type, [source.type])
+        ? context.findUsage(
+            targetField.type,
+            [source.type],
+            useNullabilityForParams: false,
+          )
         : null;
     if (mapperUsage != null) {
       return mapperUsage;
     }
 
     mapperUsage = targetField != null && sourceField != null
-        ? context.findUsage(targetField.type, [sourceField.type])
+        ? context.findUsage(
+            targetField.type,
+            [sourceField.type],
+          )
         : null;
     if (mapperUsage != null) {
       return mapperUsage;

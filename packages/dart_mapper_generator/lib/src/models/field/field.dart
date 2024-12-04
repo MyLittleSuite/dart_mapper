@@ -188,6 +188,7 @@ abstract class Field {
         name: name,
         type: type,
         fields: nestedFields ?? [],
+        nullable: type.isNullable,
       );
     }
   }

@@ -26,6 +26,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper/dart_mapper.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
 class AnalyzerContext {
@@ -39,15 +40,27 @@ class AnalyzerContext {
     required this.mapperClass,
   });
 
-  MapperUsage? findUsage(DartType returnType, List<DartType> parameters) =>
+  MapperUsage? findUsage(
+    DartType returnType,
+    List<DartType> parameters, {
+    bool useNullabilityForReturn = true,
+    bool useNullabilityForParams = true,
+  }) =>
       mapperUsages
           .where(
             (usage) =>
-                usage.returnType == returnType &&
+                usage.returnType.same(
+                  returnType,
+                  useNullability: useNullabilityForReturn,
+                ) &&
                 usage.parameters.length == parameters.length &&
                 usage.parameters.every(
-                  (parameter) =>
-                      parameters.any((param) => param == parameter.field.type),
+                  (parameter) => parameters.any(
+                    (param) => param.same(
+                      parameter.field.type,
+                      useNullability: useNullabilityForParams,
+                    ),
+                  ),
                 ),
           )
           .firstOrNull;
