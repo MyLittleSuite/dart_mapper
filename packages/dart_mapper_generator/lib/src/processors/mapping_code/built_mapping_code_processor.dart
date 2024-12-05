@@ -107,6 +107,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
             ExpressionContext(
               field: binding.source,
               origin: FieldOrigin.source,
+              counterpartField: binding.target,
               currentMethod: method,
               ignored: binding.ignored,
               extraMappingMethod: binding.extraMappingMethod,

@@ -46,6 +46,10 @@ extension DartTypeExtension on DartType {
 
   bool get isEnum => element?.enumElementOrNull != null;
 
+  bool get isDateTime => className == 'DateTime';
+
+  bool get isDuration => className == 'Duration';
+
   bool get isPrimitive =>
       isDartCoreBool ||
       isDartCoreDouble ||
@@ -53,10 +57,8 @@ extension DartTypeExtension on DartType {
       isDartCoreNum ||
       isDartCoreString ||
       isDartCoreSymbol ||
-      {
-        'DateTime',
-        'Duration',
-      }.contains(className);
+      isDateTime ||
+      isDuration;
 
   List<DartType>? get asGenerics {
     if (this is ParameterizedType) {

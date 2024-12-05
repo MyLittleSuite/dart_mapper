@@ -66,6 +66,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
             ExpressionContext(
               field: binding.source,
               origin: FieldOrigin.source,
+              counterpartField: binding.target,
               currentMethod: method,
             ),
           );
@@ -73,6 +74,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
             ExpressionContext(
               field: binding.target,
               origin: FieldOrigin.target,
+              counterpartField: binding.source,
               currentMethod: method,
             ),
           );

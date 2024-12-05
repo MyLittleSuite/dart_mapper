@@ -83,6 +83,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
                 ExpressionContext(
                   field: binding.source,
                   origin: FieldOrigin.source,
+                  counterpartField: binding.target,
                   ignored: binding.ignored,
                   currentMethod: method,
                   extraMappingMethod: binding.extraMappingMethod,

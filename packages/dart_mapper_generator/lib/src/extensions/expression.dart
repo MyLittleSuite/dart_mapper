@@ -36,4 +36,45 @@ extension ExpressionExtension on Expression {
       property('toList').call([], {'growable': literal(growable)});
 
   Expression propertyToSet() => property('toSet').call([]);
+
+  Expression dateTimeToIsoString({bool nullable = false}) {
+    final functionName = 'toIso8601String';
+    return (nullable ? nullSafeProperty(functionName) : property(functionName))
+        .call([]);
+  }
+
+  Expression stringToDateTime({bool nullable = false}) {
+    final dateTimeRefer = refer('DateTime');
+    return (nullable
+            ? dateTimeRefer.property('tryParse')
+            : dateTimeRefer.property('parse'))
+        .call([nullable ? ifNullThen(literal('')) : this]);
+  }
+
+  Expression stringToInt({bool nullable = false}) {
+    final intRefer = refer('int');
+    return (nullable
+            ? intRefer.property('tryParse')
+            : intRefer.property('parse'))
+        .call([nullable ? ifNullThen(literal('')) : this]);
+  }
+
+  Expression stringToDouble({bool nullable = false}) {
+    final doubleRefer = refer('double');
+    return (nullable
+            ? doubleRefer.property('tryParse')
+            : doubleRefer.property('parse'))
+        .call([nullable ? ifNullThen(literal('')) : this]);
+  }
+
+  Expression stringToNum({bool nullable = false}) {
+    final numRefer = refer('num');
+    return (nullable
+            ? numRefer.property('tryParse')
+            : numRefer.property('parse'))
+        .call([nullable ? ifNullThen(literal('')) : this]);
+  }
+
+  Expression propertyToString({bool nullable = false}) =>
+      (nullable ? nullSafeProperty('toString') : property('toString')).call([]);
 }

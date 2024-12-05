@@ -24,6 +24,8 @@
  */
 
 import 'package:code_builder/code_builder.dart' hide Field;
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 
@@ -35,6 +37,7 @@ enum FieldOrigin {
 class ExpressionContext {
   final Field field;
   final FieldOrigin origin;
+  final Field counterpartField;
   final MappingMethod currentMethod;
   final bool ignored;
   final MappingMethod? extraMappingMethod;
@@ -42,6 +45,7 @@ class ExpressionContext {
   const ExpressionContext({
     required this.field,
     required this.origin,
+    required this.counterpartField,
     required this.currentMethod,
     this.ignored = false,
     this.extraMappingMethod,
@@ -61,13 +65,45 @@ abstract class ExpressionFactory {
     }
 
     if (context.field.nullable && context.ignored) {
-      return literalNull;
+      return literal(null);
     }
 
-    if (context.field.instance != null) {
-      return refer(context.field.instance!.name).property(context.field.name);
+    final result = context.field.instance != null
+        ? refer(context.field.instance!.name).property(context.field.name)
+        : refer(context.field.name);
+
+    return _transformation(context, result);
+  }
+
+  Expression _transformation(ExpressionContext context, Expression basic) {
+    final field = context.field;
+    final counterpart = context.counterpartField;
+
+    if (field is PrimitiveField && counterpart is PrimitiveField) {
+      if (field.type.isDartCoreInt && counterpart.type.isDartCoreString) {
+        return basic.propertyToString(nullable: field.nullable);
+      } else if (field.type.isDartCoreDouble &&
+          counterpart.type.isDartCoreString) {
+        return basic.propertyToString(nullable: field.nullable);
+      } else if (field.type.isDartCoreNum &&
+          counterpart.type.isDartCoreString) {
+        return basic.propertyToString(nullable: field.nullable);
+      } else if (field.type.isDateTime && counterpart.type.isDartCoreString) {
+        return basic.dateTimeToIsoString(nullable: field.nullable);
+      } else if (field.type.isDartCoreString && counterpart.type.isDateTime) {
+        return basic.stringToDateTime(nullable: field.nullable);
+      } else if (field.type.isDartCoreString &&
+          counterpart.type.isDartCoreInt) {
+        return basic.stringToInt(nullable: field.nullable);
+      } else if (field.type.isDartCoreString &&
+          counterpart.type.isDartCoreDouble) {
+        return basic.stringToDouble(nullable: field.nullable);
+      } else if (field.type.isDartCoreString &&
+          counterpart.type.isDartCoreNum) {
+        return basic.stringToNum(nullable: field.nullable);
+      }
     }
 
-    return refer(context.field.name);
+    return basic;
   }
 }
