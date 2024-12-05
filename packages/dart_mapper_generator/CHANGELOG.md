@@ -1,3 +1,8 @@
+## 0.3.0
+
+- Add support for automatic transformation mapping if two fields are primitive. DateTime included.
+- Improve find nullability in external mapping method.
+
 ## 0.2.2
 
 - Auto skipping copyWith, toString, hashCode, runtimeType from getters.
