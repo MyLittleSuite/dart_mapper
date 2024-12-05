@@ -1,6 +1,7 @@
 name: dart_mapper
 
 packages:
+  - example
   - packages/dart_mapper
   - packages/dart_mapper_generator
 

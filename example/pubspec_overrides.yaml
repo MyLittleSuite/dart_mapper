@@ -1,0 +1,6 @@
+# melos_managed_dependency_overrides: dart_mapper,dart_mapper_generator
+dependency_overrides:
+  dart_mapper:
+    path: ../packages/dart_mapper
+  dart_mapper_generator:
+    path: ../packages/dart_mapper_generator
