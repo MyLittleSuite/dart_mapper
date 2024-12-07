@@ -75,6 +75,21 @@ extension ExpressionExtension on Expression {
         .call([nullable ? ifNullThen(literal('')) : this]);
   }
 
-  Expression propertyToString({bool nullable = false}) =>
-      (nullable ? nullSafeProperty('toString') : property('toString')).call([]);
+  Expression propertyToString({bool nullable = false}) {
+    final functionName = 'toString';
+    return (nullable ? nullSafeProperty(functionName) : property(functionName))
+        .call([]);
+  }
+
+  Expression propertyToInt({bool nullable = false}) {
+    final functionName = 'toInt';
+    return (nullable ? nullSafeProperty(functionName) : property(functionName))
+        .call([]);
+  }
+
+  Expression propertyToDouble({bool nullable = false}) {
+    final functionName = 'toDouble';
+    return (nullable ? nullSafeProperty(functionName) : property(functionName))
+        .call([]);
+  }
 }

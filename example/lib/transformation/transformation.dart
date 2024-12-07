@@ -35,6 +35,10 @@ class TransformationSource {
   final String? nullableDoubleValue;
   final String numValue;
   final String? nullableNumValue;
+  final int numFromIntValue;
+  final int? nullableNumFromIntValue;
+  final double numFromDoubleValue;
+  final double? nullableNumFromDoubleValue;
 
   const TransformationSource({
     required this.date,
@@ -45,6 +49,10 @@ class TransformationSource {
     this.nullableDoubleValue,
     required this.numValue,
     this.nullableNumValue,
+    required this.numFromIntValue,
+    this.nullableNumFromIntValue,
+    required this.numFromDoubleValue,
+    this.nullableNumFromDoubleValue,
   });
 }
 
@@ -57,6 +65,10 @@ class TransformationTarget {
   final double? nullableDoubleValue;
   final num numValue;
   final num? nullableNumValue;
+  final num numFromIntValue;
+  final num? nullableNumFromIntValue;
+  final num numFromDoubleValue;
+  final num? nullableNumFromDoubleValue;
 
   const TransformationTarget({
     required this.date,
@@ -67,6 +79,10 @@ class TransformationTarget {
     this.nullableDoubleValue,
     required this.numValue,
     this.nullableNumValue,
+    required this.numFromIntValue,
+    this.nullableNumFromIntValue,
+    required this.numFromDoubleValue,
+    this.nullableNumFromDoubleValue,
   });
 }
 
