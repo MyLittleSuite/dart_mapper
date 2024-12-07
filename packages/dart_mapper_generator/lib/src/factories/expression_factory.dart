@@ -80,28 +80,97 @@ abstract class ExpressionFactory {
     final counterpart = context.counterpartField;
 
     if (field is PrimitiveField && counterpart is PrimitiveField) {
-      if (field.type.isDartCoreInt && counterpart.type.isDartCoreString) {
-        return basic.propertyToString(nullable: field.nullable);
-      } else if (field.type.isDartCoreDouble &&
-          counterpart.type.isDartCoreString) {
-        return basic.propertyToString(nullable: field.nullable);
-      } else if (field.type.isDartCoreNum &&
-          counterpart.type.isDartCoreString) {
-        return basic.propertyToString(nullable: field.nullable);
-      } else if (field.type.isDateTime && counterpart.type.isDartCoreString) {
-        return basic.dateTimeToIsoString(nullable: field.nullable);
-      } else if (field.type.isDartCoreString && counterpart.type.isDateTime) {
-        return basic.stringToDateTime(nullable: field.nullable);
-      } else if (field.type.isDartCoreString &&
-          counterpart.type.isDartCoreInt) {
-        return basic.stringToInt(nullable: field.nullable);
-      } else if (field.type.isDartCoreString &&
-          counterpart.type.isDartCoreDouble) {
-        return basic.stringToDouble(nullable: field.nullable);
-      } else if (field.type.isDartCoreString &&
-          counterpart.type.isDartCoreNum) {
-        return basic.stringToNum(nullable: field.nullable);
+      if (field.type.isDartCoreString) {
+        return _transformationFromString(context, basic);
+      } else if (field.type.isDateTime) {
+        return _transformationFromDateTime(context, basic);
+      } else if (field.type.isDartCoreNum) {
+        return _transformationFromNum(context, basic);
+      } else if (field.type.isDartCoreDouble) {
+        return _transformationFromDouble(context, basic);
+      } else if (field.type.isDartCoreInt) {
+        return _transformationFromInt(context, basic);
       }
+    }
+
+    return basic;
+  }
+
+  Expression _transformationFromString(
+    ExpressionContext context,
+    Expression basic,
+  ) {
+    final field = context.field;
+    final counterpart = context.counterpartField;
+
+    if (counterpart.type.isDateTime) {
+      return basic.stringToDateTime(nullable: field.nullable);
+    } else if (counterpart.type.isDartCoreInt) {
+      return basic.stringToInt(nullable: field.nullable);
+    } else if (counterpart.type.isDartCoreDouble) {
+      return basic.stringToDouble(nullable: field.nullable);
+    } else if (counterpart.type.isDartCoreNum) {
+      return basic.stringToNum(nullable: field.nullable);
+    }
+
+    return basic;
+  }
+
+  Expression _transformationFromDateTime(
+    ExpressionContext context,
+    Expression basic,
+  ) {
+    final field = context.field;
+    final counterpart = context.counterpartField;
+
+    if (counterpart.type.isDartCoreString) {
+      return basic.dateTimeToIsoString(nullable: field.nullable);
+    }
+
+    return basic;
+  }
+
+  Expression _transformationFromNum(
+    ExpressionContext context,
+    Expression basic,
+  ) {
+    final field = context.field;
+    final counterpart = context.counterpartField;
+
+    if (counterpart.type.isDartCoreString) {
+      return basic.propertyToString(nullable: field.nullable);
+    } else if (counterpart.type.isDartCoreInt) {
+      return basic.propertyToInt(nullable: field.nullable);
+    } else if (counterpart.type.isDartCoreDouble) {
+      return basic.propertyToDouble(nullable: field.nullable);
+    }
+
+    return basic;
+  }
+
+  Expression _transformationFromDouble(
+    ExpressionContext context,
+    Expression basic,
+  ) {
+    final field = context.field;
+    final counterpart = context.counterpartField;
+
+    if (counterpart.type.isDartCoreString) {
+      return basic.propertyToString(nullable: field.nullable);
+    }
+
+    return basic;
+  }
+
+  Expression _transformationFromInt(
+    ExpressionContext context,
+    Expression basic,
+  ) {
+    final field = context.field;
+    final counterpart = context.counterpartField;
+
+    if (counterpart.type.isDartCoreString) {
+      return basic.propertyToString(nullable: field.nullable);
     }
 
     return basic;
