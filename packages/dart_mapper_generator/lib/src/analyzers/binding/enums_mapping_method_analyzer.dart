@@ -28,7 +28,7 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.da
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
-import 'package:dart_mapper_generator/src/extensions/enum_element.dart';
+import 'package:dart_mapper_generator/src/extensions/interface_element.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
@@ -69,12 +69,12 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final enumValuesMap = context.enumValuesReversed;
 
     final sourceType = context.method.parameters.first.type;
-    final sourceElement = sourceType.element!.enumElement;
+    final sourceElement = sourceType.element!.interfaceElement;
     final targetReturnType = context.method.returnType;
-    final targetEnum = targetReturnType.element!.enumElement;
+    final targetEnum = targetReturnType.element!.interfaceElement;
 
-    for (final targetValue in targetEnum.values) {
-      final sourceClassParam = sourceElement.getValue(
+    for (final targetValue in targetEnum.enumValues) {
+      final sourceClassParam = sourceElement.getEnumValue(
         enumValuesMap[targetValue.name] ?? targetValue.name,
       );
 
@@ -107,9 +107,9 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final sourceType = context.method.parameters.first.type;
     final sourceElement = sourceType.element!.classElement;
     final targetReturnType = context.method.returnType;
-    final targetEnum = targetReturnType.element!.enumElement;
+    final targetEnum = targetReturnType.element!.interfaceElement;
 
-    for (final targetValue in targetEnum.values) {
+    for (final targetValue in targetEnum.enumValues) {
       final sourceClassValue =
           enumValuesMap[targetValue.name] ?? targetValue.name;
 
@@ -138,11 +138,11 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final enumValuesMap = context.enumValues;
 
     final sourceType = context.method.parameters.first.type;
-    final sourceEnum = sourceType.element!.enumElement;
+    final sourceEnum = sourceType.element!.interfaceElement;
     final targetReturnType = context.method.returnType;
     final targetElement = targetReturnType.element!.classElement;
 
-    for (final sourceValue in sourceEnum.values) {
+    for (final sourceValue in sourceEnum.enumValues) {
       final targetClassValue =
           enumValuesMap[sourceValue.name] ?? sourceValue.name;
 

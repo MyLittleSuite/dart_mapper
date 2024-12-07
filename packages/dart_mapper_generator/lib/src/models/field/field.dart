@@ -27,7 +27,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
-import 'package:dart_mapper_generator/src/extensions/enum_element.dart';
+import 'package:dart_mapper_generator/src/extensions/interface_element.dart';
 import 'package:dart_mapper_generator/src/models/field/enum_field.dart';
 import 'package:dart_mapper_generator/src/models/field/iterable_field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_field.dart';
@@ -96,7 +96,7 @@ abstract class Field {
         nullable: nullable,
       );
     } else if (type.isEnum) {
-      final values = type.element?.enumElementOrNull?.values
+      final values = type.element?.interfaceElementOrNull?.enumValues
           .map(
             (value) => PrimitiveField(
               name: value.name,
@@ -151,7 +151,7 @@ abstract class Field {
         nullable: type.isNullable,
       );
     } else if (type.isEnum) {
-      final values = type.element?.enumElementOrNull?.values
+      final values = type.element?.interfaceElementOrNull?.enumValues
           .map(
             (value) => PrimitiveField(
               name: value.name,

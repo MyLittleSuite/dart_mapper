@@ -26,10 +26,11 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 
-extension EnumElementExtension on EnumElement {
-  List<FieldElement> get values =>
-      fields.where((element) => !element.type.isList).toList(growable: false);
+extension InterfaceElementExtension on InterfaceElement {
+  List<FieldElement> get enumValues => fields
+      .where((element) => element.type.same(thisType, useNullability: false))
+      .toList(growable: false);
 
-  FieldElement? getValue(Object value) =>
-      values.where((element) => element.name == value).firstOrNull;
+  FieldElement? getEnumValue(Object value) =>
+      enumValues.where((element) => element.name == value).firstOrNull;
 }

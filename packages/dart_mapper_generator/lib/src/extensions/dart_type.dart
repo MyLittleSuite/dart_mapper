@@ -23,28 +23,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:strings/strings.dart';
 
 extension DartTypeExtension on DartType {
-  bool get isList =>
-      isDartCoreList ||
-      {
-        'BuiltList',
-      }.contains(className);
+  bool get isList => isDartCoreList || isBuiltList;
 
-  bool get isSet =>
-      isDartCoreSet ||
-      {
-        'BuiltSet',
-      }.contains(className);
+  bool get isSet => isDartCoreSet || isBuiltSet;
 
   bool get isIterable => isList || isSet || isDartCoreIterable;
 
   bool get isMap => isDartCoreMap;
 
-  bool get isEnum => element?.enumElementOrNull != null;
+  bool get isEnum => element is EnumElement || isBuiltEnum;
 
   bool get isDateTime => className == 'DateTime';
 
@@ -93,5 +86,35 @@ extension DartTypeExtension on DartType {
 
     return (element?.librarySource?.uri == other.element?.librarySource?.uri) &&
         (displayString == other.displayString);
+  }
+}
+
+extension DartTypeBuilt on DartType {
+  bool get isLibraryBuilt => {
+        'package:built_value/',
+        'package:built_collection/',
+      }.fold(
+        false,
+        (acc, uri) =>
+            acc || element?.librarySource?.uri.toString().contains(uri) == true,
+      );
+
+  bool get isBuiltSet =>
+      isLibraryBuilt &&
+      {
+        'BuiltSet',
+      }.contains(className);
+
+  bool get isBuiltList =>
+      isLibraryBuilt &&
+      {
+        'BuiltList',
+      }.contains(className);
+
+  bool get isBuiltEnum {
+    final superType = element?.classElementOrNull?.supertype;
+
+    return superType?.isLibraryBuilt == true &&
+        superType?.className == 'EnumClass';
   }
 }

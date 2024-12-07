@@ -45,24 +45,6 @@ extension ElementExtension on Element {
     }
   }
 
-  EnumElement get enumElement {
-    if (this is! EnumElement) {
-      throw UnsupportedError(
-        '$displayName is not an enum. This is a ${runtimeType.toString()}.',
-      );
-    }
-
-    return this as EnumElement;
-  }
-
-  EnumElement? get enumElementOrNull {
-    try {
-      return enumElement;
-    } catch (_) {
-      return null;
-    }
-  }
-
   InterfaceElement get interfaceElement {
     if (this is! InterfaceElement) {
       throw UnsupportedError(
