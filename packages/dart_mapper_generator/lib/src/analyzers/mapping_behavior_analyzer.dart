@@ -32,10 +32,6 @@ import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
 class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
-  static const _builtImports = {
-    'package:built_value/built_value.dart',
-  };
-
   @override
   MappingBehavior analyze(AnalyzerContext context) {
     final sourceParams = switch (context) {
@@ -57,8 +53,7 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
 
     final targetInterface = targetType.element!.interfaceElementOrNull;
     final foundSupertype = (targetInterface?.allSupertypes ?? [])
-        .where((type) =>
-            _builtImports.contains(type.element.source.uri.toString()))
+        .where((type) => type.isLibraryBuilt)
         .firstOrNull;
 
     return foundSupertype != null

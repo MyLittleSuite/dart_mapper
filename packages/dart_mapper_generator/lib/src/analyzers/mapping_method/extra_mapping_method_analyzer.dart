@@ -235,7 +235,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
           .map(
             (param) => [
               if (param.nullable) 'Nullable',
-              param.type.displayString.toCapitalised(),
+              param.type.humanReadable.toCapitalised(),
             ].join(),
           )
           .join('And'),

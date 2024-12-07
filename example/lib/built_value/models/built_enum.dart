@@ -24,29 +24,25 @@
  *  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/built_value.dart';
+import 'package:built_value/serializer.dart';
 
-import 'package:freezed_annotation/freezed_annotation.dart';
+part 'built_enum.g.dart';
 
-part 'alert.freezed.dart';
+class BuiltEnum extends EnumClass {
+  @BuiltValueEnumConst(wireName: r'WALK')
+  static const BuiltEnum WALK = _$WALK;
+  @BuiltValueEnumConst(wireName: r'BUS')
+  static const BuiltEnum BUS = _$BUS;
+  @BuiltValueEnumConst(wireName: r'UNKNOWN', fallback: true)
+  static const BuiltEnum UNKNOWN = _$UNKNOWN;
 
-enum AlertType {
-  missingPhoneNumber,
-  missingEmail,
-  goToAppointment,
-  performQuickAcceptance,
-}
+  static Serializer<BuiltEnum> get serializer => _$builtEnumSerializer;
 
-@freezed
-class Alert with _$Alert {
-  const Alert._();
+  const BuiltEnum._(String name) : super(name);
 
-  const factory Alert({
-    AlertType? type,
-    String? title,
-    String? subtitle,
-    DateTime? date,
-    int? rank,
-    bool? warning,
-    String? payload,
-  }) = _Alert;
+  static BuiltSet<BuiltEnum> get values => _$values;
+
+  static BuiltEnum valueOf(String name) => _$valueOf(name);
 }

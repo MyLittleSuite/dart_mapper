@@ -27,10 +27,12 @@ import 'package:built_collection/built_collection.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_example/built_value/models/alert.dart';
 import 'package:dart_mapper_example/built_value/models/alert_info.dart';
+import 'package:dart_mapper_example/built_value/models/built_enum.dart';
 import 'package:dart_mapper_example/built_value/models/review.dart';
 import 'package:dart_mapper_example/built_value/models/review_dto.dart';
 import 'package:dart_mapper_example/built_value/models/user.dart';
 import 'package:dart_mapper_example/built_value/models/user_dto.dart';
+import 'package:dart_mapper_example/built_value/models/vanilla_enum.dart';
 
 part 'built_value_mapper.g.dart';
 
@@ -45,6 +47,27 @@ abstract class AlertTypeMapper {
   @ValueMapping(target: '1', source: 'missingPhoneNumber')
   @ValueMapping(target: '2', source: 'missingEmail')
   int? toRaw(AlertType? raw);
+}
+
+@Mapper()
+abstract class BuiltEnumMapper {
+  const BuiltEnumMapper();
+
+  VanillaEnum toVanillaEnum(BuiltEnum value);
+
+  VanillaEnum? toNullableVanillaEnum(BuiltEnum value);
+
+  BuiltEnum toBuiltEnum(VanillaEnum value);
+
+  BuiltEnum? toNullableBuiltEnum(VanillaEnum value);
+
+  BuiltEnum toBuiltEnumFromString(String value);
+
+  BuiltEnum? toNullableBuiltEnumFromString(String value);
+
+  String toStringFromBuiltEnum(BuiltEnum value);
+
+  String? toNullableStringFromBuiltEnum(BuiltEnum value);
 }
 
 @Mapper(uses: {AlertTypeMapper})
