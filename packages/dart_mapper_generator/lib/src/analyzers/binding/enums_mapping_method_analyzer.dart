@@ -26,6 +26,9 @@
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/too_many_enum_mapping_method_parameters_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unknown_source_class_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unknown_target_class_error.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/extensions/interface_element.dart';
@@ -41,10 +44,9 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     }
 
     if (context.method.parameters.length != 1) {
-      throw ArgumentError(
-        'Enum mapping method \'${context.method.name}\' '
-        'in mapper \'${context.mapperClass.name}\' '
-        'must have only one enum parameter.',
+      throw TooManyEnumMappingMethodParametersError(
+        mapperClass: context.mapperClass,
+        method: context.method,
       );
     }
 
@@ -69,9 +71,22 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final enumValuesMap = context.enumValuesReversed;
 
     final sourceType = context.method.parameters.first.type;
-    final sourceElement = sourceType.element!.interfaceElement;
+    final sourceElement = sourceType.element?.interfaceElementOrNull;
+    if (sourceElement == null) {
+      throw UnknownSourceClassError(
+        mapperClass: context.mapperClass,
+        method: context.method,
+      );
+    }
+
     final targetReturnType = context.method.returnType;
-    final targetEnum = targetReturnType.element!.interfaceElement;
+    final targetEnum = targetReturnType.element?.interfaceElementOrNull;
+    if (targetEnum == null) {
+      throw UnknownTargetClassError(
+        mapperClass: context.mapperClass,
+        method: context.method,
+      );
+    }
 
     for (final targetValue in targetEnum.enumValues) {
       final sourceClassParam = sourceElement.getEnumValue(
@@ -105,9 +120,22 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final enumValuesMap = context.enumValuesReversed;
 
     final sourceType = context.method.parameters.first.type;
-    final sourceElement = sourceType.element!.classElement;
+    final sourceElement = sourceType.element?.classElementOrNull;
+    if (sourceElement == null) {
+      throw UnknownSourceClassError(
+        mapperClass: context.mapperClass,
+        method: context.method,
+      );
+    }
+
     final targetReturnType = context.method.returnType;
-    final targetEnum = targetReturnType.element!.interfaceElement;
+    final targetEnum = targetReturnType.element?.interfaceElementOrNull;
+    if (targetEnum == null) {
+      throw UnknownTargetClassError(
+        mapperClass: context.mapperClass,
+        method: context.method,
+      );
+    }
 
     for (final targetValue in targetEnum.enumValues) {
       final sourceClassValue =
@@ -138,9 +166,22 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final enumValuesMap = context.enumValues;
 
     final sourceType = context.method.parameters.first.type;
-    final sourceEnum = sourceType.element!.interfaceElement;
+    final sourceEnum = sourceType.element?.interfaceElementOrNull;
+    if (sourceEnum == null) {
+      throw UnknownSourceClassError(
+        mapperClass: context.mapperClass,
+        method: context.method,
+      );
+    }
+
     final targetReturnType = context.method.returnType;
-    final targetElement = targetReturnType.element!.classElement;
+    final targetElement = targetReturnType.element?.classElementOrNull;
+    if (targetElement == null) {
+      throw UnknownTargetClassError(
+        mapperClass: context.mapperClass,
+        method: context.method,
+      );
+    }
 
     for (final sourceValue in sourceEnum.enumValues) {
       final targetClassValue =

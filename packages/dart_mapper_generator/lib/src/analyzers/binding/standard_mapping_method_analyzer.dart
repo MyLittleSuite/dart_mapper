@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/element.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
@@ -54,18 +55,19 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     final renamingMap = context.renamingMap;
     final ignoredTargets = context.ignoredTargets;
 
-    final targetClass = method.returnType.element!.classElement;
-    final targetParam = targetClass.constructorParameters
+    final targetClass = method.returnType.element?.classElementOrNull;
+    final targetParam = targetClass?.constructorParameters
         .asMap()
         .map((_, value) => MapEntry(value.name, value));
 
     for (final sourceMethodParam in method.parameters) {
-      final sourceClass = sourceMethodParam.type.element!.classElement;
+      final sourceClass = sourceMethodParam.type.element?.classElementOrNull;
+      final sourceGetters = sourceClass?.getters ?? <VariableElement>[];
 
-      for (final sourceClassParam in sourceClass.getters) {
+      for (final sourceClassParam in sourceGetters) {
         final targetClassParamName =
             renamingMap[sourceClassParam.name] ?? sourceClassParam.name;
-        final resolvedTargetParam = targetParam[targetClassParamName];
+        final resolvedTargetParam = targetParam?[targetClassParamName];
 
         if (resolvedTargetParam != null) {
           final sourceField = Field.from(

@@ -51,7 +51,7 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
       return MappingBehavior.enums;
     }
 
-    final targetInterface = targetType.element!.interfaceElementOrNull;
+    final targetInterface = targetType.element?.interfaceElementOrNull;
     final foundSupertype = (targetInterface?.allSupertypes ?? [])
         .where((type) => type.isLibraryBuilt)
         .firstOrNull;

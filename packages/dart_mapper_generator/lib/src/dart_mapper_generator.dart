@@ -29,6 +29,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/wrong_mapper_annotation_usage_error.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 import 'package:dart_mapper_generator/src/models/bindings.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
@@ -51,11 +52,7 @@ class DartMapperGenerator extends GeneratorForAnnotation<Mapper> {
     BuildStep buildStep,
   ) {
     if (element is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '${element.displayName} is not a class and cannot be annotated with @Mapper.',
-        element: element,
-        todo: 'Add @Mapper to a class.',
-      );
+      throw WrongMapperAnnotationUsageError(element);
     }
 
     final mapperAnnotation = MapperAnnotation.load(annotation);

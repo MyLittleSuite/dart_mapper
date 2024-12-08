@@ -24,6 +24,9 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/exceptions/no_relation_found_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/target_field_requires_non_optional_source_field_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
@@ -31,7 +34,6 @@ import 'package:dart_mapper_generator/src/misc/expressions.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
-import 'package:source_gen/source_gen.dart';
 
 class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
   final StrategyDispatcher<MappingBehavior, ExpressionFactory>
@@ -50,7 +52,14 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
     }
 
     final method = context.currentMethod;
-    final targetClass = method.returnType!.element!.classElement;
+    final targetClass = method.returnType?.element?.classElementOrNull;
+    if (targetClass == null) {
+      throw UnknownReturnTypeError(
+        mapperClass: context.mapperClass,
+        method: method,
+      );
+    }
+
     final targetConstructor = targetClass.primaryConstructor;
 
     final positionalArguments = <Expression>[];
@@ -59,22 +68,22 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
     for (final parameter in targetConstructor.parameters) {
       final binding = context.currentMethod.fromTarget(parameter.name);
       if (parameter.isRequired && binding == null) {
-        throw InvalidGenerationSourceError(
-          'No relation found for required \'${parameter.name}\' '
-          'in method \'${context.mapperClass.name}.${method.name}\'.',
-          element: targetClass,
+        throw NoRelationFoundError(
+          parameter: parameter,
+          mapperClass: context.mapperClass,
+          method: method,
+          targetClass: targetClass,
         );
       }
 
       if (!parameter.isOptional &&
           binding?.source.nullable == true &&
           binding?.target.nullable == false) {
-        throw InvalidGenerationSourceError(
-          'Target field \'${parameter.name}\' '
-          'in class \'${targetClass.name}\', '
-          'method \'${method.name}\' in class \'${context.mapperClass.name}\', '
-          'requires a non-optional source field.',
-          element: targetClass,
+        throw TargetFieldRequiresNonOptionalSourceFieldError(
+          parameter: parameter,
+          targetClass: targetClass,
+          mapperClass: context.mapperClass,
+          method: method,
         );
       }
 
