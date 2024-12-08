@@ -24,7 +24,7 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:dart_mapper_generator/src/exceptions/no_constructors_available_error.dart';
 
 extension ClassElementExtension on ClassElement {
   static const _ignoreGetters = {
@@ -41,11 +41,7 @@ extension ClassElementExtension on ClassElement {
           ))
         .firstOrNull;
     if (constructor == null) {
-      throw InvalidGenerationSourceError(
-        '$name has no constructors.',
-        element: this,
-        todo: 'Please, specify a valid constructor.',
-      );
+      throw NoConstructorsAvailableError(this);
     }
 
     return constructor;

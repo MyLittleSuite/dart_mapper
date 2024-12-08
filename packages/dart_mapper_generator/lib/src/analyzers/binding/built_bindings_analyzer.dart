@@ -27,6 +27,8 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/too_many_constructor_parameters_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unknown_target_class_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
@@ -34,7 +36,6 @@ import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
-import 'package:source_gen/source_gen.dart';
 
 class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
   final Analyzer<MappingMethod?> extraMappingMethodAnalyzer;
@@ -55,22 +56,26 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
     final renamingMap = context.renamingMapReversed;
     final ignoredTargets = context.ignoredTargets;
 
-    final targetClass = method.returnType.element!.classElement;
-    final targetConstructor = targetClass.primaryConstructor;
-    if (targetConstructor.parameters.length > 1) {
-      throw InvalidGenerationSourceError(
-        'Too many parameters number for constructor \'${targetClass.name}\'.',
-        element: targetClass,
+    final targetClass = method.returnType.element?.classElementOrNull;
+    if (targetClass == null) {
+      throw UnknownTargetClassError(
+        mapperClass: context.mapperClass,
+        method: method,
       );
     }
 
+    final targetConstructor = targetClass.primaryConstructor;
+    if (targetConstructor.parameters.length > 1) {
+      throw TooManyConstructorParametersError(targetClass);
+    }
+
     for (final sourceMethodParam in method.parameters) {
-      final sourceClass = sourceMethodParam.type.element!.classElement;
+      final sourceClass = sourceMethodParam.type.element?.classElementOrNull;
 
       for (final targetGetter in targetClass.getters) {
         final sourceClassParamName =
             renamingMap[targetGetter.name] ?? targetGetter.name;
-        final sourceClassParam = sourceClass.getFieldOrGetter(
+        final sourceClassParam = sourceClass?.getFieldOrGetter(
           sourceClassParamName,
         );
 

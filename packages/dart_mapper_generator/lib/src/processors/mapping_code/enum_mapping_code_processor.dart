@@ -24,7 +24,7 @@
  */
 
 import 'package:code_builder/code_builder.dart';
-import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/expressions.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
@@ -48,7 +48,14 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
     }
 
     final method = context.currentMethod;
-    final targetEnum = method.returnType!;
+    final targetEnum = method.returnType;
+    if (targetEnum == null) {
+      throw UnknownReturnTypeError(
+        mapperClass: context.mapperClass,
+        method: method,
+      );
+    }
+
     final sourceField = method.parameters.first.field;
     final expressionFactory = expressionStrategyDispatcher.get(method.behavior);
 
