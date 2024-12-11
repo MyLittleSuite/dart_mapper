@@ -1,3 +1,9 @@
+## 0.4.0
+
+- Enhance error handling.
+- Add support for built enum mapping.
+- Enhance transformation from num to double and int.
+
 ## 0.3.0
 
 - Add support for automatic transformation mapping if two fields are primitive. DateTime included.

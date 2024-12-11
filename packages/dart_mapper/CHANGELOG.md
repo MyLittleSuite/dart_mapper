@@ -1,3 +1,7 @@
+## 0.4.0
+
+Nothing new.
+
 ## 0.3.0
 
 Nothing new.
