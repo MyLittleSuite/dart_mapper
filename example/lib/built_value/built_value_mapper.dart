@@ -26,7 +26,7 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_example/built_value/models/alert.dart';
-import 'package:dart_mapper_example/built_value/models/alert_info.dart';
+import 'package:dart_mapper_example/built_value/models/alert_info.dart' as models;
 import 'package:dart_mapper_example/built_value/models/built_enum.dart';
 import 'package:dart_mapper_example/built_value/models/review.dart';
 import 'package:dart_mapper_example/built_value/models/review_dto.dart';
@@ -79,8 +79,8 @@ abstract class BuiltValueMapper {
   ReviewDTO toReviewDTO(Review review);
 
   @Mapping(target: 'type', source: 'actionType')
-  Alert toAlert(AlertInfo alertInfo);
+  Alert toAlert(models.AlertInfo alertInfo);
 
   @Mapping(target: 'actionType', source: 'type')
-  AlertInfo toAlertInfo(Alert alert);
+  models.AlertInfo toAlertInfo(Alert alert);
 }

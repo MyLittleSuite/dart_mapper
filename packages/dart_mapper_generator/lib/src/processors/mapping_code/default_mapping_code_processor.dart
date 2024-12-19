@@ -96,6 +96,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
                   ignored: binding.ignored,
                   currentMethod: method,
                   extraMappingMethod: binding.extraMappingMethod,
+                  importAliases: context.importAliases,
                 ),
               )
           : null;
@@ -117,11 +118,8 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
         }
 
         builder.addExpression(
-          refer(targetConstructor.displayName)
-              .newInstance(
-                positionalArguments,
-                namedArguments,
-              )
+          refer(context.resolveConstructor(targetConstructor))
+              .newInstance(positionalArguments, namedArguments)
               .returned,
         );
       },

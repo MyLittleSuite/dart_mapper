@@ -58,6 +58,11 @@ class EnumExpressionFactory extends ExpressionFactory {
       return literal(num.tryParse(name) ?? name);
     }
 
+    if (context.field.type.isEnum) {
+      return refer(context.resolveType(context.field.type))
+          .property(context.field.name);
+    }
+
     return defaultFactory.create(context);
   }
 }

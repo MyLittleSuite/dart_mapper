@@ -37,10 +37,12 @@ import 'package:dart_style/dart_style.dart';
 import 'package:source_gen/source_gen.dart';
 
 class DartMapperGenerator extends GeneratorForAnnotation<Mapper> {
+  final Analyzer<Map<Uri, String>> importAliasesAnalyzer;
   final ComponentProcessor<Class> mapperProcessor;
   final Analyzer<Bindings> analyzer;
 
   const DartMapperGenerator({
+    required this.importAliasesAnalyzer,
     required this.mapperProcessor,
     required this.analyzer,
   });
@@ -56,19 +58,28 @@ class DartMapperGenerator extends GeneratorForAnnotation<Mapper> {
     }
 
     final mapperAnnotation = MapperAnnotation.load(annotation);
-    final bindings = analyzer.analyze(
+    final importAliases = importAliasesAnalyzer.analyze(
       AnalyzerContext(
         mapperAnnotation: mapperAnnotation,
         mapperClass: element,
       ),
     );
 
+    final analyzingContext = AnalyzerContext(
+      mapperAnnotation: mapperAnnotation,
+      mapperClass: element,
+      importAliases: importAliases,
+    );
+
+    final bindings = analyzer.analyze(analyzingContext);
+
     final library = Library(
       (b) => b.body.add(
         mapperProcessor.process(
           ProcessorContext(
-            mapperAnnotation: mapperAnnotation,
+            mapperAnnotation: analyzingContext.mapperAnnotation,
             mapperClass: bindings.mapperClass,
+            importAliases: importAliases,
           ),
         ),
       ),

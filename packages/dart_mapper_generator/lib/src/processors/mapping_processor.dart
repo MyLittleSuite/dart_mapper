@@ -59,28 +59,37 @@ class MappingProcessor extends ComponentProcessor<Method> {
 
         builder
           ..name = method.name
-          ..requiredParameters.addAll(_processParameters(requiredParameters))
-          ..optionalParameters.addAll(_processParameters(optionalParameters))
-          ..returns = _processReturns(method)
+          ..requiredParameters.addAll(
+            _processParameters(context, requiredParameters),
+          )
+          ..optionalParameters.addAll(
+            _processParameters(context, optionalParameters),
+          )
+          ..returns = _processReturns(context, method)
           ..body = methodCodeDispatcher.get(method.behavior).process(context);
       },
     );
   }
 
   Iterable<Parameter> _processParameters(
+    ProcessorMethodContext context,
     Iterable<MappingParameter> parameters,
   ) =>
       parameters.map(
         (p) => Parameter(
           (b) => b
             ..name = p.field.name
-            ..type = refer(
-              p.field.type.getDisplayString(withNullability: p.field.nullable),
-            ),
+            ..type = refer(context.resolveType(
+              p.field.type,
+              withNullability: p.field.nullable,
+            )),
         ),
       );
 
-  Reference _processReturns(InternalMappingMethod method) {
+  Reference _processReturns(
+    ProcessorMethodContext context,
+    InternalMappingMethod method,
+  ) {
     final returnType = method.returnType;
     if (returnType == null) {
       return refer('void');
@@ -90,8 +99,9 @@ class MappingProcessor extends ComponentProcessor<Method> {
       return refer(returnType.builtBuilderClass);
     }
 
-    return refer(
-      returnType.getDisplayString(withNullability: method.optionalReturn),
-    );
+    return refer(context.resolveType(
+      returnType,
+      withNullability: method.optionalReturn,
+    ));
   }
 }

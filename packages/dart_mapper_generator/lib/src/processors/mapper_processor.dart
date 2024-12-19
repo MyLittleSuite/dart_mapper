@@ -56,6 +56,7 @@ class MapperProcessor extends ComponentProcessor<Class> {
                 mapperAnnotation: annotation,
                 mapperClass: mapperClass,
                 currentMethod: method,
+                importAliases: context.importAliases,
               )),
             )),
     );
