@@ -25,11 +25,24 @@
  *
  */
 
-enum AliasEnum { element }
+import 'package:analyzer/dart/element/element.dart';
+import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 
-class AliasObject {
-  final String name;
-  final AliasEnum alias;
+class ImportAliasesAnalyzer extends Analyzer<Map<Uri, String>> {
+  const ImportAliasesAnalyzer();
 
-  const AliasObject(this.name, this.alias);
+  @override
+  Map<Uri, String> analyze(AnalyzerContext context) {
+    final imports = context.mapperClass.library.libraryImports;
+
+    return imports
+        .where((e) => e.prefix != null && e.uri is DirectiveUriWithSource)
+        .fold({}, (acc, import) {
+      final uri = (import.uri as DirectiveUriWithSource).source.uri;
+
+      acc[uri] = import.prefix!.element.name;
+      return acc;
+    });
+  }
 }
