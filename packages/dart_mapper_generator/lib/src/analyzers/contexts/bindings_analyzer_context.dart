@@ -32,6 +32,7 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
     required super.mapperUsages,
     required super.mapperClass,
     required super.method,
+    required super.importAliases,
   });
 
   Map<String, String> get renamingMap => MappingAnnotation.load(method)

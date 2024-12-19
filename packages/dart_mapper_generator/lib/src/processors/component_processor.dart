@@ -23,19 +23,23 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:code_builder/code_builder.dart';
+import 'package:code_builder/code_builder.dart' hide Field;
 import 'package:dart_mapper/dart_mapper.dart';
+import 'package:dart_mapper_generator/src/mixins/aliases_mixin.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 
-class ProcessorContext {
+class ProcessorContext with AliasesMixin {
   final Mapper mapperAnnotation;
   final MapperClass mapperClass;
+  @override
+  final Map<Uri, String> importAliases;
 
   const ProcessorContext({
     required this.mapperAnnotation,
     required this.mapperClass,
+    required this.importAliases,
   });
 
   Iterable<MappingMethod> get mappingMethods => mapperClass.mappingMethods;
@@ -50,6 +54,7 @@ class ProcessorMethodContext extends ProcessorContext {
   const ProcessorMethodContext({
     required super.mapperAnnotation,
     required super.mapperClass,
+    required super.importAliases,
     required this.currentMethod,
   });
 }

@@ -27,17 +27,21 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/mixins/aliases_mixin.dart';
 import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
-class AnalyzerContext {
+class AnalyzerContext with AliasesMixin {
   final Mapper mapperAnnotation;
-  final Set<MapperUsage> mapperUsages;
   final ClassElement mapperClass;
+  final Set<MapperUsage> mapperUsages;
+  @override
+  final Map<Uri, String> importAliases;
 
   const AnalyzerContext({
     required this.mapperAnnotation,
-    this.mapperUsages = const {},
     required this.mapperClass,
+    this.mapperUsages = const {},
+    this.importAliases = const {},
   });
 
   MapperUsage? findUsage(
@@ -51,6 +55,7 @@ class AnalyzerContext {
             (usage) =>
                 usage.returnType.same(
                   returnType,
+                  aliases: importAliases,
                   useNullability: useNullabilityForReturn,
                 ) &&
                 usage.parameters.length == parameters.length &&
@@ -58,6 +63,7 @@ class AnalyzerContext {
                   (parameter) => parameters.any(
                     (param) => param.same(
                       parameter.field.type,
+                      aliases: importAliases,
                       useNullability: useNullabilityForParams,
                     ),
                   ),

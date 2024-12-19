@@ -99,6 +99,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
               mapperAnnotation: context.mapperAnnotation,
               mapperUsages: context.mapperUsages,
               mapperClass: context.mapperClass,
+              importAliases: context.importAliases,
               source: sourceField,
               target: targetField,
             ),

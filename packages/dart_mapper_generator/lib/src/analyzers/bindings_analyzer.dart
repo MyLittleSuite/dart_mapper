@@ -64,8 +64,9 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
         final mappingBehavior = mappingBehaviorAnalyzer.analyze(
           MethodAnalyzerContext(
             mapperAnnotation: context.mapperAnnotation,
-            mapperUsages: mapperUsages,
             mapperClass: context.mapperClass,
+            importAliases: context.importAliases,
+            mapperUsages: mapperUsages,
             method: method,
           ),
         );
@@ -74,8 +75,9 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
             .get(mappingBehavior)
             .analyze(BindingsAnalyzerContext(
               mapperAnnotation: context.mapperAnnotation,
-              mapperUsages: mapperUsages,
               mapperClass: context.mapperClass,
+              importAliases: context.importAliases,
+              mapperUsages: mapperUsages,
               method: method,
             ));
 

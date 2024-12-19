@@ -33,6 +33,7 @@ class FieldAnalyzerContext extends AnalyzerContext {
     required super.mapperAnnotation,
     required super.mapperUsages,
     required super.mapperClass,
+    required super.importAliases,
     required this.field,
   });
 }

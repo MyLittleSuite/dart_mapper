@@ -26,6 +26,7 @@
 import 'package:code_builder/code_builder.dart' hide Field;
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/expression.dart';
+import 'package:dart_mapper_generator/src/mixins/aliases_mixin.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
 
@@ -34,13 +35,15 @@ enum FieldOrigin {
   target,
 }
 
-class ExpressionContext {
+class ExpressionContext with AliasesMixin {
   final Field field;
   final FieldOrigin origin;
   final Field counterpartField;
   final MappingMethod currentMethod;
   final bool ignored;
   final MappingMethod? extraMappingMethod;
+  @override
+  final Map<Uri, String>? importAliases;
 
   const ExpressionContext({
     required this.field,
@@ -49,6 +52,7 @@ class ExpressionContext {
     required this.currentMethod,
     this.ignored = false,
     this.extraMappingMethod,
+    this.importAliases,
   });
 }
 

@@ -90,6 +90,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
             mapperAnnotation: context.mapperAnnotation,
             mapperUsages: context.mapperUsages,
             mapperClass: context.mapperClass,
+            importAliases: context.importAliases,
             source: field,
             target: targetField,
           ),
@@ -110,12 +111,14 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         mapperAnnotation: context.mapperAnnotation,
         mapperUsages: context.mapperUsages,
         mapperClass: context.mapperClass,
+        importAliases: context.importAliases,
         field: targetField,
       ),
     );
 
     return InternalMappingMethod(
       name: _generateUniqueName(
+        context,
         [sourceField],
         targetField.nullable,
         targetField.type,
@@ -225,6 +228,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
       };
 
   static String _generateUniqueName(
+    FieldsAnalyzerContext context,
     List<Field> parameters,
     bool nullable,
     DartType? returnType,
@@ -235,12 +239,16 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
           .map(
             (param) => [
               if (param.nullable) 'Nullable',
+              if (context.resolvePrefix(param.type) != null)
+                context.resolvePrefix(param.type)!.toCapitalised(),
               param.type.humanReadable.toCapitalised(),
             ].join(),
           )
           .join('And'),
       'To',
       if (nullable) 'Nullable',
+      if (returnType != null && context.resolvePrefix(returnType) != null)
+        context.resolvePrefix(returnType)!.toCapitalised(),
       returnType?.humanReadable ?? 'Void',
     ].join();
   }

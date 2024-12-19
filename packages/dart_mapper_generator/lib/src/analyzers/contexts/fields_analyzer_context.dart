@@ -34,6 +34,7 @@ class FieldsAnalyzerContext extends AnalyzerContext {
     required super.mapperAnnotation,
     required super.mapperUsages,
     required super.mapperClass,
+    required super.importAliases,
     required this.source,
     required this.target,
   });

@@ -71,20 +71,25 @@ extension DartTypeExtension on DartType {
 
   String get displayString => getDisplayString(withNullability: false);
 
-  String get builtBuilderClass =>
-      [displayString, 'Builder', if (isNullable) '?'].join();
-
   bool get isNullable => getDisplayString(withNullability: true).endsWith('?');
 
   String get parameterName =>
       displayString.toSnakeCase().toCamelCase(lower: true);
 
-  bool same(DartType other, {bool useNullability = true}) {
+  bool same(
+    DartType other, {
+    Map<Uri, String>? aliases,
+    bool useNullability = true,
+  }) {
+    final thisUri = element?.librarySource?.uri;
+    final otherUri = other.element?.librarySource?.uri;
+
     if (useNullability) {
-      return this == other;
+      return aliases?[thisUri] == aliases?[otherUri] && this == other;
     }
 
-    return (element?.librarySource?.uri == other.element?.librarySource?.uri) &&
+    return (thisUri == otherUri) &&
+        aliases?[thisUri] == aliases?[otherUri] &&
         (displayString == other.displayString);
   }
 }
@@ -117,4 +122,7 @@ extension DartTypeBuilt on DartType {
     return superType?.isLibraryBuilt == true &&
         superType?.className == 'EnumClass';
   }
+
+  String get builtBuilderClass =>
+      [displayString, 'Builder', if (isNullable) '?'].join();
 }

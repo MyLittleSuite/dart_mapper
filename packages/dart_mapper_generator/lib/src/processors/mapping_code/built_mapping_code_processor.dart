@@ -65,7 +65,9 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
         Expression targetInstance;
 
         if (method.isOverride) {
-          targetInstance = refer(targetConstructor.displayName).newInstance([
+          targetInstance = refer(
+            context.resolveConstructor(targetConstructor),
+          ).newInstance([
             builderClosure(
               method.bindings
                   .map(
@@ -78,11 +80,16 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
             ),
           ]);
         } else {
-          targetInstance = refer('${targetConstructor.displayName}Builder')
+          targetInstance = refer([
+            context.resolveConstructor(targetConstructor),
+            'Builder',
+          ].join())
               .newInstance([])
               .cascade('replace')
               .call([
-                refer(targetConstructor.displayName).newInstance([
+                refer(
+                  context.resolveConstructor(targetConstructor),
+                ).newInstance([
                   builderClosure(
                     method.bindings
                         .map(
