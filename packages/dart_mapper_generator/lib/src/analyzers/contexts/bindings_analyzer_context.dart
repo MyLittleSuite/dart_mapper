@@ -57,4 +57,10 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
 
   Map<String, String> get enumValuesReversed =>
       enumValues.map((key, value) => MapEntry(value, key));
+
+  Map<String, Object> get defaultValues => Map.fromEntries(
+        MappingAnnotation.load(method)
+            .where((annotation) => annotation.defaultValue != null)
+            .map((element) => MapEntry(element.target, element.defaultValue!)),
+      );
 }

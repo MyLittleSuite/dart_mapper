@@ -27,10 +27,12 @@ class Mapping {
   final String? source;
   final String target;
   final bool ignore;
+  final Object? defaultValue;
 
   const Mapping({
     required this.target,
     this.source,
     this.ignore = false,
+    this.defaultValue,
   });
 }

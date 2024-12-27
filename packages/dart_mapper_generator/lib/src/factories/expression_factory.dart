@@ -44,6 +44,7 @@ class ExpressionContext with AliasesMixin {
   final MappingMethod? extraMappingMethod;
   @override
   final Map<Uri, String>? importAliases;
+  final Object? defaultValue;
 
   const ExpressionContext({
     required this.field,
@@ -53,6 +54,7 @@ class ExpressionContext with AliasesMixin {
     this.ignored = false,
     this.extraMappingMethod,
     this.importAliases,
+    required this.defaultValue,
   });
 }
 
@@ -77,6 +79,20 @@ abstract class ExpressionFactory {
         : refer(context.field.name);
 
     return _transformation(context, result);
+  }
+
+  Expression wrapDefaultFallback(ExpressionContext context, Expression basic) {
+    final defaultValue = context.defaultValue;
+
+    if (defaultValue == null) {
+      return basic;
+    }
+
+    if (context.origin == FieldOrigin.source && context.field.nullable) {
+      return basic.ifNullThen(literal(defaultValue));
+    }
+
+    return basic;
   }
 
   Expression _transformation(ExpressionContext context, Expression basic) {

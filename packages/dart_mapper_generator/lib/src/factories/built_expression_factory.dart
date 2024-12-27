@@ -50,12 +50,13 @@ class BuiltExpressionFactory extends ExpressionFactory {
           [defaultFactory.create(context).ifNullThen(literal(isSet ? {} : []))],
         );
 
-        return (context.field.nullable)
+        final result = (context.field.nullable)
             ? basicExpression.notEqualTo(literalNull).conditional(
                   cloneExpression,
                   literalNull,
                 )
             : cloneExpression;
+        return super.wrapDefaultFallback(context, result);
       }
     }
 

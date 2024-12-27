@@ -77,6 +77,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
               counterpartField: binding.target,
               currentMethod: method,
               importAliases: context.importAliases,
+              defaultValue: binding.defaultValue,
             ),
           );
           final targetValue = expressionFactory.create(
@@ -86,6 +87,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
               counterpartField: binding.source,
               currentMethod: method,
               importAliases: context.importAliases,
+              defaultValue: binding.defaultValue,
             ),
           );
 

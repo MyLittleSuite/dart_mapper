@@ -110,14 +110,15 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
   }
 
   Expression _buildExpression(InternalMappingMethod method, Binding binding) =>
-      expressionStrategyDispatcher.get(method.behavior).create(
-            ExpressionContext(
-              field: binding.source,
-              origin: FieldOrigin.source,
-              counterpartField: binding.target,
-              currentMethod: method,
-              ignored: binding.ignored,
-              extraMappingMethod: binding.extraMappingMethod,
-            ),
-          );
+      expressionStrategyDispatcher
+          .get(method.behavior)
+          .create(ExpressionContext(
+            field: binding.source,
+            origin: FieldOrigin.source,
+            counterpartField: binding.target,
+            currentMethod: method,
+            ignored: binding.ignored,
+            defaultValue: binding.defaultValue,
+            extraMappingMethod: binding.extraMappingMethod,
+          ));
 }

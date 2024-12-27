@@ -46,14 +46,14 @@ class DefaultExpressionFactory extends ExpressionFactory {
       return _mapFieldWithMethod(context, context.extraMappingMethod!);
     }
 
-    return basicExpression;
+    return super.wrapDefaultFallback(context, basicExpression);
   }
 
   Expression _createMap(
     ExpressionContext context,
     MapField field,
   ) {
-    return super.basic(context).property('map').call([
+    final mapExpression = super.basic(context).property('map').call([
       CodeExpression(
         Code(
           context.extraMappingMethod?.name ??
@@ -61,6 +61,8 @@ class DefaultExpressionFactory extends ExpressionFactory {
         ),
       ),
     ]);
+
+    return super.wrapDefaultFallback(context, mapExpression);
   }
 
   Expression _createIterable(ExpressionContext context, IterableField field) {
@@ -88,14 +90,16 @@ class DefaultExpressionFactory extends ExpressionFactory {
     ]);
 
     if (field.type.isList) {
-      return cloneExpression.propertyToList();
+      final result = cloneExpression.propertyToList();
+      return super.wrapDefaultFallback(context, result);
     } else if (field.type.isSet) {
-      return cloneExpression.propertyToSet();
+      final result = cloneExpression.propertyToSet();
+      return super.wrapDefaultFallback(context, result);
     } else if (field.type.isDartCoreIterable) {
-      return cloneExpression;
+      return super.wrapDefaultFallback(context, cloneExpression);
     }
 
-    return basicExpression;
+    return super.wrapDefaultFallback(context, basicExpression);
   }
 
   Expression _mapFieldWithMethod(
@@ -106,12 +110,14 @@ class DefaultExpressionFactory extends ExpressionFactory {
 
     if (context.field.nullable) {
       // source != null ? {extraMappingMethod.name}(source) : null
-      return basicExpression.conditionalNull(
+      final result = basicExpression.conditionalNull(
         refer(extraMethod.name).call([basicExpression.nullChecked]),
       );
+      return super.wrapDefaultFallback(context, result);
     }
 
     // {extraMappingMethod.name}(source)
-    return refer(extraMethod.name).call([basicExpression]);
+    final result = refer(extraMethod.name).call([basicExpression]);
+    return super.wrapDefaultFallback(context, result);
   }
 }

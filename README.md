@@ -5,7 +5,6 @@ A simple library to map Dart objects.
 ## Roadmap
 
 - [ ] Add support for multi source parameter in mapping methods.
-- [ ] Add support for default closure in @Mapping annotation.
 - [ ] Add support for expression closure in @Mapping annotation.
 - [ ] Add support for nested object mapping via @Mapping annotation, including ignore.
 - [ ] Add support for reuse config from other mapping method.

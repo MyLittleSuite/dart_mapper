@@ -47,6 +47,8 @@ extension MappingAnnotation on Mapping {
               source: annotation.getField('source')?.toStringValue(),
               target: annotation.getField('target')!.toStringValue()!,
               ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
+              defaultValue: ConstantReader(annotation.getField('defaultValue'))
+                  .literalValue,
             ),
           );
 }

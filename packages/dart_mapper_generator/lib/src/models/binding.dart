@@ -31,12 +31,14 @@ class Binding {
   final Field source;
   final Field target;
   final bool ignored;
+  final Object? defaultValue;
   final MappingMethod? extraMappingMethod;
 
   Binding({
     required this.source,
     required this.target,
     this.ignored = false,
+    this.defaultValue,
     this.extraMappingMethod,
   }) /* : assert(target.required && ignored,
             'Target field \'${target.name}\' must be required') TODO:*/
@@ -53,11 +55,14 @@ class Binding {
     }
   }
 
+  bool get hasDefaultFallback => defaultValue != null;
+
   @override
   String toString() => 'Binding{'
       'source: $source, '
       'target: $target, '
       'ignored: $ignored, '
+      'defaultValue: $defaultValue, '
       'extraMappingMethod: $extraMappingMethod'
       '}';
 }
