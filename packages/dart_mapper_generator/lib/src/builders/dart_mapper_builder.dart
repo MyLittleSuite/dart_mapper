@@ -28,6 +28,7 @@ import 'package:dart_mapper_generator/src/analyzers/binding/built_bindings_analy
 import 'package:dart_mapper_generator/src/analyzers/binding/enums_mapping_method_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/binding/standard_mapping_method_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/bindings_analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/internal_uses_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/mapping_behavior_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/mapping_method/extra_mapping_method_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/import_aliases_analyzer.dart';
@@ -93,6 +94,7 @@ Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
         ),
         analyzer: BindingsAnalyzer(
           mapperUsageAnalyzer: UsesAnalyzer(),
+          internalMapperUsageAnalyzer: InternalUsesAnalyzer(),
           mappingBehaviorAnalyzer: MappingBehaviorAnalyzer(),
           mappingMethodDispatcher: mappingMethodDispatcher,
         ),

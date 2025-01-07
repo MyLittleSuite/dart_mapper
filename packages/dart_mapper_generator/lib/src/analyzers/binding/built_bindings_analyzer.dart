@@ -35,7 +35,7 @@ import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 
 class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
   final Analyzer<MappingMethod?> extraMappingMethodAnalyzer;
@@ -98,6 +98,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
             FieldsAnalyzerContext(
               mapperAnnotation: context.mapperAnnotation,
               mapperUsages: context.mapperUsages,
+              internalMapperUsages: context.internalMapperUsages,
               mapperClass: context.mapperClass,
               importAliases: context.importAliases,
               source: sourceField,

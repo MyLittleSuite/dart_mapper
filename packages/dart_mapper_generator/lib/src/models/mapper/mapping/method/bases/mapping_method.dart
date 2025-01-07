@@ -25,7 +25,7 @@
 
 import 'package:analyzer/dart/element/type.dart';
 
-class MappingMethod {
+abstract base class MappingMethod {
   final String name;
   final DartType? returnType;
   final bool optionalReturn;

@@ -51,14 +51,16 @@ class MapperProcessor extends ComponentProcessor<Class> {
         ..extend = refer(mapperClass.name)
         ..fields.addAll(_generateInstanceField(mapperClass))
         ..constructors.addAll(_generateConstructors(mapperClass))
-        ..methods.addAll(context.internalMappingMethods.toSet().map(
-              (method) => methodProcessor.process(ProcessorMethodContext(
-                mapperAnnotation: annotation,
-                mapperClass: mapperClass,
-                currentMethod: method,
-                importAliases: context.importAliases,
-              )),
-            )),
+        ..methods.addAll(
+          context.bindableMappingMethods.toSet().map(
+                (method) => methodProcessor.process(ProcessorMethodContext(
+                  mapperAnnotation: annotation,
+                  mapperClass: mapperClass,
+                  currentMethod: method,
+                  importAliases: context.importAliases,
+                )),
+              ),
+        ),
     );
   }
 

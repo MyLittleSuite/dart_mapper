@@ -23,32 +23,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper_generator/src/models/binding.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
-class InternalMappingMethod extends MappingMethod {
-  final bool isOverride;
-  final List<MappingParameter> parameters;
-  final List<Binding> bindings;
-  final MappingBehavior behavior;
-
-  const InternalMappingMethod({
+final class DefinedMappingMethod extends BindableMappingMethod {
+  const DefinedMappingMethod({
     required super.name,
-    this.isOverride = false,
+    super.isOverride = false,
     super.returnType,
     super.optionalReturn = false,
-    this.behavior = MappingBehavior.standard,
-    this.parameters = const [],
-    this.bindings = const [],
+    super.behavior = MappingBehavior.standard,
+    super.parameters = const [],
+    super.bindings = const [],
   });
 
-  Binding? fromTarget(String target) =>
-      bindings.where((b) => b.target.name == target).firstOrNull;
-
   @override
-  String toString() => 'MappingMethod{'
+  String toString() => 'DefinedMappingMethod{'
       'name: $name, '
       'isOverride: $isOverride, '
       'returnType: $returnType, '

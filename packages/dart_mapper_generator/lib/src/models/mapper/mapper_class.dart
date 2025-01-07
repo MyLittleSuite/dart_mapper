@@ -25,8 +25,8 @@
 
 import 'package:dart_mapper_generator/src/models/mapper/constructor/mapper_constructor.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_instance_field.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/defined_mapping_method.dart';
 
 class MapperClass {
   final String name;
@@ -43,7 +43,7 @@ class MapperClass {
 
   Iterable<MappingMethod> get mappingMethods sync* {
     final internalMappingMethods =
-        _mappingMethods.whereType<InternalMappingMethod>();
+        _mappingMethods.whereType<DefinedMappingMethod>();
 
     yield* internalMappingMethods;
 

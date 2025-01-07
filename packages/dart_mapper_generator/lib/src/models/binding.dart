@@ -24,8 +24,8 @@
  */
 
 import 'package:dart_mapper_generator/src/models/field/field.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/generated_private_mapping_method.dart';
 
 class Binding {
   final Field source;
@@ -44,10 +44,10 @@ class Binding {
 
   Iterable<MappingMethod> get mappingMethods sync* {
     if (extraMappingMethod != null &&
-        extraMappingMethod is InternalMappingMethod) {
+        extraMappingMethod is GeneratedPrivateMappingMethod) {
       yield extraMappingMethod!;
 
-      yield* (extraMappingMethod! as InternalMappingMethod)
+      yield* (extraMappingMethod! as GeneratedPrivateMappingMethod)
           .bindings
           .expand((binding) => binding.mappingMethods);
     }

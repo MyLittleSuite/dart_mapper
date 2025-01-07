@@ -25,20 +25,38 @@
  *
  */
 
-import 'package:analyzer/dart/element/element.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
+import 'package:dart_mapper_generator/src/models/binding.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
-class NoRelationFoundError extends InvalidGenerationSourceError {
-  NoRelationFoundError({
-    required ParameterElement parameter,
-    required MapperClass mapperClass,
-    required MappingMethod method,
-    required ClassElement targetClass,
-  }) : super(
-          'No relation found for required \'${parameter.name}\' '
-          'in method \'${mapperClass.name}.${method.name}\'.',
-          element: targetClass,
-        );
+abstract base class BindableMappingMethod extends MappingMethod {
+  final bool isOverride;
+  final List<MappingParameter> parameters;
+  final List<Binding> bindings;
+  final MappingBehavior behavior;
+
+  const BindableMappingMethod({
+    required super.name,
+    super.returnType,
+    super.optionalReturn = false,
+    this.isOverride = false,
+    this.behavior = MappingBehavior.standard,
+    this.parameters = const [],
+    this.bindings = const [],
+  });
+
+  Binding? fromTarget(String target) =>
+      bindings.where((b) => b.target.name == target).firstOrNull;
+
+  @override
+  String toString() => 'BindableMappingMethod{'
+      'name: $name, '
+      'returnType: $returnType, '
+      'optionalReturn: $optionalReturn, '
+      'isOverride: $isOverride, '
+      'behavior: $behavior, '
+      'parameters: $parameters, '
+      'bindings: $bindings'
+      '}';
 }

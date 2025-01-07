@@ -23,19 +23,34 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/extensions/interface_element.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
+import 'package:dart_mapper_generator/src/models/instance.dart';
 
 class EnumField extends Field {
-  final List<Field> values;
-
-  EnumField({
+  const EnumField({
     required super.name,
     required super.type,
-    required this.values,
     super.instance,
     super.required = false,
     super.nullable = false,
   });
+
+  List<Field> get values =>
+      type.element?.interfaceElementOrNull?.enumValues
+          .map(
+            (value) => PrimitiveField(
+              name: value.name,
+              type: type,
+              instance: Instance(name: type.displayString),
+              required: true,
+              nullable: type.isNullable,
+            ),
+          )
+          .toList(growable: false) ??
+      [];
 
   @override
   String toString() => 'EnumField{'

@@ -30,6 +30,7 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
   const BindingsAnalyzerContext({
     required super.mapperAnnotation,
     required super.mapperUsages,
+    required super.internalMapperUsages,
     required super.mapperClass,
     required super.method,
     required super.importAliases,

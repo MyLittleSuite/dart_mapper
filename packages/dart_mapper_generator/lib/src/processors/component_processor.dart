@@ -27,8 +27,8 @@ import 'package:code_builder/code_builder.dart' hide Field;
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/mixins/aliases_mixin.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 
 class ProcessorContext with AliasesMixin {
   final Mapper mapperAnnotation;
@@ -44,12 +44,12 @@ class ProcessorContext with AliasesMixin {
 
   Iterable<MappingMethod> get mappingMethods => mapperClass.mappingMethods;
 
-  Iterable<InternalMappingMethod> get internalMappingMethods =>
-      mappingMethods.whereType<InternalMappingMethod>();
+  Iterable<BindableMappingMethod> get bindableMappingMethods =>
+      mappingMethods.whereType<BindableMappingMethod>();
 }
 
 class ProcessorMethodContext extends ProcessorContext {
-  final InternalMappingMethod currentMethod;
+  final BindableMappingMethod currentMethod;
 
   const ProcessorMethodContext({
     required super.mapperAnnotation,

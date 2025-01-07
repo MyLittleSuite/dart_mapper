@@ -23,28 +23,58 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
+import 'package:dart_mapper_generator/src/models/instance.dart';
 
 class MapField extends Field {
-  final Field? key;
-  final Field? value;
-
-  MapField({
+  const MapField({
     required super.name,
     required super.type,
-    this.key,
-    this.value,
     super.instance,
     super.required = false,
     super.nullable = false,
   });
 
+  Field? get key {
+    final genericOfKey =
+        (type as ParameterizedType?)?.typeArguments.firstOrNull;
+
+    if (genericOfKey != null) {
+      return Field.from(
+        name: genericOfKey.parameterName,
+        type: genericOfKey,
+        instance: Instance(name: genericOfKey.parameterName),
+        required: true,
+        nullable: genericOfKey.isNullable,
+      );
+    }
+
+    return null;
+  }
+
+  Field? get value {
+    final genericOfValue =
+        (type as ParameterizedType?)?.typeArguments.elementAtOrNull(1);
+
+    if (genericOfValue != null) {
+      return Field.from(
+        name: genericOfValue.parameterName,
+        type: genericOfValue,
+        instance: Instance(name: genericOfValue.parameterName),
+        required: true,
+        nullable: genericOfValue.isNullable,
+      );
+    }
+
+    return null;
+  }
+
   @override
   String toString() => 'MapField{'
       'name: $name, '
       'type: $type, '
-      'key: $key, '
-      'value: $value,'
       'required: $required, '
       'nullable: $nullable, '
       'instance: $instance'
