@@ -28,7 +28,7 @@ import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/mixins/aliases_mixin.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 
 enum FieldOrigin {
   source,

@@ -32,6 +32,7 @@ class MethodAnalyzerContext extends AnalyzerContext {
   const MethodAnalyzerContext({
     required super.mapperAnnotation,
     required super.mapperUsages,
+    required super.internalMapperUsages,
     required super.mapperClass,
     required super.importAliases,
     required this.method,

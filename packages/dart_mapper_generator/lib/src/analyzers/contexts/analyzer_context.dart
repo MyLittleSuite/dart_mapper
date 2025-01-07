@@ -34,6 +34,7 @@ class AnalyzerContext with AliasesMixin {
   final Mapper mapperAnnotation;
   final ClassElement mapperClass;
   final Set<MapperUsage> mapperUsages;
+  final Set<MapperUsage> internalMapperUsages;
   @override
   final Map<Uri, String> importAliases;
 
@@ -41,16 +42,18 @@ class AnalyzerContext with AliasesMixin {
     required this.mapperAnnotation,
     required this.mapperClass,
     this.mapperUsages = const {},
+    this.internalMapperUsages = const {},
     this.importAliases = const {},
   });
 
   MapperUsage? findUsage(
     DartType returnType,
     List<DartType> parameters, {
+    required bool internally,
     bool useNullabilityForReturn = true,
     bool useNullabilityForParams = true,
   }) =>
-      mapperUsages
+      (internally ? internalMapperUsages : mapperUsages)
           .where(
             (usage) =>
                 usage.returnType.same(

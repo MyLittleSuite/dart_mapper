@@ -23,25 +23,38 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
+import 'package:dart_mapper_generator/src/models/instance.dart';
 
 class IterableField extends Field {
-  final Field? item;
-
   const IterableField({
     required super.name,
     required super.type,
-    this.item,
     super.instance,
     super.required = false,
     super.nullable = false,
   });
 
+  Field? get item {
+    final genericType = type.asGenerics?.firstOrNull;
+    if (genericType != null) {
+      return Field.from(
+        name: genericType.parameterName,
+        type: genericType,
+        instance: Instance(name: genericType.parameterName),
+        required: true,
+        nullable: genericType.isNullable,
+      );
+    }
+
+    return null;
+  }
+
   @override
   String toString() => 'Iterable{'
       'name: $name, '
       'type: $type, '
-      'item: $item, '
       'required: $required, '
       'nullable: $nullable, '
       'instance: $instance'

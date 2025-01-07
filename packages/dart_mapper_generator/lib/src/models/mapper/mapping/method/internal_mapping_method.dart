@@ -23,38 +23,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper_generator/src/extensions/class_element.dart';
-import 'package:dart_mapper_generator/src/extensions/element.dart';
-import 'package:dart_mapper_generator/src/models/field/field.dart';
-import 'package:dart_mapper_generator/src/models/instance.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
-class NestedField extends Field {
-  const NestedField({
-    required super.name,
-    required super.type,
-    super.instance,
-    super.required = false,
-    super.nullable = false,
-  });
+final class InternalMappingMethod extends MappingMethod {
+  final MapperUsage mapperUsage;
 
-  List<Field> get fields =>
-      type.element?.classElementOrNull?.getters
-          .map((field) => Field.from(
-                name: field.name,
-                type: field.type,
-                instance: Instance(name: name),
-                required: field.isRequired,
-                nullable: field.isNullable,
-              ))
-          .toList(growable: false) ??
-      [];
+  InternalMappingMethod({
+    required this.mapperUsage,
+  }) : super(
+          name: mapperUsage.functionName,
+          returnType: mapperUsage.returnType,
+          optionalReturn: mapperUsage.returnType.isNullable,
+        );
 
   @override
-  String toString() => 'NestedField{'
-      'name: $name, '
-      'type: $type, '
-      'required: $required, '
-      'nullable: $nullable, '
-      'instance: $instance'
-      '}';
+  String toString() => 'InternalMappingMethod{mapperUsage: $mapperUsage}';
 }

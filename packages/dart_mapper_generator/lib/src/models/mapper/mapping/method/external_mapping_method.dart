@@ -24,10 +24,10 @@
  */
 
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
-class ExternalMappingMethod extends MappingMethod {
+final class ExternalMappingMethod extends MappingMethod {
   final MapperUsage mapperUsage;
 
   ExternalMappingMethod({
@@ -41,4 +41,7 @@ class ExternalMappingMethod extends MappingMethod {
           returnType: mapperUsage.returnType,
           optionalReturn: mapperUsage.returnType.isNullable,
         );
+
+  @override
+  String toString() => 'ExternalMappingMethod{mapperUsage: $mapperUsage}';
 }

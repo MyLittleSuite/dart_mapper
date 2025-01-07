@@ -52,7 +52,7 @@ class UsesAnalyzer extends Analyzer<Set<MapperUsage>> {
               returnType: method.returnType,
               functionName: method.name,
               parameters: method.parameters
-                  .map((param) => MappingParameter.from(param))
+                  .map(MappingParameter.from)
                   .toList(growable: false),
             ),
           );

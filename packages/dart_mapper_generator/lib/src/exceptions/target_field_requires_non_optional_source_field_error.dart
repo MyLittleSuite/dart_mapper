@@ -27,7 +27,7 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:source_gen/source_gen.dart';
 
 class TargetFieldRequiresNonOptionalSourceFieldError

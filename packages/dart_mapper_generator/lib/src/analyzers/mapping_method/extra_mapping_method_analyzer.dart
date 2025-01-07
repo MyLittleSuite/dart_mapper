@@ -23,21 +23,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/field_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
-import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/generated_private_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/internal_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
-import 'package:strings/strings.dart';
 
 class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
   final Analyzer<MappingBehavior> mappingBehaviorAnalyzer;
@@ -61,10 +59,11 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     final sourceFields = _getNestedFields(sourceField);
     final targetFields = _getNestedFields(targetField);
 
-    final mapperUsage = _findCorrectExternalUsage(
+    final mapperUsage = _findCorrectMethodUsage(
       context: context,
       source: source,
       target: target,
+      internally: false,
       sourceField: sourceField,
       targetField: targetField,
       sourceFields: sourceFields,
@@ -72,6 +71,20 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     );
     if (mapperUsage != null) {
       return ExternalMappingMethod(mapperUsage: mapperUsage);
+    }
+
+    final internalMapperUsage = _findCorrectMethodUsage(
+      context: context,
+      source: source,
+      target: target,
+      internally: true,
+      sourceField: sourceField,
+      targetField: targetField,
+      sourceFields: sourceFields,
+      targetFields: targetFields,
+    );
+    if (internalMapperUsage != null) {
+      return InternalMappingMethod(mapperUsage: internalMapperUsage);
     }
 
     if (targetField == null || sourceField == null) {
@@ -89,6 +102,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
           FieldsAnalyzerContext(
             mapperAnnotation: context.mapperAnnotation,
             mapperUsages: context.mapperUsages,
+            internalMapperUsages: context.internalMapperUsages,
             mapperClass: context.mapperClass,
             importAliases: context.importAliases,
             source: field,
@@ -110,19 +124,15 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
       FieldAnalyzerContext(
         mapperAnnotation: context.mapperAnnotation,
         mapperUsages: context.mapperUsages,
+        internalMapperUsages: context.internalMapperUsages,
         mapperClass: context.mapperClass,
         importAliases: context.importAliases,
         field: targetField,
       ),
     );
 
-    return InternalMappingMethod(
-      name: _generateUniqueName(
-        context,
-        [sourceField],
-        targetField.nullable,
-        targetField.type,
-      ),
+    return GeneratedPrivateMappingMethod(
+      context: context,
       returnType: targetField.type,
       parameters: [
         MappingParameter(
@@ -136,10 +146,11 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     );
   }
 
-  static MapperUsage? _findCorrectExternalUsage({
+  static MapperUsage? _findCorrectMethodUsage({
     required AnalyzerContext context,
     required Field source,
     required Field target,
+    required bool internally,
     Field? sourceField,
     Field? targetField,
     List<Field>? sourceFields,
@@ -148,6 +159,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     var mapperUsage = context.findUsage(
       target.type,
       [source.type],
+      internally: internally,
       useNullabilityForParams: false,
       useNullabilityForReturn: false,
     );
@@ -159,6 +171,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         ? context.findUsage(
             target.type,
             [sourceField.type],
+            internally: internally,
             useNullabilityForReturn: false,
           )
         : null;
@@ -170,6 +183,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         ? context.findUsage(
             target.type,
             sourceFields.map((field) => field.type).toList(growable: false),
+            internally: internally,
             useNullabilityForReturn: false,
           )
         : null;
@@ -181,6 +195,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         ? context.findUsage(
             targetField.type,
             [source.type],
+            internally: internally,
             useNullabilityForParams: false,
           )
         : null;
@@ -192,6 +207,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         ? context.findUsage(
             targetField.type,
             [sourceField.type],
+            internally: internally,
           )
         : null;
     if (mapperUsage != null) {
@@ -202,6 +218,7 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         ? context.findUsage(
             targetField.type,
             sourceFields.map((field) => field.type).toList(growable: false),
+            internally: internally,
           )
         : null;
     if (mapperUsage != null) {
@@ -226,30 +243,4 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         EnumField(:final values) => values,
         _ => [],
       };
-
-  static String _generateUniqueName(
-    FieldsAnalyzerContext context,
-    List<Field> parameters,
-    bool nullable,
-    DartType? returnType,
-  ) {
-    return [
-      '_map',
-      parameters
-          .map(
-            (param) => [
-              if (param.nullable) 'Nullable',
-              if (context.resolvePrefix(param.type) != null)
-                context.resolvePrefix(param.type)!.toCapitalised(),
-              param.type.humanReadable.toCapitalised(),
-            ].join(),
-          )
-          .join('And'),
-      'To',
-      if (nullable) 'Nullable',
-      if (returnType != null && context.resolvePrefix(returnType) != null)
-        context.resolvePrefix(returnType)!.toCapitalised(),
-      returnType?.humanReadable ?? 'Void',
-    ].join();
-  }
 }

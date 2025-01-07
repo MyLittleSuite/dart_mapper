@@ -24,10 +24,7 @@
  */
 
 import 'package:analyzer/dart/element/type.dart';
-import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
-import 'package:dart_mapper_generator/src/extensions/element.dart';
-import 'package:dart_mapper_generator/src/extensions/interface_element.dart';
 import 'package:dart_mapper_generator/src/models/field/enum_field.dart';
 import 'package:dart_mapper_generator/src/models/field/iterable_field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_field.dart';
@@ -63,8 +60,6 @@ abstract class Field {
     bool required = false,
     bool nullable = false,
   }) {
-    final genericTypes = type.asGenerics;
-
     if (type.isPrimitive) {
       return PrimitiveField(
         name: name,
@@ -78,118 +73,33 @@ abstract class Field {
         name: name,
         type: type,
         instance: instance,
-        item: genericTypes != null ? _buildGenericField(genericTypes[0]) : null,
         required: required,
         nullable: nullable,
       );
     } else if (type.isMap) {
-      final genericTypes = (type as ParameterizedType?)?.typeArguments;
-
       return MapField(
         name: name,
         type: type,
-        key: genericTypes != null ? _buildGenericField(genericTypes[0]) : null,
-        value:
-            genericTypes != null ? _buildGenericField(genericTypes[1]) : null,
         instance: instance,
         required: required,
         nullable: nullable,
       );
     } else if (type.isEnum) {
-      final values = type.element?.interfaceElementOrNull?.enumValues
-          .map(
-            (value) => PrimitiveField(
-              name: value.name,
-              type: type,
-              instance: Instance(name: type.displayString),
-              required: required,
-              nullable: nullable,
-            ),
-          )
-          .toList(growable: false);
-
       return EnumField(
         name: name,
         type: type,
-        values: values ?? [],
-        instance: instance,
-        required: required,
-        nullable: nullable,
-      );
-    } else {
-      final nestedFields = type.element?.classElementOrNull?.getters
-          .map(
-            (field) => Field.from(
-              name: field.name,
-              type: field.type,
-              instance: Instance(name: name),
-            ),
-          )
-          .toList(growable: false);
-
-      return NestedField(
-        name: name,
-        type: type,
-        fields: nestedFields ?? [],
         instance: instance,
         required: required,
         nullable: nullable,
       );
     }
-  }
 
-  static Field _buildGenericField(DartType type) {
-    final name = type.parameterName;
-    final instance = Instance(name: name);
-
-    if (type.isPrimitive) {
-      return PrimitiveField(
-        name: name,
-        type: type,
-        instance: instance,
-        required: true,
-        nullable: type.isNullable,
-      );
-    } else if (type.isEnum) {
-      final values = type.element?.interfaceElementOrNull?.enumValues
-          .map(
-            (value) => PrimitiveField(
-              name: value.name,
-              type: type,
-              instance: Instance(name: type.displayString),
-              required: true,
-              nullable: type.isNullable,
-            ),
-          )
-          .toList(growable: false);
-
-      return EnumField(
-        name: name,
-        type: type,
-        values: values ?? [],
-        instance: instance,
-        required: true,
-        nullable: type.isNullable,
-      );
-    } else {
-      final nestedFields = type.element?.classElementOrNull?.getters
-          .map(
-            (field) => Field.from(
-              name: field.name,
-              type: field.type,
-              instance: instance,
-              required: true,
-              nullable: field.type.isNullable,
-            ),
-          )
-          .toList(growable: false);
-
-      return NestedField(
-        name: name,
-        type: type,
-        fields: nestedFields ?? [],
-        nullable: type.isNullable,
-      );
-    }
+    return NestedField(
+      name: name,
+      type: type,
+      instance: instance,
+      required: required,
+      nullable: nullable,
+    );
   }
 }

@@ -29,7 +29,7 @@ import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/expressions.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
@@ -109,7 +109,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
     );
   }
 
-  Expression _buildExpression(InternalMappingMethod method, Binding binding) =>
+  Expression _buildExpression(BindableMappingMethod method, Binding binding) =>
       expressionStrategyDispatcher.get(method.behavior).create(
             ExpressionContext(
               field: binding.source,

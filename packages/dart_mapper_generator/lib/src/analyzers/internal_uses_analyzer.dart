@@ -23,38 +23,30 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper_generator/src/extensions/class_element.dart';
-import 'package:dart_mapper_generator/src/extensions/element.dart';
-import 'package:dart_mapper_generator/src/models/field/field.dart';
-import 'package:dart_mapper_generator/src/models/instance.dart';
+import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
+import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
-class NestedField extends Field {
-  const NestedField({
-    required super.name,
-    required super.type,
-    super.instance,
-    super.required = false,
-    super.nullable = false,
-  });
-
-  List<Field> get fields =>
-      type.element?.classElementOrNull?.getters
-          .map((field) => Field.from(
-                name: field.name,
-                type: field.type,
-                instance: Instance(name: name),
-                required: field.isRequired,
-                nullable: field.isNullable,
-              ))
-          .toList(growable: false) ??
-      [];
-
+class InternalUsesAnalyzer extends Analyzer<Set<MapperUsage>> {
   @override
-  String toString() => 'NestedField{'
-      'name: $name, '
-      'type: $type, '
-      'required: $required, '
-      'nullable: $nullable, '
-      'instance: $instance'
-      '}';
+  Set<MapperUsage> analyze(AnalyzerContext context) {
+    final results = <MapperUsage>{};
+
+    for (final method in context.mapperClass.methods) {
+      results.add(
+        MapperUsage(
+          mapperName: 'this',
+          mapperType: context.mapperClass.thisType,
+          returnType: method.returnType,
+          functionName: method.name,
+          parameters: method.parameters
+              .map(MappingParameter.from)
+              .toList(growable: false),
+        ),
+      );
+    }
+
+    return results;
+  }
 }

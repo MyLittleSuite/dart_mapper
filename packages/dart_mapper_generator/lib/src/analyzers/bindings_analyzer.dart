@@ -36,20 +36,22 @@ import 'package:dart_mapper_generator/src/models/mapper/constructor/mapper_const
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_instance_field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/intenal_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/defined_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 
 class BindingsAnalyzer extends Analyzer<Bindings> {
   final Analyzer<Set<MapperUsage>> mapperUsageAnalyzer;
+  final Analyzer<Set<MapperUsage>> internalMapperUsageAnalyzer;
   final Analyzer<MappingBehavior> mappingBehaviorAnalyzer;
   final StrategyDispatcher<MappingBehavior, Analyzer<List<Binding>>>
       mappingMethodDispatcher;
 
   BindingsAnalyzer({
     required this.mapperUsageAnalyzer,
+    required this.internalMapperUsageAnalyzer,
     required this.mappingBehaviorAnalyzer,
     required this.mappingMethodDispatcher,
   });
@@ -57,6 +59,7 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
   @override
   Bindings analyze(AnalyzerContext context) {
     final mapperUsages = mapperUsageAnalyzer.analyze(context);
+    final internalMapperUsages = internalMapperUsageAnalyzer.analyze(context);
 
     final mappingMethods = context.mappingMethods.fold(
       <MappingMethod>[],
@@ -67,6 +70,7 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
             mapperClass: context.mapperClass,
             importAliases: context.importAliases,
             mapperUsages: mapperUsages,
+            internalMapperUsages: internalMapperUsages,
             method: method,
           ),
         );
@@ -78,11 +82,12 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
               mapperClass: context.mapperClass,
               importAliases: context.importAliases,
               mapperUsages: mapperUsages,
+              internalMapperUsages: internalMapperUsages,
               method: method,
             ));
 
         return accumulator
-          ..add(InternalMappingMethod(
+          ..add(DefinedMappingMethod(
             name: method.name,
             isOverride: true,
             returnType: method.returnType,
