@@ -11,4 +11,3 @@ A simple library to map Dart objects.
 - [ ] Add support for reuse config from other mapping method.
 - [ ] Add Error reporting for nested object import in the mapper file.
 - [ ] Add support for complex Map object mappings.
-- [ ] Add support for circular object mappings.

@@ -1,3 +1,9 @@
+## 0.5.0
+
+- Add support for import aliases during the generation of mapping methods.
+- Add support for circular object mapping, via lazy analysis.
+- Introduce reusing of user-defined method during the generation of mapping methods.
+ 
 ## 0.4.0
 
 - Enhance error handling.
