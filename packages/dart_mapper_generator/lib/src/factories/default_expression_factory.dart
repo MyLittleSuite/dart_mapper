@@ -65,10 +65,13 @@ class DefaultExpressionFactory extends ExpressionFactory {
 
   Expression _createIterable(ExpressionContext context, IterableField field) {
     final basicExpression = super.basic(context);
+    if (context.extraMappingMethod?.returnType == field.type) {
+      return refer(context.extraMappingMethod!.name).call([basicExpression]);
+    }
+
     final mapProperty = field.nullable
         ? basicExpression.nullSafeProperty('map')
         : basicExpression.property('map');
-
     final cloneExpression = mapProperty.call([
       Method(
         (b) {
