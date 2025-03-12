@@ -30,18 +30,22 @@ part 'parent_child.g.dart';
 class ParentTarget {
   final ChildTarget childTarget;
   final List<ChildTarget> childrenTarget;
+  final List<AnotherChildTarget> anotherChildrenTarget;
   final ChildTarget? nullableChildTarget;
   final List<ChildTarget?> nullableChildrenTarget;
+  final List<AnotherChildTarget>? nullableAnotherChildrenTarget;
   final String parentProperty;
   final String? ignoredProperty;
 
   ParentTarget(
     this.childTarget,
     this.childrenTarget,
+    this.anotherChildrenTarget,
     this.parentProperty,
     this.ignoredProperty, {
     this.nullableChildTarget,
     this.nullableChildrenTarget = const [],
+    this.nullableAnotherChildrenTarget,
   });
 }
 
@@ -52,21 +56,31 @@ class ChildTarget {
   ChildTarget(this.property, this.ignoredProperty);
 }
 
+class AnotherChildTarget {
+  final String property;
+
+  AnotherChildTarget(this.property);
+}
+
 class ParentSource {
   final ChildSource childSource;
   final List<ChildSource> childrenSource;
+  final List<AnotherChildSource> anotherChildrenSource;
   final ChildSource? nullableChildSource;
   final List<ChildSource?> nullableChildrenSource;
+  final List<AnotherChildSource>? nullableAnotherChildrenSource;
   final String parentProperty;
   final String? ignoredProperty;
 
   ParentSource(
     this.childSource,
     this.childrenSource,
+    this.anotherChildrenSource,
     this.parentProperty,
     this.ignoredProperty, {
     this.nullableChildSource,
     this.nullableChildrenSource = const [],
+    this.nullableAnotherChildrenSource,
   });
 }
 
@@ -77,11 +91,24 @@ class ChildSource {
   ChildSource(this.property, this.ignoredProperty);
 }
 
+class AnotherChildSource {
+  final String property;
+
+  AnotherChildSource(this.property);
+}
+
 @Mapper()
 abstract class ChildMapper {
   ChildTarget toChildTarget(ChildSource model);
 
   ChildTarget? toChildTargetNullable(ChildSource? model);
+
+  AnotherChildTarget toAnotherChildTarget(AnotherChildSource model);
+
+  List<AnotherChildTarget> toAnotherChildTargets(
+    List<AnotherChildSource> models,
+  ) =>
+      models.map(toAnotherChildTarget).toList(growable: true);
 }
 
 @Mapper(uses: {ChildMapper})
@@ -90,8 +117,13 @@ abstract class ParentMapper {
 
   @Mapping(target: 'childTarget', source: 'childSource')
   @Mapping(target: 'childrenTarget', source: 'childrenSource')
+  @Mapping(target: 'anotherChildrenTarget', source: 'anotherChildrenSource')
   @Mapping(target: 'nullableChildTarget', source: 'nullableChildSource')
   @Mapping(target: 'nullableChildrenTarget', source: 'nullableChildrenSource')
+  @Mapping(
+    target: 'nullableAnotherChildrenTarget',
+    source: 'nullableAnotherChildrenSource',
+  )
   @Mapping(target: 'ignoredProperty', ignore: true)
   @Mapping(target: 'childSource.ignoredProperty', ignore: true)
   @Mapping(target: 'childrenSource.ignoredProperty', ignore: true)
