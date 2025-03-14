@@ -8,7 +8,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Analyze ${{ matrix.platform }}
+    name: Analyze ${{ matrix.working-directory }}
     strategy:
       matrix:
         working-directory:
@@ -24,7 +24,7 @@ jobs:
       working-directory: ${{ matrix.working-directory }}
 
   test:
-    name: Test ${{ matrix.platform }}
+    name: Test ${{ matrix.working-directory }}
     strategy:
       matrix:
         working-directory:
@@ -32,7 +32,7 @@ jobs:
           - packages/dart_mapper_generator
     uses: ./.github/workflows/test.yml
     with:
-      platform: ${{ matrix.platform }}
+      working-directory: ${{ matrix.working-directory }}
 
   publish:
     name: Publish
