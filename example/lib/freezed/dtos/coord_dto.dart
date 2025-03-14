@@ -31,7 +31,9 @@ part 'coord_dto.g.dart';
 
 /// The CoordDTO
 @freezed
-class CoordDTO extends DTO with _$CoordDTO {
+abstract class CoordDTO extends DTO with _$CoordDTO {
+  const CoordDTO._();
+
   /// The helper factory method to generate the CoordDTO constructor
   factory CoordDTO({
     required double lat,

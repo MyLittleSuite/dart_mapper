@@ -1,0 +1,24 @@
+name: Run Tests
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: true
+        type: string
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup dart env
+        uses: ./.github/actions/dart
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+      - name: Test
+        run: dart test
+        working-directory: ${{ inputs.working-directory }}

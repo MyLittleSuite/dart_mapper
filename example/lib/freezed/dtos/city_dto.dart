@@ -32,7 +32,9 @@ part 'city_dto.g.dart';
 
 /// The CityDTO
 @freezed
-class CityDTO extends DTO with _$CityDTO {
+abstract class CityDTO extends DTO with _$CityDTO {
+  const CityDTO._();
+
   /// The helper factory method to generate the CityDTO constructor
   factory CityDTO({
     required int id,

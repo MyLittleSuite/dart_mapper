@@ -29,7 +29,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'review.freezed.dart';
 
 @freezed
-class Review with _$Review {
+abstract class Review with _$Review {
+  const Review._();
+
   const factory Review({
     required String id,
     String? text,

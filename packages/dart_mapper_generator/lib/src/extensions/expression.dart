@@ -30,7 +30,11 @@ extension ExpressionExtension on Expression {
       assign(literal('')).greaterThan(literal(expression));
 
   Expression conditionalNull(Expression whenTrue) =>
-      notEqualTo(literalNull).conditional(literal(whenTrue), literalNull);
+      isNotNull.conditional(literal(whenTrue), literalNull);
+
+  Expression get isNull => equalTo(literal(null));
+
+  Expression get isNotNull => notEqualTo(literal(null));
 
   Expression propertyToList({bool growable = true}) =>
       property('toList').call([], {'growable': literal(growable)});

@@ -1,0 +1,41 @@
+name: Run Analyze
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: true
+        type: string
+      flutter:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup dart env
+        if: ${{ !inputs.flutter }}
+        uses: ./.github/actions/dart
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+      - name: Setup flutter env
+        if: ${{ inputs.flutter }}
+        uses: ./.github/actions/flutter
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+      - name: Analyze (dart)
+        if: ${{ !inputs.flutter }}
+        run: dart analyze
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Analyze (flutter)
+        if: ${{ inputs.flutter }}
+        run: fvm flutter analyze
+        working-directory: ${{ inputs.working-directory }}

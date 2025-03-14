@@ -1,12 +1,12 @@
-name: release
+name: Publish
 
 on:
-  push:
-    tags:
-      - '*.*.*'
+  workflow_call:
+
 
 jobs:
   dart_runner:
+    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       id-token: write
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
@@ -14,6 +14,7 @@ jobs:
       working-directory: packages/dart_mapper
 
   dart_mapper_generator:
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - dart_runner
     permissions:

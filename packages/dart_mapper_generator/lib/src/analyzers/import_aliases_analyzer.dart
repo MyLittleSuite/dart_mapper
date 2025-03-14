@@ -34,7 +34,8 @@ class ImportAliasesAnalyzer extends Analyzer<Map<Uri, String>> {
 
   @override
   Map<Uri, String> analyze(AnalyzerContext context) {
-    final imports = context.mapperClass.library.libraryImports;
+    final imports =
+        context.mapperClass.library.definingCompilationUnit.libraryImports;
 
     return imports
         .where((e) => e.prefix != null && e.uri is DirectiveUriWithSource)

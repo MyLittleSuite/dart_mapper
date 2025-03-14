@@ -86,6 +86,8 @@ class DartMapperGenerator extends GeneratorForAnnotation<Mapper> {
     );
 
     final emitter = DartEmitter(useNullSafetySyntax: true);
-    return DartFormatter().format(library.accept(emitter).toString());
+    return DartFormatter(
+      languageVersion: DartFormatter.latestShortStyleLanguageVersion,
+    ).format(library.accept(emitter).toString());
   }
 }

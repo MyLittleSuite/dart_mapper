@@ -28,7 +28,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'credentials.freezed.dart';
 
 @freezed
-class Credentials with _$Credentials {
+abstract class Credentials with _$Credentials {
+  const Credentials._();
+
   const factory Credentials.anon() = AnonCredentials;
 
   const factory Credentials.user({

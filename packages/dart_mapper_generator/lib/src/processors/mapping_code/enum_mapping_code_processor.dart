@@ -27,6 +27,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/expressions.dart';
+import 'package:dart_mapper_generator/src/misc/strings.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/defined_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
@@ -109,7 +110,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
         } else {
           builder.addExpression(
             throwArgumentError(
-              'Unknown value for enum ${targetEnum.getDisplayString(withNullability: false)}: \${${sourceField.name}}',
+              'Unknown value for enum ${targetEnum.getDisplayString(withNullability: false)}: {${interpolate(sourceField.name)}}',
             ),
           );
         }

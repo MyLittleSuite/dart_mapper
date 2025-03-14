@@ -27,3 +27,8 @@
 
 String chainDot(Iterable<Object?> parts) =>
     parts.where((part) => part != null).join('.');
+
+String interpolate(Object object) {
+  final string = object.toString();
+  return string.contains('.') ? '\${$string}' : '\$$string';
+}

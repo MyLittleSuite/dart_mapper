@@ -25,6 +25,7 @@
 
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 
@@ -51,10 +52,10 @@ class BuiltExpressionFactory extends ExpressionFactory {
         );
 
         return (context.field.nullable)
-            ? basicExpression.notEqualTo(literalNull).conditional(
-                  cloneExpression,
-                  literalNull,
-                )
+            ? basicExpression.isNotNull.conditional(
+                cloneExpression,
+                literalNull,
+              )
             : cloneExpression;
       }
     }
