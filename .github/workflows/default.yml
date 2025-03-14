@@ -22,6 +22,7 @@ jobs:
     uses: ./.github/workflows/analyze.yml
     with:
       working-directory: ${{ matrix.working-directory }}
+      flutter: ${{ matrix.flutter }}
 
   test:
     name: Test ${{ matrix.working-directory }}
