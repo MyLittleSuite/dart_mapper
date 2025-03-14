@@ -37,5 +37,5 @@ jobs:
 
       - name: Analyze (flutter)
         if: ${{ inputs.flutter }}
-        run: flutter analyze
+        run: fvm flutter analyze
         working-directory: ${{ inputs.working-directory }}
