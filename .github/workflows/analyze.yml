@@ -33,11 +33,9 @@ jobs:
       - name: Analyze (dart)
         if: ${{ !inputs.flutter }}
         run: dart analyze
-        with:
-          working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
 
       - name: Analyze (flutter)
         if: ${{ inputs.flutter }}
         run: flutter analyze
-        with:
-          working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
