@@ -13,7 +13,7 @@ runs:
 
     - name: Install fvm
       shell: bash
-      run: pub global activate fvm
+      run: dart pub global activate fvm
 
     - name: Install Flutter
       shell: bash
