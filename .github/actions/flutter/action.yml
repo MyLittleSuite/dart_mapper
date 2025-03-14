@@ -8,6 +8,7 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # TODO: https://github.com/kuhnroyal/flutter-fvm-config-action/issues/36
     - name: Setup Dart
       uses: dart-lang/setup-dart@v1
 
