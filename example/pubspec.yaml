@@ -14,7 +14,7 @@ dependencies:
 
 dev_dependencies:
   build_runner: ^2.4.8
-  freezed: ^2.5.7
+  freezed: ^3.0.0
   dart_mapper_generator: any
   built_value_generator: ^8.9.2
   json_serializable: ^6.9.0
