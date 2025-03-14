@@ -16,8 +16,7 @@ jobs:
 
       - name: Setup dart env
         uses: ./.github/actions/dart
-        with:
-          working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
 
       - name: Test
         run: dart test

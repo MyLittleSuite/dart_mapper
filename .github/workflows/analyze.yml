@@ -21,14 +21,12 @@ jobs:
       - name: Setup dart env
         if: ${{ !inputs.flutter }}
         uses: ./.github/actions/dart
-        with:
-          working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
 
       - name: Setup flutter env
         if: ${{ inputs.flutter }}
         uses: ./.github/actions/flutter
-        with:
-          working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}
 
       - name: Analyze (dart)
         if: ${{ !inputs.flutter }}
