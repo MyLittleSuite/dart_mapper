@@ -1,11 +1,18 @@
 name: Setup Flutter Environment and Get Dependencies
 
+inputs:
+  working-directory:
+    description: 'The working directory of the project'
+    required: true
+
 runs:
   using: "composite"
   steps:
     - name: Setup Dart
       uses: dart-lang/setup-dart@v1
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Get dart dependencies
       shell: bash
       run: dart pub get
+      working-directory: ${{ inputs.working-directory }}
