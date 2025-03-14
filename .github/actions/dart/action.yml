@@ -10,7 +10,6 @@ runs:
   steps:
     - name: Setup Dart
       uses: dart-lang/setup-dart@v1
-      working-directory: ${{ inputs.working-directory }}
 
     - name: Get dart dependencies
       shell: bash

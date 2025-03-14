@@ -10,7 +10,6 @@ runs:
   steps:
     - name: Install Flutter
       uses: kuhnroyal/flutter-fvm-config-action/setup@v3
-      working-directory: ${{ inputs.working-directory }}
 
     - name: Get flutter dependencies
       shell: bash
