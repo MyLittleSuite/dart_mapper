@@ -37,7 +37,7 @@ enum AlertType {
 }
 
 @freezed
-class Alert with _$Alert {
+abstract class Alert with _$Alert {
   const Alert._();
 
   const factory Alert({

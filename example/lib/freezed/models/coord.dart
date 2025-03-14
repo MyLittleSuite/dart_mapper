@@ -29,7 +29,9 @@ part 'coord.freezed.dart';
 
 /// The Coord model
 @freezed
-class Coord with _$Coord {
+abstract class Coord with _$Coord {
+  const Coord._();
+
   /// The helper factory method to generate the Coord constructor
   factory Coord({
     required double lat,

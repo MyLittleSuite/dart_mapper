@@ -1,0 +1,11 @@
+name: Setup Flutter Environment and Get Dependencies
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Dart
+      uses: dart-lang/flutter-dart@v1
+
+    - name: Get dart dependencies
+      shell: bash
+      run: dart pub get

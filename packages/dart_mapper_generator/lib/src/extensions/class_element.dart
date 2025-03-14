@@ -56,17 +56,11 @@ extension ClassElementExtension on ClassElement {
         .map((element) => element.element)
         .toList(growable: false);
 
-    final allAccessors = allSuperclasses.expand((element) => element.accessors);
-    final accessorMap = {
-      for (final accessor in allAccessors) accessor.displayName: accessor
-    };
-
     return [
       ...fields,
-      ...allSuperclasses.expand((element) => element.fields).where((field) {
-        final abstract = accessorMap[field.displayName]?.isAbstract ?? false;
-        return !field.isStatic && !field.isConst && !abstract;
-      }),
+      ...allSuperclasses
+          .expand((element) => element.fields)
+          .where((field) => !field.isStatic && !field.isConst),
     ]
         .where((element) => !_ignoreGetters.contains(element.name))
         .toList(growable: false);

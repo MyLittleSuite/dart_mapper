@@ -1,0 +1,42 @@
+name: Pipeline
+
+on: push
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.platform }}
+    strategy:
+      matrix:
+        working-directory:
+          - example
+          - packages/dart_mapper
+          - packages/dart_mapper_generator
+        include:
+          - flutter: false
+          - flutter: true
+            working-directory: example
+    uses: ./.github/workflows/analyze.yml
+    with:
+      working-directory: ${{ matrix.working-directory }}
+
+  test:
+    name: Test ${{ matrix.platform }}
+    strategy:
+      matrix:
+        working-directory:
+          - packages/dart_mapper
+          - packages/dart_mapper_generator
+    uses: ./.github/workflows/test.yml
+    with:
+      platform: ${{ matrix.platform }}
+
+  publish:
+    name: Publish
+    needs:
+      - analyze
+      - test
+    uses: ./.github/workflows/publish.yml
