@@ -12,7 +12,7 @@ dependencies:
   analyzer: ^6.3.0
   build: ^2.4.1
   code_builder: ^4.10.0
-  dart_style: ^2.3.4
+  dart_style: ^3.0.0
   dart_mapper: ^0.5.0
   source_gen: ^2.0.0
   strings: ^3.1.2
