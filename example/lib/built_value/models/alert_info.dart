@@ -66,6 +66,7 @@ abstract class AlertInfo implements Built<AlertInfo, AlertInfoBuilder> {
 
   AlertInfo._();
 
+  // ignore: use_function_type_syntax_for_parameters
   factory AlertInfo([void updates(AlertInfoBuilder b)]) = _$AlertInfo;
 
   @BuiltValueHook(initializeBuilder: true)

@@ -106,15 +106,17 @@ abstract class ExpressionFactory {
   ) {
     final field = context.field;
     final counterpart = context.counterpartField;
+    final fallback = field.nullable ? literal('') : null;
 
     if (counterpart.type.isDateTime) {
-      return basic.stringToDateTime(nullable: field.nullable);
+      return basic.stringToDateTime(
+          nullable: field.nullable, fallback: fallback);
     } else if (counterpart.type.isDartCoreInt) {
-      return basic.stringToInt(nullable: field.nullable);
+      return basic.stringToInt(nullable: field.nullable, fallback: fallback);
     } else if (counterpart.type.isDartCoreDouble) {
-      return basic.stringToDouble(nullable: field.nullable);
+      return basic.stringToDouble(nullable: field.nullable, fallback: fallback);
     } else if (counterpart.type.isDartCoreNum) {
-      return basic.stringToNum(nullable: field.nullable);
+      return basic.stringToNum(nullable: field.nullable, fallback: fallback);
     }
 
     return basic;

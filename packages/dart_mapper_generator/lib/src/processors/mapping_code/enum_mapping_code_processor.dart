@@ -25,6 +25,7 @@
 
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.dart';
+import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/expressions.dart';
 import 'package:dart_mapper_generator/src/misc/strings.dart';
@@ -55,7 +56,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
       _ => [],
     };
 
-    final targetEnum = method.returnType;
+    final targetEnum = method.returnType?.element?.interfaceElementOrNull;
     if (targetEnum == null) {
       throw UnknownReturnTypeError(
         mapperClass: context.mapperClass,
@@ -67,54 +68,49 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
     final expressionFactory = expressionStrategyDispatcher.get(method.behavior);
 
     return Block(
-      (builder) {
-        if (sourceField.nullable) {
-          if (method.optionalReturn) {
-            builder.addExpression(earlyReturnIfNull(sourceField.name));
-          } else {
-            builder.addExpression(throwArgumentErrorIfNull(sourceField.name));
-          }
-        }
+      (b) => b
+        ..addExpression(
+          returnSwitch(
+            refer(sourceField.name),
+            cases: [
+              if (sourceField.nullable)
+                (
+                  literal(null),
+                  method.optionalReturn
+                      ? literal(null)
+                      : throwArgumentErrorNotNull(sourceField.name),
+                ),
+              ...methodBindings.map((binding) {
+                final sourceValue = expressionFactory.create(
+                  ExpressionContext(
+                    field: binding.source,
+                    origin: FieldOrigin.source,
+                    counterpartField: binding.target,
+                    currentMethod: method,
+                    importAliases: context.importAliases,
+                  ),
+                );
+                final targetValue = expressionFactory.create(
+                  ExpressionContext(
+                    field: binding.target,
+                    origin: FieldOrigin.target,
+                    counterpartField: binding.source,
+                    currentMethod: method,
+                    importAliases: context.importAliases,
+                  ),
+                );
 
-        for (final binding in methodBindings) {
-          final sourceValue = expressionFactory.create(
-            ExpressionContext(
-              field: binding.source,
-              origin: FieldOrigin.source,
-              counterpartField: binding.target,
-              currentMethod: method,
-              importAliases: context.importAliases,
-            ),
-          );
-          final targetValue = expressionFactory.create(
-            ExpressionContext(
-              field: binding.target,
-              origin: FieldOrigin.target,
-              counterpartField: binding.source,
-              currentMethod: method,
-              importAliases: context.importAliases,
-            ),
-          );
-
-          builder.addExpression(
-            ifValueReturns(
-              sourceField.name,
-              sourceValue,
-              targetValue,
-            ),
-          );
-        }
-
-        if (method.optionalReturn) {
-          builder.addExpression(literalNull.returned);
-        } else {
-          builder.addExpression(
-            throwArgumentError(
-              'Unknown value for enum ${targetEnum.getDisplayString(withNullability: false)}: {${interpolate(sourceField.name)}}',
-            ),
-          );
-        }
-      },
+                return (sourceValue, targetValue);
+              }),
+            ],
+            ignoreUnreachableCode: true,
+            otherwise: method.optionalReturn
+                ? literal(null)
+                : throwArgumentError(
+                    'Unknown value for enum ${targetEnum.getDisplayString()}: {${interpolate(sourceField.name)}}',
+                  ),
+          ).returned,
+        ),
     );
   }
 }

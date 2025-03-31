@@ -26,8 +26,13 @@
 import 'package:code_builder/code_builder.dart';
 
 extension ExpressionExtension on Expression {
-  Expression arrowReturn(Expression expression) =>
-      assign(literal('')).greaterThan(literal(expression));
+  Expression arrowReturn(Expression expression) => CodeExpression(
+        Block.of([
+          code,
+          Code('=>'),
+          expression.code,
+        ]),
+      );
 
   Expression conditionalNull(Expression whenTrue) =>
       isNotNull.conditional(literal(whenTrue), literalNull);
@@ -47,36 +52,36 @@ extension ExpressionExtension on Expression {
         .call([]);
   }
 
-  Expression stringToDateTime({bool nullable = false}) {
+  Expression stringToDateTime({bool nullable = false, Expression? fallback}) {
     final dateTimeRefer = refer('DateTime');
     return (nullable
             ? dateTimeRefer.property('tryParse')
             : dateTimeRefer.property('parse'))
-        .call([nullable ? ifNullThen(literal('')) : this]);
+        .call([fallback != null ? ifNullThen(fallback) : this]);
   }
 
-  Expression stringToInt({bool nullable = false}) {
+  Expression stringToInt({bool nullable = false, Expression? fallback}) {
     final intRefer = refer('int');
     return (nullable
             ? intRefer.property('tryParse')
             : intRefer.property('parse'))
-        .call([nullable ? ifNullThen(literal('')) : this]);
+        .call([fallback != null ? ifNullThen(fallback) : this]);
   }
 
-  Expression stringToDouble({bool nullable = false}) {
+  Expression stringToDouble({bool nullable = false, Expression? fallback}) {
     final doubleRefer = refer('double');
     return (nullable
             ? doubleRefer.property('tryParse')
             : doubleRefer.property('parse'))
-        .call([nullable ? ifNullThen(literal('')) : this]);
+        .call([fallback != null ? ifNullThen(fallback) : this]);
   }
 
-  Expression stringToNum({bool nullable = false}) {
+  Expression stringToNum({bool nullable = false, Expression? fallback}) {
     final numRefer = refer('num');
     return (nullable
             ? numRefer.property('tryParse')
             : numRefer.property('parse'))
-        .call([nullable ? ifNullThen(literal('')) : this]);
+        .call([fallback != null ? ifNullThen(fallback) : this]);
   }
 
   Expression propertyToString({bool nullable = false}) {

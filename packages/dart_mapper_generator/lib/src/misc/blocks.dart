@@ -23,23 +23,37 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:built_value/built_value.dart';
+import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/extensions/expression.dart';
 
-part 'user_dto.g.dart';
+Block ifStatement(
+  Expression condition, {
+  required Block then,
+  Block? otherwise,
+}) =>
+    Block((b) {
+      b.statements.addAll([
+        Code('if'),
+        condition.parenthesized.code,
+        Code('{'),
+      ]);
+      b.statements.addAll(
+        then.statements.map((statement) => Block.of([statement, Code(';')])),
+      );
+      b.statements.add(Code('}'));
 
-@BuiltValue()
-abstract class UserDTO implements Built<UserDTO, UserDTOBuilder> {
-  @BuiltValueField(wireName: r'id')
-  String get id;
+      if (otherwise != null) {
+        b.statements.addAll([
+          Code('else {'),
+          ...otherwise.statements.map(
+            (statement) => Block.of([statement, Code(';')]),
+          ),
+          Code('}'),
+        ]);
+      }
+    });
 
-  @BuiltValueField(wireName: r'username')
-  String? get username;
-
-  UserDTO._();
-
-  // ignore: use_function_type_syntax_for_parameters
-  factory UserDTO([void updates(UserDTOBuilder b)]) = _$UserDTO;
-
-  @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(UserDTOBuilder b) => b;
-}
+Block earlyReturnIfNull(String name) => ifStatement(
+      refer(name).isNull,
+      then: Block.of([literal(null).returned.code]),
+    );

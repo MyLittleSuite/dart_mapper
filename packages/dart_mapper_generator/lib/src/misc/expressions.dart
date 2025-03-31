@@ -24,31 +24,45 @@
  */
 
 import 'package:code_builder/code_builder.dart';
-
-Expression earlyReturnIfNull(String name) =>
-    CodeExpression(Code('if ($name == null) return null'));
-
-Expression throwArgumentErrorIfNull(String name) => CodeExpression(
-      Code(
-        'if ($name == null) throw ArgumentError.notNull(\'The argument \$$name must not be null.\')',
-      ),
-    );
+import 'package:dart_mapper_generator/src/extensions/expression.dart';
 
 Expression throwArgumentError(String message) =>
-    CodeExpression(Code('throw ArgumentError(\'$message\')'));
+    refer('ArgumentError').call([literal(message)]).thrown;
 
-Expression ifValueReturns(
-        String name, Expression rightSize, Expression returnValue) =>
-    CodeExpression(Block.of(
-      [
-        Code('if ('),
-        Code(name),
-        Code('=='),
-        rightSize.code,
-        Code(')'),
-        returnValue.returned.code,
-      ],
-    ));
+Expression throwArgumentErrorNotNull(String name) => refer('ArgumentError')
+    .property('notNull')
+    .call([literal('The argument \$$name must not be null.')]).thrown;
+
+Expression returnSwitch(
+  Expression condition, {
+  required Iterable<(Expression, Expression)> cases,
+  Expression? otherwise,
+  bool ignoreUnreachableCode = false,
+}) =>
+    CodeExpression(Block((b) {
+      b.statements.addAll([
+        Code('switch'),
+        condition.parenthesized.code,
+        Code('{'),
+      ]);
+
+      for (final element in cases) {
+        b.statements.addAll([
+          element.$1.arrowReturn(element.$2).code,
+          Code(','),
+        ]);
+      }
+
+      if (otherwise != null) {
+        b.statements.addAll([
+          if (ignoreUnreachableCode) Code('// ignore:unreachable_switch_case'),
+          refer('_').arrowReturn(otherwise).code,
+          Code(','),
+        ]);
+      }
+
+      b.statements.add(Code('}'));
+    }));
 
 Expression builderClosure(List<(String, Expression)> expressions) {
   Expression closure = CodeExpression(Code('(b) => b'));
