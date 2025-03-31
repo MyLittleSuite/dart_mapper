@@ -27,6 +27,7 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/misc/strings.dart';
 
 mixin AliasesMixin {
@@ -38,7 +39,10 @@ mixin AliasesMixin {
   String resolveType(DartType type, {bool withNullability = false}) =>
       chainDot([
         importAliases?[type.element?.librarySource?.uri],
-        type.getDisplayString(withNullability: withNullability),
+        chain([
+          type.displayString,
+          if (withNullability) '?',
+        ]),
       ]);
 
   String resolveConstructor(ConstructorElement constructor) => chainDot([

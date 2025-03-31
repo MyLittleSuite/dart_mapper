@@ -25,6 +25,9 @@
  *
  */
 
+String chain(Iterable<Object?> parts) =>
+    parts.where((part) => part != null).join();
+
 String chainDot(Iterable<Object?> parts) =>
     parts.where((part) => part != null).join('.');
 
