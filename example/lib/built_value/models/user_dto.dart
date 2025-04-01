@@ -37,6 +37,7 @@ abstract class UserDTO implements Built<UserDTO, UserDTOBuilder> {
 
   UserDTO._();
 
+  // ignore: use_function_type_syntax_for_parameters
   factory UserDTO([void updates(UserDTOBuilder b)]) = _$UserDTO;
 
   @BuiltValueHook(initializeBuilder: true)

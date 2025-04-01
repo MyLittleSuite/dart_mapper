@@ -30,7 +30,9 @@ part 'city.freezed.dart';
 
 /// The City model
 @freezed
-class City with _$City {
+abstract class City with _$City {
+  const City._();
+
   /// The helper factory method to generate the City constructor
   factory City({
     required int id,

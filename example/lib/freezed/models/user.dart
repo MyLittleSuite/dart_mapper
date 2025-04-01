@@ -29,6 +29,8 @@ part 'user.freezed.dart';
 
 @freezed
 sealed class User with _$User {
+  const User._();
+
   const factory User({
     required String name,
     required String password,

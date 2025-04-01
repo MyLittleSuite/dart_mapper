@@ -31,15 +31,16 @@ import 'package:built_value/serializer.dart';
 part 'built_enum.g.dart';
 
 class BuiltEnum extends EnumClass {
-  @BuiltValueEnumConst(wireName: r'WALK')
-  static const BuiltEnum WALK = _$WALK;
-  @BuiltValueEnumConst(wireName: r'BUS')
-  static const BuiltEnum BUS = _$BUS;
-  @BuiltValueEnumConst(wireName: r'UNKNOWN', fallback: true)
-  static const BuiltEnum UNKNOWN = _$UNKNOWN;
+  @BuiltValueEnumConst(wireName: r'walk')
+  static const BuiltEnum walk = _$WALK;
+  @BuiltValueEnumConst(wireName: r'bus')
+  static const BuiltEnum bus = _$BUS;
+  @BuiltValueEnumConst(wireName: r'unknown', fallback: true)
+  static const BuiltEnum unknown = _$UNKNOWN;
 
   static Serializer<BuiltEnum> get serializer => _$builtEnumSerializer;
 
+  // ignore: use_super_parameters
   const BuiltEnum._(String name) : super(name);
 
   static BuiltSet<BuiltEnum> get values => _$values;

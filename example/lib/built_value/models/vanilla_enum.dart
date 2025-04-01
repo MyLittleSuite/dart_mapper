@@ -25,4 +25,4 @@
  *
  */
 
-enum VanillaEnum { WALK, BUS, UNKNOWN }
+enum VanillaEnum { walk, bus, unknown }

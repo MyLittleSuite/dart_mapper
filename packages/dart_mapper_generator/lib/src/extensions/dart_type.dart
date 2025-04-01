@@ -24,6 +24,7 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:strings/strings.dart';
@@ -61,17 +62,16 @@ extension DartTypeExtension on DartType {
     return null;
   }
 
-  String get humanReadable => getDisplayString(withNullability: false)
+  String get humanReadable => displayString
       .replaceAll('<', 'Of')
       .replaceAll('>', '')
       .replaceAll(', ', 'And');
 
-  String get className => getDisplayString(withNullability: false)
-      .replaceAll(RegExp(r'<[^]*>?'), '');
+  String get className => displayString.replaceAll(RegExp(r'<[^]*>?'), '');
 
-  String get displayString => getDisplayString(withNullability: false);
+  String get displayString => getDisplayString().replaceAll('?', '');
 
-  bool get isNullable => getDisplayString(withNullability: true).endsWith('?');
+  bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
 
   String get parameterName =>
       displayString.toSnakeCase().toCamelCase(lower: true);

@@ -27,6 +27,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
+import 'package:dart_mapper_generator/src/misc/blocks.dart';
 import 'package:dart_mapper_generator/src/misc/expressions.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
@@ -58,7 +59,9 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
       (builder) {
         if (method.optionalReturn) {
           for (final parameter in method.parameters) {
-            builder.addExpression(earlyReturnIfNull(parameter.field.name));
+            builder.statements.addAll(
+              earlyReturnIfNull(parameter.field.name).statements,
+            );
           }
         }
 

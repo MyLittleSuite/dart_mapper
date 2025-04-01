@@ -48,5 +48,6 @@ abstract class ReviewDTO implements Built<ReviewDTO, ReviewDTOBuilder> {
 
   ReviewDTO._();
 
+  // ignore: use_function_type_syntax_for_parameters
   factory ReviewDTO([void updates(ReviewDTOBuilder b)]) = _$ReviewDTO;
 }

@@ -1,0 +1,32 @@
+name: Setup Flutter Environment and Get Dependencies
+
+inputs:
+  working-directory:
+    description: 'The working directory of the project'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # TODO: https://github.com/kuhnroyal/flutter-fvm-config-action/issues/36
+    - name: Setup Dart
+      uses: dart-lang/setup-dart@v1
+
+    - name: Install fvm
+      shell: bash
+      run: dart pub global activate fvm
+
+    - name: Install Flutter
+      shell: bash
+      run: fvm install
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Get flutter dependencies
+      shell: bash
+      run: fvm flutter pub get
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Generate code
+      shell: bash
+      run: fvm flutter pub run build_runner build --delete-conflicting-outputs
+      working-directory: ${{ inputs.working-directory }}

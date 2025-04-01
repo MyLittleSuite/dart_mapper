@@ -30,7 +30,7 @@ import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.d
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
-import 'package:dart_mapper_generator/src/misc/expressions.dart';
+import 'package:dart_mapper_generator/src/misc/blocks.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
@@ -113,7 +113,9 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
       (builder) {
         if (method.optionalReturn) {
           for (final parameter in method.parameters) {
-            builder.addExpression(earlyReturnIfNull(parameter.field.name));
+            builder.statements.addAll(
+              earlyReturnIfNull(parameter.field.name).statements,
+            );
           }
         }
 

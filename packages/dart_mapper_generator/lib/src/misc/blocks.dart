@@ -23,18 +23,37 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/extensions/expression.dart';
 
-part 'coord.freezed.dart';
+Block ifStatement(
+  Expression condition, {
+  required Block then,
+  Block? otherwise,
+}) =>
+    Block((b) {
+      b.statements.addAll([
+        Code('if'),
+        condition.parenthesized.code,
+        Code('{'),
+      ]);
+      b.statements.addAll(
+        then.statements.map((statement) => Block.of([statement, Code(';')])),
+      );
+      b.statements.add(Code('}'));
 
-/// The Coord model
-@freezed
-abstract class Coord with _$Coord {
-  const Coord._();
+      if (otherwise != null) {
+        b.statements.addAll([
+          Code('else {'),
+          ...otherwise.statements.map(
+            (statement) => Block.of([statement, Code(';')]),
+          ),
+          Code('}'),
+        ]);
+      }
+    });
 
-  /// The helper factory method to generate the Coord constructor
-  factory Coord({
-    required double lat,
-    required double lon,
-  }) = CoordData;
-}
+Block earlyReturnIfNull(String name) => ifStatement(
+      refer(name).isNull,
+      then: Block.of([literal(null).returned.code]),
+    );
