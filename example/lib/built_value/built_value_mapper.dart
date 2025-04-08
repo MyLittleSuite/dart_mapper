@@ -81,6 +81,9 @@ abstract class BuiltValueMapper {
   @Mapping(target: 'type', source: 'actionType')
   Alert toAlert(models.AlertInfo alertInfo);
 
-  @Mapping(target: 'actionType', source: 'type')
+  @InheritConfiguration()
+  Alert toAlertDirect(models.AlertInfo alertInfo);
+
+  @InheritInverseConfiguration()
   models.AlertInfo toAlertInfo(Alert alert);
 }

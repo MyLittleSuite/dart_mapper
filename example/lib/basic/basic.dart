@@ -72,6 +72,9 @@ abstract class BasicMapper {
   @Mapping(target: 'ignoreField', ignore: true)
   AnotherBasicObject toAnotherBasicObject(BasicObject basicObject);
 
-  @Mapping(target: 'ignoreField', ignore: true)
+  @InheritConfiguration()
+  AnotherBasicObject toAnotherBasicObjectDirect(BasicObject basicObject);
+
+  @InheritInverseConfiguration()
   BasicObject toBasicObject(AnotherBasicObject anotherBasicObject);
 }
