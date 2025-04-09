@@ -1,3 +1,14 @@
+## 0.6.0
+
+- Add support for InheritConfiguration and InheritInverseConfiguration annotations.
+- Update dependency analyzer to v7.
+- Update dependency dart_style to v3.
+- Update dependency freezed to v3.
+- Update dependency freezed_annotation to v3.
+- Update dependency lints to v5.
+- Update dependency source_gen to v2.
+- Update dependency flutter to v3.29.2.
+
 ## 0.5.0
 
 - Add support for import aliases during the generation of mapping methods.

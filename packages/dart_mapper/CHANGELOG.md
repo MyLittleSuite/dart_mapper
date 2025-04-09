@@ -1,3 +1,7 @@
+## 0.6.0
+
+- Add support for InheritConfiguration and InheritInverseConfiguration annotations.
+
 ## 0.5.0
 
 Nothing new.
