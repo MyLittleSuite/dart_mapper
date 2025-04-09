@@ -77,8 +77,8 @@ class InheritConfigurationAnalyzer extends Analyzer<Iterable<Mapping>?> {
     MethodAnalyzerContext context, {
     required DartType returnType,
     required DartType parameterType,
-  }) {
-    final cacca = context.mapperClass.methods
+  }) =>
+      context.mapperClass.methods
           .where((method) => method != context.method)
           .where((method) => method.parameters.length == 1)
           .where(
@@ -99,7 +99,4 @@ class InheritConfigurationAnalyzer extends Analyzer<Iterable<Mapping>?> {
                 ? MappingAnnotation.loadInverse(method)
                 : MappingAnnotation.load(method),
           );
-
-    return cacca;
-  }
 }

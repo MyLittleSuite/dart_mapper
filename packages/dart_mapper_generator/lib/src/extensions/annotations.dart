@@ -55,6 +55,8 @@ extension MappingAnnotation on Mapping {
           .annotationsOf(method)
           .where((annotation) =>
               annotation.getField('source')?.toStringValue() != null)
+          .where((annotation) =>
+              annotation.getField('target')?.toStringValue() != null)
           .map(
             (annotation) => Mapping(
               source: annotation.getField('target')!.toStringValue(),

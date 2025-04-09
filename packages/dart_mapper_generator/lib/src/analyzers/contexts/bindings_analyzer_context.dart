@@ -42,15 +42,15 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
     this.inheritedRenamingReversed,
   });
 
-  Map<String, String> get renamingMap => [
-        ...?inheritedRenaming,
-        ...?inheritedRenamingReversed,
-        ...MappingAnnotation.load(method),
-      ]
-          .where((annotation) => annotation.source != null)
-          .toList(growable: false)
-          .asMap()
-          .map((_, element) => MapEntry(element.source!, element.target));
+  Map<String, String> get renamingMap => Map.fromEntries(
+        [
+          ...?inheritedRenaming,
+          ...?inheritedRenamingReversed,
+          ...MappingAnnotation.load(method),
+        ]
+            .where((annotation) => annotation.source != null)
+            .map((element) => MapEntry(element.source!, element.target)),
+      );
 
   Map<String, String> get renamingMapReversed =>
       renamingMap.map((key, value) => MapEntry(value, key));
