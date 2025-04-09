@@ -60,6 +60,9 @@ abstract class MixedMapper {
   @Mapping(target: 'adult', source: 'isAdult')
   AnotherMixedObject toAnotherMixedObject(MixedObject mixedObject);
 
-  @Mapping(target: 'isAdult', source: 'adult')
+  @InheritConfiguration()
+  AnotherMixedObject toAnotherMixedObjectDirect(MixedObject mixedObject);
+
+  @InheritInverseConfiguration()
   MixedObject toMixedObject(AnotherMixedObject anotherMixedObject);
 }

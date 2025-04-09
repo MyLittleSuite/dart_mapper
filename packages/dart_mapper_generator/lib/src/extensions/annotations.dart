@@ -49,6 +49,21 @@ extension MappingAnnotation on Mapping {
               ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
             ),
           );
+
+  static Iterable<Mapping> loadInverse(MethodElement method) =>
+      TypeChecker.fromRuntime(Mapping)
+          .annotationsOf(method)
+          .where((annotation) =>
+              annotation.getField('source')?.toStringValue() != null)
+          .where((annotation) =>
+              annotation.getField('target')?.toStringValue() != null)
+          .map(
+            (annotation) => Mapping(
+              source: annotation.getField('target')!.toStringValue(),
+              target: annotation.getField('source')!.toStringValue()!,
+              ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
+            ),
+          );
 }
 
 extension ValueMappingAnnotation on ValueMapping {
@@ -59,4 +74,22 @@ extension ValueMappingAnnotation on ValueMapping {
               target: annotation.getField('target')!.toStringValue()!,
             ),
           );
+}
+
+extension InheritConfigurationAnnotation on InheritConfiguration {
+  static InheritConfiguration? loadFirst(MethodElement method) {
+    final annotation =
+        TypeChecker.fromRuntime(InheritConfiguration).firstAnnotationOf(method);
+
+    return annotation != null ? InheritConfiguration() : null;
+  }
+}
+
+extension InheritInverseConfigurationAnnotation on InheritInverseConfiguration {
+  static InheritInverseConfiguration? loadFirst(MethodElement method) {
+    final annotation = TypeChecker.fromRuntime(InheritInverseConfiguration)
+        .firstAnnotationOf(method);
+
+    return annotation != null ? InheritInverseConfiguration() : null;
+  }
 }

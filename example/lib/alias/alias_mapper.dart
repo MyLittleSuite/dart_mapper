@@ -36,12 +36,18 @@ abstract class AliasMapper {
   @Mapping(target: 'name', source: 'description')
   AliasObject map(alias.AliasObject source);
 
-  @Mapping(target: 'description', source: 'name')
+  @InheritConfiguration()
+  AliasObject mapDirect(alias.AliasObject source);
+
+  @InheritInverseConfiguration()
   alias.AliasObject reverseMap(AliasObject target);
 
   @ValueMapping(target: 'element', source: 'anotherElement')
   AliasEnum mapEnum(alias.AliasEnum source);
 
-  @ValueMapping(target: 'anotherElement', source: 'element')
+  @InheritConfiguration()
+  AliasEnum mapDirectEnum(alias.AliasEnum source);
+
+  @InheritInverseConfiguration()
   alias.AliasEnum reverseMapEnum(AliasEnum target);
 }

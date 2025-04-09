@@ -23,10 +23,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 
 class BindingsAnalyzerContext extends MethodAnalyzerContext {
+  final Iterable<Mapping>? inheritedRenaming;
+  final Iterable<Mapping>? inheritedRenamingReversed;
+
   const BindingsAnalyzerContext({
     required super.mapperAnnotation,
     required super.mapperUsages,
@@ -34,13 +38,19 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
     required super.mapperClass,
     required super.method,
     required super.importAliases,
+    this.inheritedRenaming,
+    this.inheritedRenamingReversed,
   });
 
-  Map<String, String> get renamingMap => MappingAnnotation.load(method)
-      .where((annotation) => annotation.source != null)
-      .toList(growable: false)
-      .asMap()
-      .map((_, element) => MapEntry(element.source!, element.target));
+  Map<String, String> get renamingMap => Map.fromEntries(
+        [
+          ...?inheritedRenaming,
+          ...?inheritedRenamingReversed,
+          ...MappingAnnotation.load(method),
+        ]
+            .where((annotation) => annotation.source != null)
+            .map((element) => MapEntry(element.source!, element.target)),
+      );
 
   Map<String, String> get renamingMapReversed =>
       renamingMap.map((key, value) => MapEntry(value, key));

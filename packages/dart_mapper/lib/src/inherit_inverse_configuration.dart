@@ -23,10 +23,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
-
-export 'src/inherit_configuration.dart';
-export 'src/inherit_inverse_configuration.dart';
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/value_mapping.dart';
+class InheritInverseConfiguration {
+  const InheritInverseConfiguration();
+}

@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
@@ -36,8 +37,8 @@ import 'package:dart_mapper_generator/src/models/mapper/constructor/mapper_const
 import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapper_instance_field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/defined_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/defined_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
@@ -45,6 +46,8 @@ import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 class BindingsAnalyzer extends Analyzer<Bindings> {
   final Analyzer<Set<MapperUsage>> mapperUsageAnalyzer;
   final Analyzer<Set<MapperUsage>> internalMapperUsageAnalyzer;
+  final Analyzer<Iterable<Mapping>?> inheritConfigurationAnalyzer;
+  final Analyzer<Iterable<Mapping>?> inverseInheritConfigurationAnalyzer;
   final Analyzer<MappingBehavior> mappingBehaviorAnalyzer;
   final StrategyDispatcher<MappingBehavior, Analyzer<List<Binding>>>
       mappingMethodDispatcher;
@@ -52,6 +55,8 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
   BindingsAnalyzer({
     required this.mapperUsageAnalyzer,
     required this.internalMapperUsageAnalyzer,
+    required this.inheritConfigurationAnalyzer,
+    required this.inverseInheritConfigurationAnalyzer,
     required this.mappingBehaviorAnalyzer,
     required this.mappingMethodDispatcher,
   });
@@ -64,6 +69,20 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
     final mappingMethods = context.mappingMethods.fold(
       <MappingMethod>[],
       (accumulator, method) {
+        final inheritContext = MethodAnalyzerContext(
+          mapperAnnotation: context.mapperAnnotation,
+          mapperUsages: mapperUsages,
+          internalMapperUsages: internalMapperUsages,
+          mapperClass: context.mapperClass,
+          importAliases: context.importAliases,
+          method: method,
+        );
+
+        final inheritedRenamingMap =
+            inheritConfigurationAnalyzer.analyze(inheritContext);
+        final inheritedRenamingMapReversed =
+            inverseInheritConfigurationAnalyzer.analyze(inheritContext);
+
         final mappingBehavior = mappingBehaviorAnalyzer.analyze(
           MethodAnalyzerContext(
             mapperAnnotation: context.mapperAnnotation,
@@ -83,6 +102,8 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
               importAliases: context.importAliases,
               mapperUsages: mapperUsages,
               internalMapperUsages: internalMapperUsages,
+              inheritedRenaming: inheritedRenamingMap,
+              inheritedRenamingReversed: inheritedRenamingMapReversed,
               method: method,
             ));
 
