@@ -27,6 +27,9 @@ class Mapping {
   final String? source;
   final String target;
   final bool ignore;
+
+  /// When true, forces the target field to be non-null during mapping,
+  /// even if the source field is nullable.
   final bool forceNonNull;
 
   const Mapping({

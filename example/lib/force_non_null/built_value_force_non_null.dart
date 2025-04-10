@@ -59,7 +59,7 @@ class AnotherForceNonNull {
 }
 
 @Mapper()
-abstract class FreezedForceNonNullMapper {
+abstract class BuiltValueForceNonNullMapper {
   AnotherForceNonNull toAnotherForceNonNull(BuiltValueForceNonNull object);
 
   @Mapping(target: 'name', forceNonNull: true)
