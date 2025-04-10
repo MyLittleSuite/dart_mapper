@@ -1,3 +1,7 @@
+## 0.7.0
+
+- Add support for force non null flag in Mapping annotation.
+
 ## 0.6.0
 
 - Add support for InheritConfiguration and InheritInverseConfiguration annotations.

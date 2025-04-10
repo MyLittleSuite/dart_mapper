@@ -1,6 +1,6 @@
 name: dart_mapper
 description: The dart mapper annotations.
-version: 0.6.0
+version: 0.7.0
 repository: https://github.com/MyLittleSuite/dart_mapper.git
 issue_tracker: https://github.com/MyLittleSuite/dart_mapper/issues
 
