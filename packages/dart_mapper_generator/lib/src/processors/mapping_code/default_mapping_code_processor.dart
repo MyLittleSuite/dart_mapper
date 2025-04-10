@@ -76,7 +76,8 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
         );
       }
 
-      if (!parameter.isOptional &&
+      if (binding?.forceNonNull == false &&
+          !parameter.isOptional &&
           binding?.source.nullable == true &&
           binding?.target.nullable == false) {
         throw TargetFieldRequiresNonOptionalSourceFieldError(
@@ -94,6 +95,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
                   origin: FieldOrigin.source,
                   counterpartField: binding.target,
                   ignored: binding.ignored,
+                  forceNonNull: binding.forceNonNull,
                   currentMethod: method,
                   extraMappingMethod: binding.extraMappingMethod,
                   importAliases: context.importAliases,

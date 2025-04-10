@@ -54,6 +54,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     final method = context.method;
     final renamingMap = context.renamingMap;
     final ignoredTargets = context.ignoredTargets;
+    final forceNonNullTargets = context.forceNonNullTargets;
 
     final targetClass = method.returnType.element?.classElementOrNull;
     final targetParam = targetClass?.constructorParameters
@@ -100,6 +101,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
             source: sourceField,
             target: targetField,
             ignored: ignoredTargets.contains(targetClassParamName),
+            forceNonNull: forceNonNullTargets.contains(targetClassParamName),
             extraMappingMethod: extraMappingMethod,
           ));
         }

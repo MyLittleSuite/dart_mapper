@@ -31,12 +31,14 @@ class Binding {
   final Field source;
   final Field target;
   final bool ignored;
+  final bool forceNonNull;
   final MappingMethod? extraMappingMethod;
 
   Binding({
     required this.source,
     required this.target,
     this.ignored = false,
+    this.forceNonNull = false,
     this.extraMappingMethod,
   }) /* : assert(target.required && ignored,
             'Target field \'${target.name}\' must be required') TODO:*/
@@ -58,6 +60,7 @@ class Binding {
       'source: $source, '
       'target: $target, '
       'ignored: $ignored, '
+      'forceNonNull: $forceNonNull, '
       'extraMappingMethod: $extraMappingMethod'
       '}';
 }

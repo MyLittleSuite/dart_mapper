@@ -47,6 +47,8 @@ extension MappingAnnotation on Mapping {
               source: annotation.getField('source')?.toStringValue(),
               target: annotation.getField('target')!.toStringValue()!,
               ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
+              forceNonNull: annotation.getField('forceNonNull')?.toBoolValue() ??
+                  false,
             ),
           );
 
@@ -62,6 +64,8 @@ extension MappingAnnotation on Mapping {
               source: annotation.getField('target')!.toStringValue(),
               target: annotation.getField('source')!.toStringValue()!,
               ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
+              forceNonNull: annotation.getField('forceNonNull')?.toBoolValue() ??
+                  false,
             ),
           );
 }

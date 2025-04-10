@@ -55,6 +55,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
     final method = context.method;
     final renamingMap = context.renamingMapReversed;
     final ignoredTargets = context.ignoredTargets;
+    final forceNonNullTargets = context.forceNonNullTargets;
 
     final targetClass = method.returnType.element?.classElementOrNull;
     if (targetClass == null) {
@@ -110,6 +111,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
             source: sourceField,
             target: targetField,
             ignored: ignoredTargets.contains(targetGetter.name),
+            forceNonNull: forceNonNullTargets.contains(targetGetter.name),
             extraMappingMethod: extraMappingMethod,
           ));
         }

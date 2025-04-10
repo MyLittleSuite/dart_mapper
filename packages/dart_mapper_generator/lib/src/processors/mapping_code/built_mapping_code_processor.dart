@@ -120,6 +120,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
               counterpartField: binding.target,
               currentMethod: method,
               ignored: binding.ignored,
+              forceNonNull: binding.forceNonNull,
               extraMappingMethod: binding.extraMappingMethod,
             ),
           );

@@ -60,6 +60,11 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
       .map((annotation) => annotation.target)
       .toSet();
 
+  Set<String> get forceNonNullTargets => MappingAnnotation.load(method)
+      .where((annotation) => annotation.forceNonNull)
+      .map((annotation) => annotation.target)
+      .toSet();
+
   Map<String, String> get enumValues => Map.fromEntries(
         ValueMappingAnnotation.load(method).map(
           (element) => MapEntry(element.source, element.target),

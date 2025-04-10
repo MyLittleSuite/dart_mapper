@@ -41,6 +41,7 @@ class ExpressionContext with AliasesMixin {
   final Field counterpartField;
   final MappingMethod currentMethod;
   final bool ignored;
+  final bool forceNonNull;
   final MappingMethod? extraMappingMethod;
   @override
   final Map<Uri, String>? importAliases;
@@ -51,6 +52,7 @@ class ExpressionContext with AliasesMixin {
     required this.counterpartField,
     required this.currentMethod,
     this.ignored = false,
+    this.forceNonNull = false,
     this.extraMappingMethod,
     this.importAliases,
   });
@@ -62,7 +64,7 @@ abstract class ExpressionFactory {
   Expression create(ExpressionContext context);
 
   Expression basic(ExpressionContext context) {
-    if (!context.field.nullable && context.ignored) {
+    if (!context.forceNonNull && !context.field.nullable && context.ignored) {
       throw ArgumentError(
         'Field ${context.field.name} is not nullable and ignored, mapping function ${context.currentMethod.name}.',
       );
@@ -76,10 +78,16 @@ abstract class ExpressionFactory {
         ? refer(context.field.instance!.name).property(context.field.name)
         : refer(context.field.name);
 
-    return _transformation(context, result);
+    return _transformation(
+      context,
+      basic: context.forceNonNull ? result.nullChecked : result,
+    );
   }
 
-  Expression _transformation(ExpressionContext context, Expression basic) {
+  Expression _transformation(
+    ExpressionContext context, {
+    required Expression basic,
+  }) {
     final field = context.field;
     final counterpart = context.counterpartField;
 

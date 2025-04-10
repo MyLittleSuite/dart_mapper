@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 MyLittleSuite
+ * Copyright (c) 2025 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,16 +23,36 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-class Mapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
+import 'package:dart_mapper/dart_mapper.dart';
 
-  const Mapping({
-    required this.target,
-    this.source,
-    this.ignore = false,
-    this.forceNonNull = false,
-  });
+part 'force_non_null.g.dart';
+
+class ForceNonNullObject {
+  final String name;
+  final int age;
+
+  ForceNonNullObject(
+    this.name,
+    this.age,
+  );
+}
+
+class AnotherForceNonNullObject {
+  final String? name;
+  final int? age;
+
+  AnotherForceNonNullObject(
+    this.name,
+    this.age,
+  );
+}
+
+@Mapper()
+abstract class ForceNonNullMapper {
+  AnotherForceNonNullObject toAnotherForceNonNullObject(
+      ForceNonNullObject object);
+
+  @Mapping(target: 'name', forceNonNull: true)
+  @Mapping(target: 'age', forceNonNull: true)
+  ForceNonNullObject toForceNonNullObject(AnotherForceNonNullObject object);
 }
