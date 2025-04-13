@@ -24,10 +24,13 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
 
 class BuiltExpressionFactory extends ExpressionFactory {
   final ExpressionFactory defaultFactory;
@@ -58,6 +61,31 @@ class BuiltExpressionFactory extends ExpressionFactory {
               )
             : cloneExpression;
       }
+    } else if (context.field is NestedField &&
+        context.extraMappingMethod is ExternalMappingMethod) {
+      final basicExpression = super.basic(context);
+
+      final method = context.extraMappingMethod!;
+      final targetClass = method.returnType!.element!.classElement;
+      final targetConstructor = targetClass.primaryConstructor;
+
+      final replaceExpression = refer([
+        context.resolveConstructor(targetConstructor),
+        'Builder',
+      ].join())
+          .newInstance([])
+          .cascade('replace')
+          .call([
+            refer(method.name).call([basicExpression.nullChecked])
+          ])
+          .parenthesized;
+
+      return (context.field.nullable)
+          ? basicExpression.isNotNull.conditional(
+              replaceExpression,
+              literalNull,
+            )
+          : replaceExpression;
     }
 
     return defaultFactory.create(context);
