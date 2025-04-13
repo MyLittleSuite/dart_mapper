@@ -87,3 +87,17 @@ abstract class BuiltValueMapper {
   @InheritInverseConfiguration()
   models.AlertInfo toAlertInfo(Alert alert);
 }
+
+@Mapper()
+abstract class UserMapper {
+  const UserMapper();
+
+  UserDTO toUserDTO(User user);
+}
+
+@Mapper(uses: {UserMapper})
+abstract class BuiltValueMapperWithUses {
+  const BuiltValueMapperWithUses();
+
+  ReviewDTO toReviewDTO(Review review);
+}
