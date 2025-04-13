@@ -66,7 +66,12 @@ class BuiltExpressionFactory extends ExpressionFactory {
       final basicExpression = super.basic(context);
 
       final method = context.extraMappingMethod!;
-      final targetClass = method.returnType!.element!.classElement;
+      final returnType = method.returnType;
+      if (returnType?.element == null) {
+        return defaultFactory.create(context);
+      }
+
+      final targetClass = returnType!.element!.classElement;
       final targetConstructor = targetClass.primaryConstructor;
 
       final replaceExpression = refer([
