@@ -23,13 +23,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/bindings.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
@@ -46,8 +46,9 @@ import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 class BindingsAnalyzer extends Analyzer<Bindings> {
   final Analyzer<Set<MapperUsage>> mapperUsageAnalyzer;
   final Analyzer<Set<MapperUsage>> internalMapperUsageAnalyzer;
-  final Analyzer<Iterable<Mapping>?> inheritConfigurationAnalyzer;
-  final Analyzer<Iterable<Mapping>?> inverseInheritConfigurationAnalyzer;
+  final Analyzer<Iterable<ResolvedMapping>?> inheritConfigurationAnalyzer;
+  final Analyzer<Iterable<ResolvedMapping>?>
+      inverseInheritConfigurationAnalyzer;
   final Analyzer<MappingBehavior> mappingBehaviorAnalyzer;
   final StrategyDispatcher<MappingBehavior, Analyzer<List<Binding>>>
       mappingMethodDispatcher;

@@ -121,6 +121,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
               currentMethod: method,
               ignored: binding.ignored,
               forceNonNull: binding.forceNonNull,
+              expressionMappingMethod: binding.callableMappingMethod,
               extraMappingMethod: binding.extraMappingMethod,
             ),
           );

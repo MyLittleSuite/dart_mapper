@@ -26,7 +26,8 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_example/built_value/models/alert.dart';
-import 'package:dart_mapper_example/built_value/models/alert_info.dart' as models;
+import 'package:dart_mapper_example/built_value/models/alert_info.dart'
+    as models;
 import 'package:dart_mapper_example/built_value/models/built_enum.dart';
 import 'package:dart_mapper_example/built_value/models/review.dart';
 import 'package:dart_mapper_example/built_value/models/review_dto.dart';
@@ -99,5 +100,27 @@ abstract class UserMapper {
 abstract class BuiltValueMapperWithUses {
   const BuiltValueMapperWithUses();
 
+  ReviewDTO toReviewDTO(Review review);
+}
+
+UserDTOBuilder? _mapUserManually(dynamic user) {
+  return UserDTOBuilder()..replace(UserDTO((b) => b..id = user.id));
+}
+
+ListBuilder<UserDTO>? _mapUserManuallyList(dynamic user) {
+  return ListBuilder([UserDTO((b) => b..id = user.id)]);
+}
+
+SetBuilder<UserDTO>? _mapUserManuallySet(dynamic user) {
+  return SetBuilder([UserDTO((b) => b..id = user.id)]);
+}
+
+@Mapper()
+abstract class BuiltValueMapperWithCallable {
+  const BuiltValueMapperWithCallable();
+
+  @Mapping(target: 'user', callable: _mapUserManually)
+  @Mapping(target: 'thumbsUp', callable: _mapUserManuallyList)
+  @Mapping(target: 'thumbsDown', callable: _mapUserManuallySet)
   ReviewDTO toReviewDTO(Review review);
 }

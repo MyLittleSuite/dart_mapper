@@ -25,6 +25,7 @@
 
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/generated_private_mapping_method.dart';
 
 class Binding {
@@ -32,6 +33,7 @@ class Binding {
   final Field target;
   final bool ignored;
   final bool forceNonNull;
+  final CallableMappingMethod? callableMappingMethod;
   final MappingMethod? extraMappingMethod;
 
   Binding({
@@ -39,6 +41,7 @@ class Binding {
     required this.target,
     this.ignored = false,
     this.forceNonNull = false,
+    this.callableMappingMethod,
     this.extraMappingMethod,
   }) /* : assert(target.required && ignored,
             'Target field \'${target.name}\' must be required') TODO:*/
@@ -61,6 +64,7 @@ class Binding {
       'target: $target, '
       'ignored: $ignored, '
       'forceNonNull: $forceNonNull, '
+      'callableMappingMethod: $callableMappingMethod, '
       'extraMappingMethod: $extraMappingMethod'
       '}';
 }

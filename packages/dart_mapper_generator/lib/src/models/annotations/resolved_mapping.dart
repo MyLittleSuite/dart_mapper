@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 MyLittleSuite
+ * Copyright (c) 2025 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,27 +23,29 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/// A function that takes a source object and returns a mapped value.
-typedef MappingCallable<T, S> = T Function(S source);
+import 'package:analyzer/dart/element/element.dart';
 
-class Mapping {
+class ResolvedMapping {
   final String? source;
   final String target;
   final bool ignore;
-
-  /// When true, forces the target field to be non-null during mapping,
-  /// even if the source field is nullable.
   final bool forceNonNull;
+  final ExecutableElement? callable;
 
-  /// A function that takes the source object and returns a mapped value.
-  /// This parameter delegates you to write the mapping logic manually.
-  final MappingCallable? callable;
-
-  const Mapping({
+  const ResolvedMapping({
     required this.target,
-    this.source,
-    this.ignore = false,
-    this.forceNonNull = false,
-    this.callable,
+    required this.source,
+    required this.ignore,
+    required this.forceNonNull,
+    required this.callable,
   });
+
+  @override
+  String toString() => 'ResolvedMapping{'
+      'source: $source, '
+      'target: $target, '
+      'ignore: $ignore, '
+      'forceNonNull: $forceNonNull, '
+      'callable: $callable'
+      '}';
 }

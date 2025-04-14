@@ -35,6 +35,12 @@ import 'package:dart_mapper_example/freezed/models/user_jto.dart';
 
 part 'freezed_mapper.g.dart';
 
+CoordDTO _toCoordDTO(dynamic coord) {
+  assert(coord is Coord);
+
+  return CoordDTO(lat: coord.lat, lon: coord.lon);
+}
+
 @Mapper()
 abstract class FreezedMapper {
   UserJTO toUserJTO(User user);
@@ -54,4 +60,7 @@ abstract class FreezedMapper {
   City toCity(CityDTO dto);
 
   CityDTO toCityDTO(City city);
+
+  @Mapping(target: 'coord', callable: _toCoordDTO)
+  CityDTO toCityDTOWithCustomCoordinates(City city);
 }

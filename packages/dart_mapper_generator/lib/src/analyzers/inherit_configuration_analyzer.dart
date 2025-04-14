@@ -24,14 +24,15 @@
  */
 
 import 'package:analyzer/dart/element/type.dart';
-import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
 
-class InheritConfigurationAnalyzer extends Analyzer<Iterable<Mapping>?> {
+class InheritConfigurationAnalyzer
+    extends Analyzer<Iterable<ResolvedMapping>?> {
   final bool inverse;
 
   const InheritConfigurationAnalyzer({
@@ -39,7 +40,7 @@ class InheritConfigurationAnalyzer extends Analyzer<Iterable<Mapping>?> {
   });
 
   @override
-  Iterable<Mapping>? analyze(AnalyzerContext context) {
+  Iterable<ResolvedMapping>? analyze(AnalyzerContext context) {
     if (context is! MethodAnalyzerContext) {
       throw ArgumentError('context must be a MethodAnalyzerContext');
     }
@@ -73,7 +74,7 @@ class InheritConfigurationAnalyzer extends Analyzer<Iterable<Mapping>?> {
     );
   }
 
-  Iterable<Mapping> _loadMappings(
+  Iterable<ResolvedMapping> _loadMappings(
     MethodAnalyzerContext context, {
     required DartType returnType,
     required DartType parameterType,
@@ -94,9 +95,5 @@ class InheritConfigurationAnalyzer extends Analyzer<Iterable<Mapping>?> {
                   aliases: context.importAliases,
                 ),
           )
-          .expand(
-            (method) => inverse
-                ? MappingAnnotation.loadInverse(method)
-                : MappingAnnotation.load(method),
-          );
+          .expand((method) => MappingAnnotation.load(method, inverse: inverse));
 }

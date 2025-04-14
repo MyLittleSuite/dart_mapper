@@ -35,15 +35,17 @@ class DefaultExpressionFactory extends ExpressionFactory {
   Expression create(ExpressionContext context) {
     final basicExpression = super.basic(context);
 
-    if (context.field is MapField) {
-      return _createMap(context, context.field as MapField);
-    } else if (context.field is IterableField) {
-      return _createIterable(context, context.field as IterableField);
-    } else if ((context.field is NestedField ||
-            context.field is EnumField ||
-            context.field is PrimitiveField) &&
-        context.extraMappingMethod != null) {
-      return _mapFieldWithMethod(context, context.extraMappingMethod!);
+    if (context.expressionMappingMethod == null) {
+      if (context.field is MapField) {
+        return _createMap(context, context.field as MapField);
+      } else if (context.field is IterableField) {
+        return _createIterable(context, context.field as IterableField);
+      } else if ((context.field is NestedField ||
+          context.field is EnumField ||
+          context.field is PrimitiveField) &&
+          context.extraMappingMethod != null) {
+        return _mapFieldWithMethod(context, context.extraMappingMethod!);
+      }
     }
 
     return basicExpression;
