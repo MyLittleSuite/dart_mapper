@@ -41,7 +41,7 @@ final class CallableMappingMethod extends MappingMethod {
   factory CallableMappingMethod.from(ExecutableElement element) {
     assert(
       element.parameters.length == 1,
-      'ExpressionMappingMethod can only be created from a method with one parameter',
+      'CallableMappingMethod can only be created from a method with one parameter',
     );
 
     return CallableMappingMethod(
