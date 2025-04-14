@@ -64,7 +64,7 @@ class Binding {
       'target: $target, '
       'ignored: $ignored, '
       'forceNonNull: $forceNonNull, '
-      'expressionMappingMethod: $callableMappingMethod, '
+      'callableMappingMethod: $callableMappingMethod, '
       'extraMappingMethod: $extraMappingMethod'
       '}';
 }
