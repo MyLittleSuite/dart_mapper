@@ -26,7 +26,7 @@
 import 'package:built_value/built_value.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 
-part 'expression_mapper.g.dart';
+part 'callable_mapper.g.dart';
 
 class SourceObject {
   final String name;
@@ -68,8 +68,8 @@ int _convertPrice(dynamic price) {
 }
 
 @Mapper()
-abstract class ExpressionMapper {
-  const ExpressionMapper();
+abstract class CallableMapper {
+  const CallableMapper();
 
   @Mapping(target: 'price', callable: _convertPrice)
   TargetObject toTargetObject(SourceObject source);

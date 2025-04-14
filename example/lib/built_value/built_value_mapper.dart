@@ -116,8 +116,8 @@ SetBuilder<UserDTO>? _mapUserManuallySet(dynamic user) {
 }
 
 @Mapper()
-abstract class BuiltValueMapperWithExpression {
-  const BuiltValueMapperWithExpression();
+abstract class BuiltValueMapperWithCallable {
+  const BuiltValueMapperWithCallable();
 
   @Mapping(target: 'user', callable: _mapUserManually)
   @Mapping(target: 'thumbsUp', callable: _mapUserManuallyList)
