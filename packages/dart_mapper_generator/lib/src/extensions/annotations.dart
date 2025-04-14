@@ -25,6 +25,8 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:dart_mapper/dart_mapper.dart';
+import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
+import 'package:dart_mapper_generator/src/models/annotations/resolved_value_mapping.dart';
 import 'package:source_gen/source_gen.dart';
 
 extension MapperAnnotation on Mapper {
@@ -41,39 +43,38 @@ extension MapperAnnotation on Mapper {
 }
 
 extension MappingAnnotation on Mapping {
-  static Iterable<Mapping> load(MethodElement method) =>
-      TypeChecker.fromRuntime(Mapping).annotationsOf(method).map(
-            (annotation) => Mapping(
-              source: annotation.getField('source')?.toStringValue(),
-              target: annotation.getField('target')!.toStringValue()!,
-              ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
-              forceNonNull: annotation.getField('forceNonNull')?.toBoolValue() ??
-                  false,
-            ),
-          );
-
-  static Iterable<Mapping> loadInverse(MethodElement method) =>
+  static Iterable<ResolvedMapping> load(
+    MethodElement method, {
+    bool inverse = false,
+  }) =>
       TypeChecker.fromRuntime(Mapping)
           .annotationsOf(method)
-          .where((annotation) =>
-              annotation.getField('source')?.toStringValue() != null)
-          .where((annotation) =>
-              annotation.getField('target')?.toStringValue() != null)
+          .where(
+            (annotation) => inverse
+                ? annotation.getField('source')?.toStringValue() != null &&
+                    annotation.getField('target')?.toStringValue() != null
+                : true,
+          )
           .map(
-            (annotation) => Mapping(
-              source: annotation.getField('target')!.toStringValue(),
-              target: annotation.getField('source')!.toStringValue()!,
+            (annotation) => ResolvedMapping(
+              source: inverse
+                  ? annotation.getField('target')!.toStringValue()
+                  : annotation.getField('source')?.toStringValue(),
+              target: inverse
+                  ? annotation.getField('source')!.toStringValue()!
+                  : annotation.getField('target')!.toStringValue()!,
               ignore: annotation.getField('ignore')?.toBoolValue() ?? false,
-              forceNonNull: annotation.getField('forceNonNull')?.toBoolValue() ??
-                  false,
+              forceNonNull:
+                  annotation.getField('forceNonNull')?.toBoolValue() ?? false,
+              callable: annotation.getField('callable')?.toFunctionValue(),
             ),
           );
 }
 
 extension ValueMappingAnnotation on ValueMapping {
-  static Iterable<ValueMapping> load(MethodElement method) =>
+  static Iterable<ResolvedValueMapping> load(MethodElement method) =>
       TypeChecker.fromRuntime(ValueMapping).annotationsOf(method).map(
-            (annotation) => ValueMapping(
+            (annotation) => ResolvedValueMapping(
               source: annotation.getField('source')!.toStringValue()!,
               target: annotation.getField('target')!.toStringValue()!,
             ),

@@ -29,6 +29,7 @@ import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/mixins/aliases_mixin.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
 
 enum FieldOrigin {
   source,
@@ -42,6 +43,7 @@ class ExpressionContext with AliasesMixin {
   final MappingMethod currentMethod;
   final bool ignored;
   final bool forceNonNull;
+  final CallableMappingMethod? expressionMappingMethod;
   final MappingMethod? extraMappingMethod;
   @override
   final Map<Uri, String>? importAliases;
@@ -53,6 +55,7 @@ class ExpressionContext with AliasesMixin {
     required this.currentMethod,
     this.ignored = false,
     this.forceNonNull = false,
+    this.expressionMappingMethod,
     this.extraMappingMethod,
     this.importAliases,
   });
@@ -74,14 +77,17 @@ abstract class ExpressionFactory {
       return literal(null);
     }
 
-    final result = context.field.instance != null
+    Expression result = context.field.instance != null
         ? refer(context.field.instance!.name).property(context.field.name)
         : refer(context.field.name);
 
-    return _transformation(
-      context,
-      basic: context.forceNonNull ? result.nullChecked : result,
-    );
+    if (context.forceNonNull == true) {
+      result = result.nullChecked;
+    }
+
+    return context.expressionMappingMethod != null
+        ? refer(context.expressionMappingMethod!.name).call([result])
+        : _transformation(context, basic: result);
   }
 
   Expression _transformation(

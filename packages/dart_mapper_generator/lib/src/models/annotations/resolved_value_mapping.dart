@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 MyLittleSuite
+ * Copyright (c) 2025 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,27 +23,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/// A function that takes a source object and returns a mapped value.
-typedef MappingCallable<T, S> = T Function(S source);
-
-class Mapping {
-  final String? source;
+class ResolvedValueMapping {
   final String target;
-  final bool ignore;
+  final String source;
 
-  /// When true, forces the target field to be non-null during mapping,
-  /// even if the source field is nullable.
-  final bool forceNonNull;
-
-  /// A function that takes the source object and returns a mapped value.
-  /// This parameter delegates you to write the mapping logic manually.
-  final MappingCallable? callable;
-
-  const Mapping({
+  const ResolvedValueMapping({
     required this.target,
-    this.source,
-    this.ignore = false,
-    this.forceNonNull = false,
-    this.callable,
+    required this.source,
   });
+
+  @override
+  String toString() => 'ResolvedValueMapping{'
+      'target: $target, '
+      'source: $source'
+      '}';
 }

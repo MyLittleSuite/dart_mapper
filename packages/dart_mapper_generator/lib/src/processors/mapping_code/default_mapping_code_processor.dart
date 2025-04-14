@@ -97,6 +97,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
                   ignored: binding.ignored,
                   forceNonNull: binding.forceNonNull,
                   currentMethod: method,
+                  expressionMappingMethod: binding.callableMappingMethod,
                   extraMappingMethod: binding.extraMappingMethod,
                   importAliases: context.importAliases,
                 ),

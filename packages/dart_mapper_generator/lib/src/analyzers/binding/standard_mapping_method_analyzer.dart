@@ -55,6 +55,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     final renamingMap = context.renamingMap;
     final ignoredTargets = context.ignoredTargets;
     final forceNonNullTargets = context.forceNonNullTargets;
+    final callableMap = context.callableMap;
 
     final targetClass = method.returnType.element?.classElementOrNull;
     final targetParam = targetClass?.constructorParameters
@@ -85,23 +86,27 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
             nullable: resolvedTargetParam.type.isNullable,
           );
 
-          final extraMappingMethod = extraMappingMethodAnalyzer.analyze(
-            FieldsAnalyzerContext(
-              mapperAnnotation: context.mapperAnnotation,
-              mapperUsages: context.mapperUsages,
-              internalMapperUsages: context.internalMapperUsages,
-              mapperClass: context.mapperClass,
-              importAliases: context.importAliases,
-              source: sourceField,
-              target: targetField,
-            ),
-          );
+          final callableMappingMethod = callableMap[targetClassParamName];
+          final extraMappingMethod = callableMappingMethod == null
+              ? extraMappingMethodAnalyzer.analyze(
+                  FieldsAnalyzerContext(
+                    mapperAnnotation: context.mapperAnnotation,
+                    mapperUsages: context.mapperUsages,
+                    internalMapperUsages: context.internalMapperUsages,
+                    mapperClass: context.mapperClass,
+                    importAliases: context.importAliases,
+                    source: sourceField,
+                    target: targetField,
+                  ),
+                )
+              : null;
 
           bindings.add(Binding(
             source: sourceField,
             target: targetField,
             ignored: ignoredTargets.contains(targetClassParamName),
             forceNonNull: forceNonNullTargets.contains(targetClassParamName),
+            callableMappingMethod: callableMappingMethod,
             extraMappingMethod: extraMappingMethod,
           ));
         }

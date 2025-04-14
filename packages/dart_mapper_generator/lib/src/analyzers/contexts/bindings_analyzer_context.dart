@@ -23,13 +23,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
+import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
 
 class BindingsAnalyzerContext extends MethodAnalyzerContext {
-  final Iterable<Mapping>? inheritedRenaming;
-  final Iterable<Mapping>? inheritedRenamingReversed;
+  final Iterable<ResolvedMapping>? inheritedRenaming;
+  final Iterable<ResolvedMapping>? inheritedRenamingReversed;
 
   const BindingsAnalyzerContext({
     required super.mapperAnnotation,
@@ -43,11 +44,7 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
   });
 
   Map<String, String> get renamingMap => Map.fromEntries(
-        [
-          ...?inheritedRenaming,
-          ...?inheritedRenamingReversed,
-          ...MappingAnnotation.load(method),
-        ]
+        _renamingMappings
             .where((annotation) => annotation.source != null)
             .map((element) => MapEntry(element.source!, element.target)),
       );
@@ -73,4 +70,21 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
 
   Map<String, String> get enumValuesReversed =>
       enumValues.map((key, value) => MapEntry(value, key));
+
+  Map<String, CallableMappingMethod> get callableMap => Map.fromEntries(
+        _renamingMappings
+            .where((annotation) => annotation.callable != null)
+            .map(
+              (annotation) => MapEntry(
+                annotation.target,
+                CallableMappingMethod.from(annotation.callable!),
+              ),
+            ),
+      );
+
+  Iterable<ResolvedMapping> get _renamingMappings => [
+        ...?inheritedRenaming,
+        ...?inheritedRenamingReversed,
+        ...MappingAnnotation.load(method),
+      ];
 }
