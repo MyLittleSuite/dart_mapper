@@ -1,3 +1,8 @@
+## 0.8.0
+
+- Checking ExternalMappingMethods when field is NestedField for BuiltExpressionFactory (#38)
+- Add support for callable function in @Mapping annotation. (#39)
+
 ## 0.7.0
 
 - Add support for force non null flag in Mapping annotation.

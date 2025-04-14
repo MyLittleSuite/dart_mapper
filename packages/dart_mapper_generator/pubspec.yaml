@@ -1,6 +1,6 @@
 name: dart_mapper_generator
 description: The dart mapper generator, useful to autogenerate mapping code.
-version: 0.7.0
+version: 0.8.0
 repository: https://github.com/MyLittleSuite/dart_mapper.git
 issue_tracker: https://github.com/MyLittleSuite/dart_mapper/issues
 
@@ -13,7 +13,7 @@ dependencies:
   build: ^2.4.1
   code_builder: ^4.10.1
   dart_style: ^3.0.0
-  dart_mapper: ^0.7.0
+  dart_mapper: ^0.8.0
   source_gen: ^2.0.0
   strings: ^3.1.2
 
