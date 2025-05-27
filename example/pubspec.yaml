@@ -19,4 +19,4 @@ dev_dependencies:
   dart_mapper_generator: any
   built_value_generator: ^8.9.2
   json_serializable: ^6.9.0
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
