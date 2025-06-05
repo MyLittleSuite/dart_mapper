@@ -15,7 +15,7 @@ dependencies:
   dart_style: ^3.0.0
   dart_mapper: ^0.8.0
   source_gen: ^2.0.0
-  strings: ^3.1.2
+  strings: ^4.0.0
 
 dev_dependencies:
   build_runner: ^2.4.8
