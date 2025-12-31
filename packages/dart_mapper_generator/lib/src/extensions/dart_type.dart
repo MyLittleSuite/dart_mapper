@@ -81,8 +81,8 @@ extension DartTypeExtension on DartType {
     Map<Uri, String>? aliases,
     bool useNullability = true,
   }) {
-    final thisUri = element?.library?.firstFragment.source.uri;
-    final otherUri = other.element?.library?.firstFragment.source.uri;
+    final thisUri = element?.library?.uri;
+    final otherUri = other.element?.library?.uri;
 
     if (useNullability) {
       return aliases?[thisUri] == aliases?[otherUri] && this == other;
