@@ -30,23 +30,20 @@ import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 
 class InternalUsesAnalyzer extends Analyzer<Set<MapperUsage>> {
   @override
-  Set<MapperUsage> analyze(AnalyzerContext context) {
-    final results = <MapperUsage>{};
-
-    for (final method in context.mapperClass.methods) {
-      results.add(
-        MapperUsage(
-          mapperName: 'this',
-          mapperType: context.mapperClass.thisType,
-          returnType: method.returnType,
-          functionName: method.name,
-          parameters: method.parameters
-              .map(MappingParameter.from)
-              .toList(growable: false),
-        ),
-      );
-    }
-
-    return results;
-  }
+  Set<MapperUsage> analyze(AnalyzerContext context) =>
+      context.mapperClass.methods
+          .where((method) => method.name != null)
+          .map(
+            (method) => MapperUsage(
+              mapperName: 'this',
+              mapperType: context.mapperClass.thisType,
+              returnType: method.returnType,
+              functionName: method.name!,
+              parameters: method.formalParameters
+                  .where((parameter) => parameter.name != null)
+                  .map(MappingParameter.from)
+                  .toList(growable: false),
+            ),
+          )
+          .toSet();
 }

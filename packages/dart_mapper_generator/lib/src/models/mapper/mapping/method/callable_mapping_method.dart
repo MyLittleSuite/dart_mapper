@@ -40,15 +40,17 @@ final class CallableMappingMethod extends MappingMethod {
 
   factory CallableMappingMethod.from(ExecutableElement element) {
     assert(
-      element.parameters.length == 1,
+      element.formalParameters.length == 1,
       'CallableMappingMethod can only be created from a method with one parameter',
     );
+    assert(element.formalParameters.first.name != null,
+        'CallableMappingMethod parameter name is null');
 
     return CallableMappingMethod(
-      name: element.name,
+      name: element.name!,
       optionalReturn: element.returnType.isNullable,
       returnType: element.returnType,
-      parameter: MappingParameter.from(element.parameters.first),
+      parameter: MappingParameter.from(element.formalParameters.first),
     );
   }
 

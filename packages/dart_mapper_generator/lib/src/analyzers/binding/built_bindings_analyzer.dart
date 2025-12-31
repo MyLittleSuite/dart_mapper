@@ -67,58 +67,62 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
     }
 
     final targetConstructor = targetClass.primaryConstructor;
-    if (targetConstructor.parameters.length > 1) {
+    if (targetConstructor.formalParameters.length > 1) {
       throw TooManyConstructorParametersError(targetClass);
     }
 
-    for (final sourceMethodParam in method.parameters) {
+    for (final sourceMethodParam in method.formalParameters) {
       final sourceClass = sourceMethodParam.type.element?.classElementOrNull;
 
-      for (final targetGetter in targetClass.getters) {
-        final sourceClassParamName =
-            renamingMap[targetGetter.name] ?? targetGetter.name;
-        final sourceClassParam = sourceClass?.getFieldOrGetter(
-          sourceClassParamName,
-        );
-
-        if (sourceClassParam != null) {
-          final sourceField = Field.from(
-            name: sourceClassParamName,
-            type: sourceClassParam.type,
-            required: sourceClassParam.isRequired,
-            nullable: sourceClassParam.type.isNullable,
-            instance: Instance(name: sourceMethodParam.name),
-          );
-          final targetField = Field.from(
-            name: targetGetter.name,
-            type: targetGetter.type,
-            required: targetGetter.isRequired,
-            nullable: targetGetter.type.isNullable,
+      for (final targetGetter in targetClass.getterElements) {
+        if (targetGetter.name != null) {
+          final sourceClassParamName =
+              renamingMap[targetGetter.name!] ?? targetGetter.name!;
+          final sourceClassParam = sourceClass?.getFieldOrGetter(
+            sourceClassParamName,
           );
 
-          final callableMappingMethod = callableMap[targetGetter.name];
-          final extraMappingMethod = callableMappingMethod == null
-              ? extraMappingMethodAnalyzer.analyze(
-                  FieldsAnalyzerContext(
-                    mapperAnnotation: context.mapperAnnotation,
-                    mapperUsages: context.mapperUsages,
-                    internalMapperUsages: context.internalMapperUsages,
-                    mapperClass: context.mapperClass,
-                    importAliases: context.importAliases,
-                    source: sourceField,
-                    target: targetField,
-                  ),
-                )
-              : null;
+          if (sourceClassParam != null && sourceMethodParam.name != null) {
+            final sourceField = Field.from(
+              name: sourceClassParamName,
+              type: sourceClassParam.type,
+              required: sourceClassParam.isRequired,
+              nullable: sourceClassParam.type.isNullable,
+              instance: Instance(name: sourceMethodParam.name!),
+            );
+            final targetField = Field.from(
+              name: targetGetter.name!,
+              type: targetGetter.type,
+              required: targetGetter.isRequired,
+              nullable: targetGetter.type.isNullable,
+            );
 
-          bindings.add(Binding(
-            source: sourceField,
-            target: targetField,
-            ignored: ignoredTargets.contains(targetGetter.name),
-            forceNonNull: forceNonNullTargets.contains(targetGetter.name),
-            callableMappingMethod: callableMappingMethod,
-            extraMappingMethod: extraMappingMethod,
-          ));
+            final callableMappingMethod = callableMap[targetGetter.name!];
+            final extraMappingMethod = callableMappingMethod == null
+                ? extraMappingMethodAnalyzer.analyze(
+                    FieldsAnalyzerContext(
+                      mapperAnnotation: context.mapperAnnotation,
+                      mapperUsages: context.mapperUsages,
+                      internalMapperUsages: context.internalMapperUsages,
+                      mapperClass: context.mapperClass,
+                      importAliases: context.importAliases,
+                      source: sourceField,
+                      target: targetField,
+                    ),
+                  )
+                : null;
+
+            bindings.add(
+              Binding(
+                source: sourceField,
+                target: targetField,
+                ignored: ignoredTargets.contains(targetGetter.name!),
+                forceNonNull: forceNonNullTargets.contains(targetGetter.name!),
+                callableMappingMethod: callableMappingMethod,
+                extraMappingMethod: extraMappingMethod,
+              ),
+            );
+          }
         }
       }
     }

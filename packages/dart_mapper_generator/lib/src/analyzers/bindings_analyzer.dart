@@ -108,33 +108,39 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
               method: method,
             ));
 
-        return accumulator
-          ..add(DefinedMappingMethod(
-            name: method.name,
-            isOverride: true,
-            returnType: method.returnType,
-            optionalReturn: method.returnType.isNullable,
-            parameters: method.parameters
-                .map(
-                  (param) => MappingParameter(
-                    field: Field.from(
-                      name: param.name,
-                      type: param.type,
-                      nullable: param.isNullable,
+        if (method.name != null) {
+          accumulator.add(
+            DefinedMappingMethod(
+              name: method.name!,
+              isOverride: true,
+              returnType: method.returnType,
+              optionalReturn: method.returnType.isNullable,
+              parameters: method.formalParameters
+                  .where((param) => param.name != null)
+                  .map(
+                    (param) => MappingParameter(
+                      field: Field.from(
+                        name: param.name!,
+                        type: param.type,
+                        nullable: param.isNullable,
+                      ),
+                      isNullable: param.isNullable,
                     ),
-                    isNullable: param.isNullable,
-                  ),
-                )
-                .toList(growable: false),
-            bindings: bindings,
-            behavior: mappingBehavior,
-          ));
+                  )
+                  .toList(growable: false),
+              bindings: bindings,
+              behavior: mappingBehavior,
+            ),
+          );
+        }
+
+        return accumulator;
       },
     );
 
     return Bindings(
       mapperClass: MapperClass(
-        name: context.mapperClass.name,
+        name: context.mapperClass.name!, //TODO: null safety
         instanceFields: _createInstanceFields(context),
         constructors: _createMapperConstructors(context),
         mappingMethods: mappingMethods,
@@ -150,14 +156,15 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
 
   List<MapperConstructor> _createMapperConstructors(AnalyzerContext context) {
     final parentConstructors = context.mapperClass.constructors
+        .where((constructor) => constructor.name != null)
         .map((constructor) => MapperConstructor.fromConstructor(constructor))
         .toList(growable: false);
 
     final uses = context.mapperAnnotation.uses;
-    if (uses != null && uses.isNotEmpty) {
+    if (uses != null && uses.isNotEmpty && context.mapperClass.name != null) {
       return [
         MapperConstructor.fromUses(
-          context.mapperClass.name,
+          context.mapperClass.name!,
           uses,
           isConst: parentConstructors.any((constructor) => constructor.isConst),
         ),

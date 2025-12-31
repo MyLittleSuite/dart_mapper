@@ -33,7 +33,7 @@ import 'package:source_gen/source_gen.dart';
 class TargetFieldRequiresNonOptionalSourceFieldError
     extends InvalidGenerationSourceError {
   TargetFieldRequiresNonOptionalSourceFieldError({
-    required ParameterElement parameter,
+    required FormalParameterElement parameter,
     required ClassElement targetClass,
     required MapperClass mapperClass,
     required MappingMethod method,

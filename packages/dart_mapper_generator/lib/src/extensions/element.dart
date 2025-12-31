@@ -64,12 +64,12 @@ extension ElementExtension on Element {
   }
 
   bool get isRequired => switch (this) {
-        ParameterElement(:final isRequired) => isRequired,
+        FormalParameterElement(:final isRequired) => isRequired,
         _ => false,
       };
 
   bool get isNullable => switch (this) {
-        ParameterElement(:final isOptional, :final type) =>
+        FormalParameterElement(:final isOptional, :final type) =>
           isOptional || type.isNullable,
         FieldElement(:final type) => type.isNullable,
         InterfaceElement(:final thisType) => thisType.isNullable,

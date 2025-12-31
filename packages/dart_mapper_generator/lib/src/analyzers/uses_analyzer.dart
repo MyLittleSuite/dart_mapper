@@ -50,8 +50,9 @@ class UsesAnalyzer extends Analyzer<Set<MapperUsage>> {
               mapperName: mapperType.parameterName,
               mapperType: mapperType,
               returnType: method.returnType,
-              functionName: method.name,
-              parameters: method.parameters
+              functionName: method.name!,
+              parameters: method.formalParameters
+                  .where((parameter) => parameter.name != null)
                   .map(MappingParameter.from)
                   .toList(growable: false),
             ),

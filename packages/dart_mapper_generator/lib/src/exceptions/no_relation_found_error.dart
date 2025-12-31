@@ -32,7 +32,7 @@ import 'package:source_gen/source_gen.dart';
 
 class NoRelationFoundError extends InvalidGenerationSourceError {
   NoRelationFoundError({
-    required ParameterElement parameter,
+    required FormalParameterElement parameter,
     required MapperClass mapperClass,
     required MappingMethod method,
     required ClassElement targetClass,

@@ -29,6 +29,20 @@ import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.da
 import 'package:dart_mapper_generator/src/models/annotations/resolved_value_mapping.dart';
 import 'package:source_gen/source_gen.dart';
 
+// TypeCheckers for dart_mapper annotations (using fromUrl as fromRuntime was removed in source_gen 4.0.0)
+const _mappingChecker = TypeChecker.fromUrl(
+  'package:dart_mapper/src/mapping.dart#Mapping',
+);
+const _valueMappingChecker = TypeChecker.fromUrl(
+  'package:dart_mapper/src/value_mapping.dart#ValueMapping',
+);
+const _inheritConfigurationChecker = TypeChecker.fromUrl(
+  'package:dart_mapper/src/inherit_configuration.dart#InheritConfiguration',
+);
+const _inheritInverseConfigurationChecker = TypeChecker.fromUrl(
+  'package:dart_mapper/src/inherit_inverse_configuration.dart#InheritInverseConfiguration',
+);
+
 extension MapperAnnotation on Mapper {
   static Mapper load(ConstantReader annotation) => Mapper(
         implementationName: annotation.peek('implementationName')!.stringValue,
@@ -47,7 +61,7 @@ extension MappingAnnotation on Mapping {
     MethodElement method, {
     bool inverse = false,
   }) =>
-      TypeChecker.fromRuntime(Mapping)
+      _mappingChecker
           .annotationsOf(method)
           .where(
             (annotation) => inverse
@@ -73,7 +87,7 @@ extension MappingAnnotation on Mapping {
 
 extension ValueMappingAnnotation on ValueMapping {
   static Iterable<ResolvedValueMapping> load(MethodElement method) =>
-      TypeChecker.fromRuntime(ValueMapping).annotationsOf(method).map(
+      _valueMappingChecker.annotationsOf(method).map(
             (annotation) => ResolvedValueMapping(
               source: annotation.getField('source')!.toStringValue()!,
               target: annotation.getField('target')!.toStringValue()!,
@@ -84,7 +98,7 @@ extension ValueMappingAnnotation on ValueMapping {
 extension InheritConfigurationAnnotation on InheritConfiguration {
   static InheritConfiguration? loadFirst(MethodElement method) {
     final annotation =
-        TypeChecker.fromRuntime(InheritConfiguration).firstAnnotationOf(method);
+        _inheritConfigurationChecker.firstAnnotationOf(method);
 
     return annotation != null ? InheritConfiguration() : null;
   }
@@ -92,7 +106,7 @@ extension InheritConfigurationAnnotation on InheritConfiguration {
 
 extension InheritInverseConfigurationAnnotation on InheritInverseConfiguration {
   static InheritInverseConfiguration? loadFirst(MethodElement method) {
-    final annotation = TypeChecker.fromRuntime(InheritInverseConfiguration)
+    final annotation = _inheritInverseConfigurationChecker
         .firstAnnotationOf(method);
 
     return annotation != null ? InheritInverseConfiguration() : null;

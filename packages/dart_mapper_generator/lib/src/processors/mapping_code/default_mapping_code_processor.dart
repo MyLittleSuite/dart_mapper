@@ -65,49 +65,51 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
     final positionalArguments = <Expression>[];
     final namedArguments = <String, Expression>{};
 
-    for (final parameter in targetConstructor.parameters) {
-      final binding = context.currentMethod.fromTarget(parameter.name);
-      if (parameter.isRequired && binding == null) {
-        throw NoRelationFoundError(
-          parameter: parameter,
-          mapperClass: context.mapperClass,
-          method: method,
-          targetClass: targetClass,
-        );
-      }
+    for (final parameter in targetConstructor.formalParameters) {
+      if (parameter.name != null) {
+        final binding = context.currentMethod.fromTarget(parameter.name!);
+        if (parameter.isRequired && binding == null) {
+          throw NoRelationFoundError(
+            parameter: parameter,
+            mapperClass: context.mapperClass,
+            method: method,
+            targetClass: targetClass,
+          );
+        }
 
-      if (binding?.forceNonNull == false &&
-          !parameter.isOptional &&
-          binding?.source.nullable == true &&
-          binding?.target.nullable == false) {
-        throw TargetFieldRequiresNonOptionalSourceFieldError(
-          parameter: parameter,
-          targetClass: targetClass,
-          mapperClass: context.mapperClass,
-          method: method,
-        );
-      }
+        if (binding?.forceNonNull == false &&
+            !parameter.isOptional &&
+            binding?.source.nullable == true &&
+            binding?.target.nullable == false) {
+          throw TargetFieldRequiresNonOptionalSourceFieldError(
+            parameter: parameter,
+            targetClass: targetClass,
+            mapperClass: context.mapperClass,
+            method: method,
+          );
+        }
 
-      final sourceExpression = binding != null
-          ? expressionStrategyDispatcher.get(method.behavior).create(
-                ExpressionContext(
-                  field: binding.source,
-                  origin: FieldOrigin.source,
-                  counterpartField: binding.target,
-                  ignored: binding.ignored,
-                  forceNonNull: binding.forceNonNull,
-                  currentMethod: method,
-                  expressionMappingMethod: binding.callableMappingMethod,
-                  extraMappingMethod: binding.extraMappingMethod,
-                  importAliases: context.importAliases,
-                ),
-              )
-          : null;
-      if (sourceExpression != null) {
-        if (parameter.isNamed) {
-          namedArguments[parameter.name] = sourceExpression;
-        } else {
-          positionalArguments.add(sourceExpression);
+        final sourceExpression = binding != null
+            ? expressionStrategyDispatcher.get(method.behavior).create(
+          ExpressionContext(
+            field: binding.source,
+            origin: FieldOrigin.source,
+            counterpartField: binding.target,
+            ignored: binding.ignored,
+            forceNonNull: binding.forceNonNull,
+            currentMethod: method,
+            expressionMappingMethod: binding.callableMappingMethod,
+            extraMappingMethod: binding.extraMappingMethod,
+            importAliases: context.importAliases,
+          ),
+        )
+            : null;
+        if (sourceExpression != null) {
+          if (parameter.isNamed) {
+            namedArguments[parameter.name!] = sourceExpression;
+          } else {
+            positionalArguments.add(sourceExpression);
+          }
         }
       }
     }
