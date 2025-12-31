@@ -77,7 +77,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
           if (resolvedTargetParam != null && sourceMethodParam.name != null) {
             final sourceField = Field.from(
               name: sourceClassParam.name!,
-              type: (sourceClassParam as FieldElement).type,
+              type: sourceClassParam.type,
               required: sourceClassParam.isRequired,
               nullable: sourceClassParam.type.isNullable,
               instance: Instance(name: sourceMethodParam.name!),
