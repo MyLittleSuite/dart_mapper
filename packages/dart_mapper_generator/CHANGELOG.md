@@ -1,3 +1,14 @@
+## 0.9.0
+
+- Escape ArgumentError for enum by sanitizing display name (#64)
+- Add support for multiple value mapping in enums (#65)
+- Update dependency analyzer to v8.
+- Update dependency build to v4.
+- Update dependency lints to v6 (#42)
+- Update dependency strings to v4 (#48)
+- Update dependency source_gen to v4 (#55)
+- Update dependency flutter to v3.38.5 (#58)
+
 ## 0.8.0
 
 - Checking ExternalMappingMethods when field is NestedField for BuiltExpressionFactory (#38)

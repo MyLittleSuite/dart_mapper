@@ -1,3 +1,7 @@
+## 0.9.0
+
+- Update dependency lints to v6 (#42)
+
 ## 0.8.0
 
 - Checking ExternalMappingMethods when field is NestedField for BuiltExpressionFactory (#38)
