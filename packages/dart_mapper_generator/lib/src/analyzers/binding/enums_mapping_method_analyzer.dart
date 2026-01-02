@@ -68,7 +68,7 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
 
   List<Binding> _bindTwoEnums(BindingsAnalyzerContext context) {
     final bindings = <Binding>[];
-    final enumValuesMap = context.enumValuesReversed;
+    final enumValuesMap = context.enumValues;
 
     final sourceType = context.method.parameters.first.type;
     final sourceElement = sourceType.element?.interfaceElementOrNull;
@@ -88,19 +88,18 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
       );
     }
 
-    for (final targetValue in targetEnum.enumValues) {
-      final sourceClassParam = sourceElement.getEnumValue(
-        enumValuesMap[targetValue.name] ?? targetValue.name,
-      );
+    for (final sourceValue in sourceElement.enumValues) {
+      final targetName = enumValuesMap[sourceValue.name] ?? sourceValue.name;
+      final targetEnumValue = targetEnum.getEnumValue(targetName);
 
-      if (sourceClassParam != null) {
+      if (targetEnumValue != null) {
         final sourceField = Field.from(
-          name: sourceClassParam.name,
+          name: sourceValue.name,
           type: sourceType,
           instance: Instance(name: sourceElement.name),
         );
         final targetField = Field.from(
-          name: targetValue.name,
+          name: targetEnumValue.name,
           type: targetReturnType,
           instance: Instance(name: targetEnum.name),
         );
@@ -138,12 +137,9 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     }
 
     for (final targetValue in targetEnum.enumValues) {
-      final sourceClassValue = switch (enumValuesMap[targetValue.name]) {
-        null => targetReturnType.isDartCoreString ? targetValue.name : null,
-        String() => enumValuesMap[targetValue.name],
-      };
+      final sourceClassValues = enumValuesMap[targetValue.name] ?? [];
 
-      if (sourceClassValue != null) {
+      for (final sourceClassValue in sourceClassValues) {
         final sourceField = Field.from(
           name: sourceClassValue.toString(),
           type: sourceType,

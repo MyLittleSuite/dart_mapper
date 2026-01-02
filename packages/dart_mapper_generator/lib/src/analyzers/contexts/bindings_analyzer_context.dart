@@ -68,8 +68,16 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
         ),
       );
 
-  Map<String, String> get enumValuesReversed =>
-      enumValues.map((key, value) => MapEntry(value, key));
+  Map<String, List<String>> get enumValuesReversed =>
+      enumValues.entries.fold<Map<String, List<String>>>(
+        {},
+        (previousValue, element) => previousValue
+          ..update(
+            element.value,
+            (value) => value..add(element.key),
+            ifAbsent: () => [element.key],
+          ),
+      );
 
   Map<String, CallableMappingMethod> get callableMap => Map.fromEntries(
         _renamingMappings
