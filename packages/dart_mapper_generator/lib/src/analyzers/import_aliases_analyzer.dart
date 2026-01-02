@@ -34,15 +34,16 @@ class ImportAliasesAnalyzer extends Analyzer<Map<Uri, String>> {
 
   @override
   Map<Uri, String> analyze(AnalyzerContext context) {
-    final imports =
-        context.mapperClass.library.definingCompilationUnit.libraryImports;
+    final imports = context.mapperClass.library.firstFragment.libraryImports;
 
     return imports
-        .where((e) => e.prefix != null && e.uri is DirectiveUriWithSource)
+        .where((import) =>
+            import.prefix?.element.name != null &&
+            import.uri is DirectiveUriWithSource)
         .fold({}, (acc, import) {
       final uri = (import.uri as DirectiveUriWithSource).source.uri;
 
-      acc[uri] = import.prefix!.element.name;
+      acc[uri] = import.prefix!.element.name!;
       return acc;
     });
   }

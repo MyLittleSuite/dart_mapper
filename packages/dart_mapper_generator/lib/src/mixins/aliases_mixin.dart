@@ -34,11 +34,11 @@ mixin AliasesMixin {
   Map<Uri, String>? get importAliases;
 
   String? resolvePrefix(DartType type) =>
-      importAliases?[type.element?.librarySource?.uri];
+      importAliases?[type.element?.library?.firstFragment.source.uri];
 
   String resolveType(DartType type, {bool withNullability = false}) =>
       chainDot([
-        importAliases?[type.element?.librarySource?.uri],
+        importAliases?[type.element?.library?.firstFragment.source.uri],
         chain([
           type.displayString,
           if (withNullability) '?',
@@ -46,7 +46,7 @@ mixin AliasesMixin {
       ]);
 
   String resolveConstructor(ConstructorElement constructor) => chainDot([
-        importAliases?[constructor.librarySource.uri],
+        importAliases?[constructor.library.firstFragment.source.uri],
         constructor.displayName,
       ]);
 }

@@ -35,13 +35,17 @@ class MappingParameter {
     required this.isNullable,
   });
 
-  factory MappingParameter.from(ParameterElement element) => MappingParameter(
+  factory MappingParameter.from(FormalParameterElement element) {
+    assert(element.name != null, 'FormalParameterElement name is null');
+
+    return MappingParameter(
         field: Field.from(
-          name: element.name,
+          name: element.name!,
           type: element.type,
         ),
         isNullable: element.isOptional,
       );
+  }
 
   @override
   String toString() => 'MappingParameter{'

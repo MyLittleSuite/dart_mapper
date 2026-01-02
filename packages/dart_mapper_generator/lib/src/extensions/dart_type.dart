@@ -81,8 +81,8 @@ extension DartTypeExtension on DartType {
     Map<Uri, String>? aliases,
     bool useNullability = true,
   }) {
-    final thisUri = element?.librarySource?.uri;
-    final otherUri = other.element?.librarySource?.uri;
+    final thisUri = element?.library?.uri;
+    final otherUri = other.element?.library?.uri;
 
     if (useNullability) {
       return aliases?[thisUri] == aliases?[otherUri] && this == other;
@@ -100,8 +100,10 @@ extension DartTypeBuilt on DartType {
         'package:built_collection/',
       }.fold(
         false,
-        (acc, uri) =>
-            acc || element?.librarySource?.uri.toString().contains(uri) == true,
+        (acc, uri) {
+          final libraryUri = element?.library?.firstFragment.source.uri;
+          return acc || libraryUri?.toString().contains(uri) == true;
+        },
       );
 
   bool get isBuiltSet =>

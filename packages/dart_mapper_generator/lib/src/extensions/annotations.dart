@@ -47,7 +47,7 @@ extension MappingAnnotation on Mapping {
     MethodElement method, {
     bool inverse = false,
   }) =>
-      TypeChecker.fromRuntime(Mapping)
+      TypeChecker.typeNamed(Mapping)
           .annotationsOf(method)
           .where(
             (annotation) => inverse
@@ -73,7 +73,7 @@ extension MappingAnnotation on Mapping {
 
 extension ValueMappingAnnotation on ValueMapping {
   static Iterable<ResolvedValueMapping> load(MethodElement method) =>
-      TypeChecker.fromRuntime(ValueMapping).annotationsOf(method).map(
+      TypeChecker.typeNamed(ValueMapping).annotationsOf(method).map(
             (annotation) => ResolvedValueMapping(
               source: annotation.getField('source')!.toStringValue()!,
               target: annotation.getField('target')!.toStringValue()!,
@@ -84,7 +84,7 @@ extension ValueMappingAnnotation on ValueMapping {
 extension InheritConfigurationAnnotation on InheritConfiguration {
   static InheritConfiguration? loadFirst(MethodElement method) {
     final annotation =
-        TypeChecker.fromRuntime(InheritConfiguration).firstAnnotationOf(method);
+        TypeChecker.typeNamed(InheritConfiguration).firstAnnotationOf(method);
 
     return annotation != null ? InheritConfiguration() : null;
   }
@@ -92,7 +92,7 @@ extension InheritConfigurationAnnotation on InheritConfiguration {
 
 extension InheritInverseConfigurationAnnotation on InheritInverseConfiguration {
   static InheritInverseConfiguration? loadFirst(MethodElement method) {
-    final annotation = TypeChecker.fromRuntime(InheritInverseConfiguration)
+    final annotation = TypeChecker.typeNamed(InheritInverseConfiguration)
         .firstAnnotationOf(method);
 
     return annotation != null ? InheritInverseConfiguration() : null;

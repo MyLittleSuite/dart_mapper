@@ -35,7 +35,7 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
   @override
   MappingBehavior analyze(AnalyzerContext context) {
     final sourceParams = switch (context) {
-      MethodAnalyzerContext() => context.method.parameters,
+      MethodAnalyzerContext() => context.method.formalParameters,
       _ => null,
     };
     final targetType = switch (context) {

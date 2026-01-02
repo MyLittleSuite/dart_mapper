@@ -38,9 +38,10 @@ class NestedField extends Field {
   });
 
   List<Field> get fields =>
-      type.element?.classElementOrNull?.getters
+      type.element?.classElementOrNull?.getterElements
+          .where((field) => field.name != null)
           .map((field) => Field.from(
-                name: field.name,
+                name: field.name!,
                 type: field.type,
                 instance: Instance(name: name),
                 required: field.isRequired,

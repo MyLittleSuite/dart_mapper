@@ -38,14 +38,17 @@ class MapperConstructor {
     this.isConst = false,
   });
 
-  factory MapperConstructor.fromConstructor(ConstructorElement element) =>
-      MapperConstructor._(
-        name: element.name,
-        parameters: element.parameters
+  factory MapperConstructor.fromConstructor(ConstructorElement element) {
+    assert(element.name != null, 'ConstructorElement name is null');
+
+    return MapperConstructor._(
+        name: element.name!,
+        parameters: element.formalParameters
             .map((param) => MapperConstructorParameter.fromDartType(param.type))
             .toList(growable: false),
         isConst: element.isConst,
       );
+  }
 
   factory MapperConstructor.fromUses(
     String name,

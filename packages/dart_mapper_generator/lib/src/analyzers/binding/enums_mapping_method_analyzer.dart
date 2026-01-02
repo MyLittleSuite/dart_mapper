@@ -43,14 +43,14 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
       throw ArgumentError('context must be a BindingsAnalyzerContext');
     }
 
-    if (context.method.parameters.length != 1) {
+    if (context.method.formalParameters.length != 1) {
       throw TooManyEnumMappingMethodParametersError(
         mapperClass: context.mapperClass,
         method: context.method,
       );
     }
 
-    final sourceType = context.method.parameters.first.type;
+    final sourceType = context.method.formalParameters.first.type;
     final targetType = context.method.returnType;
 
     if (targetType.isEnum && sourceType.isEnum) {
@@ -70,7 +70,7 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final bindings = <Binding>[];
     final enumValuesMap = context.enumValues;
 
-    final sourceType = context.method.parameters.first.type;
+    final sourceType = context.method.formalParameters.first.type;
     final sourceElement = sourceType.element?.interfaceElementOrNull;
     if (sourceElement == null) {
       throw UnknownSourceClassError(
@@ -90,24 +90,32 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
 
     for (final sourceValue in sourceElement.enumValues) {
       final targetName = enumValuesMap[sourceValue.name] ?? sourceValue.name;
-      final targetEnumValue = targetEnum.getEnumValue(targetName);
 
-      if (targetEnumValue != null) {
-        final sourceField = Field.from(
-          name: sourceValue.name,
-          type: sourceType,
-          instance: Instance(name: sourceElement.name),
-        );
-        final targetField = Field.from(
-          name: targetEnumValue.name,
-          type: targetReturnType,
-          instance: Instance(name: targetEnum.name),
-        );
+      if (targetName != null) {
+        final targetEnumValue = targetEnum.getEnumValue(targetName);
 
-        bindings.add(Binding(
-          source: sourceField,
-          target: targetField,
-        ));
+        if (sourceElement.name != null &&
+            sourceValue.name != null &&
+            targetEnum.name != null &&
+            targetEnumValue?.name != null) {
+          final sourceField = Field.from(
+            name: sourceValue.name!,
+            type: sourceType,
+            instance: Instance(name: sourceElement.name!),
+          );
+          final targetField = Field.from(
+            name: targetEnumValue!.name!,
+            type: targetReturnType,
+            instance: Instance(name: targetEnum.name!),
+          );
+
+          bindings.add(
+            Binding(
+              source: sourceField,
+              target: targetField,
+            ),
+          );
+        }
       }
     }
 
@@ -118,7 +126,7 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final bindings = <Binding>[];
     final enumValuesMap = context.enumValuesReversed;
 
-    final sourceType = context.method.parameters.first.type;
+    final sourceType = context.method.formalParameters.first.type;
     final sourceElement = sourceType.element?.classElementOrNull;
     if (sourceElement == null) {
       throw UnknownSourceClassError(
@@ -140,21 +148,27 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
       final sourceClassValues = enumValuesMap[targetValue.name] ?? [];
 
       for (final sourceClassValue in sourceClassValues) {
-        final sourceField = Field.from(
-          name: sourceClassValue.toString(),
-          type: sourceType,
-          instance: Instance(name: sourceElement.name),
-        );
-        final targetField = Field.from(
-          name: targetValue.name,
-          type: targetReturnType,
-          instance: Instance(name: targetEnum.name),
-        );
+        if (sourceElement.name != null &&
+            targetEnum.name != null &&
+            targetValue.name != null) {
+          final sourceField = Field.from(
+            name: sourceClassValue.toString(),
+            type: sourceType,
+            instance: Instance(name: sourceElement.name!),
+          );
+          final targetField = Field.from(
+            name: targetValue.name!,
+            type: targetReturnType,
+            instance: Instance(name: targetEnum.name!),
+          );
 
-        bindings.add(Binding(
-          source: sourceField,
-          target: targetField,
-        ));
+          bindings.add(
+            Binding(
+              source: sourceField,
+              target: targetField,
+            ),
+          );
+        }
       }
     }
 
@@ -165,7 +179,7 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final bindings = <Binding>[];
     final enumValuesMap = context.enumValues;
 
-    final sourceType = context.method.parameters.first.type;
+    final sourceType = context.method.formalParameters.first.type;
     final sourceEnum = sourceType.element?.interfaceElementOrNull;
     if (sourceEnum == null) {
       throw UnknownSourceClassError(
@@ -184,27 +198,31 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     }
 
     for (final sourceValue in sourceEnum.enumValues) {
-      final targetClassValue = switch (enumValuesMap[sourceValue.name]) {
-        null => targetReturnType.isDartCoreString ? sourceValue.name : null,
-        String() => enumValuesMap[sourceValue.name],
-      };
+      if (sourceValue.name != null) {
+        final targetClassValue = switch (enumValuesMap[sourceValue.name!]) {
+          null => targetReturnType.isDartCoreString ? sourceValue.name! : null,
+          String() => enumValuesMap[sourceValue.name!],
+        };
 
-      if (targetClassValue != null) {
-        final sourceField = Field.from(
-          name: sourceValue.name,
-          type: sourceType,
-          instance: Instance(name: sourceEnum.name),
-        );
-        final targetField = Field.from(
-          name: targetClassValue.toString(),
-          type: targetReturnType,
-          instance: Instance(name: targetElement.name),
-        );
+        if (targetClassValue != null &&
+            sourceEnum.name != null &&
+            targetElement.name != null) {
+          final sourceField = Field.from(
+            name: sourceValue.name!,
+            type: sourceType,
+            instance: Instance(name: sourceEnum.name!),
+          );
+          final targetField = Field.from(
+            name: targetClassValue.toString(),
+            type: targetReturnType,
+            instance: Instance(name: targetElement.name!),
+          );
 
-        bindings.add(Binding(
-          source: sourceField,
-          target: targetField,
-        ));
+          bindings.add(Binding(
+            source: sourceField,
+            target: targetField,
+          ));
+        }
       }
     }
 

@@ -40,9 +40,10 @@ class EnumField extends Field {
 
   List<Field> get values =>
       type.element?.interfaceElementOrNull?.enumValues
+          .where((value) => value.name != null)
           .map(
             (value) => PrimitiveField(
-              name: value.name,
+              name: value.name!,
               type: type,
               instance: Instance(name: type.displayString),
               required: true,

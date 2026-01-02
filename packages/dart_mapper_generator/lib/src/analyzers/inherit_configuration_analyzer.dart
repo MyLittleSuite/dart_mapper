@@ -59,7 +59,7 @@ class InheritConfigurationAnalyzer
     }
 
     final returnType = context.method.returnType;
-    final parameters = context.method.parameters;
+    final parameters = context.method.formalParameters;
 
     if (parameters.length != 1) {
       throw ArgumentError(
@@ -81,7 +81,7 @@ class InheritConfigurationAnalyzer
   }) =>
       context.mapperClass.methods
           .where((method) => method != context.method)
-          .where((method) => method.parameters.length == 1)
+          .where((method) => method.formalParameters.length == 1)
           .where(
             (method) =>
                 method.returnType.same(
@@ -89,7 +89,7 @@ class InheritConfigurationAnalyzer
                   useNullability: false,
                   aliases: context.importAliases,
                 ) &&
-                method.parameters.first.type.same(
+                method.formalParameters.first.type.same(
                   parameterType,
                   useNullability: false,
                   aliases: context.importAliases,

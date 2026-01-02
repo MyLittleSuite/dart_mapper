@@ -37,7 +37,7 @@ extension ClassElementExtension on ClassElement {
   ConstructorElement get primaryConstructor {
     final constructor = (constructors
           ..sort(
-            (a, b) => a.parameters.length.compareTo(b.parameters.length) * -1,
+            (a, b) => a.formalParameters.length.compareTo(b.formalParameters.length) * -1,
           ))
         .firstOrNull;
     if (constructor == null) {
@@ -47,10 +47,10 @@ extension ClassElementExtension on ClassElement {
     return constructor;
   }
 
-  List<VariableElement> get constructorParameters =>
-      primaryConstructor.parameters;
+  List<FormalParameterElement> get constructorParameters =>
+      primaryConstructor.formalParameters;
 
-  List<VariableElement> get getters {
+  List<VariableElement> get getterElements {
     final allSuperclasses = allSupertypes
         .where((element) => !element.isDartCoreObject)
         .map((element) => element.element)
@@ -72,7 +72,7 @@ extension ClassElementExtension on ClassElement {
       return field;
     }
 
-    final getter = getters.where((element) => element.name == name).firstOrNull;
+    final getter = getterElements.where((element) => element.name == name).firstOrNull;
     if (getter != null) {
       return getter;
     }
