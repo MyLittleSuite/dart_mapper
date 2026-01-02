@@ -64,6 +64,8 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
       );
     }
 
+    final safeEnumDisplayName =
+        targetEnum.displayName.replaceAll('\\', '\\\\').replaceAll(r'$', r'\$');
     final sourceField = method.parameters.first.field;
     final expressionFactory = expressionStrategyDispatcher.get(method.behavior);
 
@@ -107,7 +109,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
             otherwise: method.optionalReturn
                 ? literal(null)
                 : throwArgumentError(
-                    'Unknown value for enum ${targetEnum.getDisplayString()}: {${interpolate(sourceField.name)}}',
+                    'Unknown value for enum $safeEnumDisplayName: {${interpolate(sourceField.name)}}',
                   ),
           ).returned,
         ),
