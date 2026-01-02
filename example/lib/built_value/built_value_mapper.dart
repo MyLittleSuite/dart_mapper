@@ -43,6 +43,9 @@ abstract class AlertTypeMapper {
 
   @ValueMapping(target: 'missingPhoneNumber', source: '1')
   @ValueMapping(target: 'missingEmail', source: '2')
+  @ValueMapping(target: 'goToAppointment', source: '3')
+  @ValueMapping(target: 'goToAppointment', source: '4')
+  @ValueMapping(target: 'goToAppointment', source: '5')
   AlertType? fromRaw(int? raw);
 
   @ValueMapping(target: '1', source: 'missingPhoneNumber')
