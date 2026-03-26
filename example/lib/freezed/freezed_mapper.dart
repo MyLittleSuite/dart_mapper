@@ -70,13 +70,13 @@ abstract class FreezedMapper {
 
 @Mapper()
 abstract class FreezedAnyRemainingStatusMapper {
-  @ValueMapping(source: '<ANY_REMAINING>', target: 'pending')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'pending')
   FrzTargetStatus convert(FrzSourceStatus source);
 }
 
 @Mapper()
 abstract class FreezedAnyUnmappedStatusMapper {
-  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   FrzTargetStatus? convert(FrzSourceStatus source);
 }
 

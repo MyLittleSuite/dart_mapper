@@ -63,12 +63,12 @@ abstract class EnumMapper {
 
 @Mapper()
 abstract class AnyRemainingEnumMapper {
-  @ValueMapping(source: '<ANY_REMAINING>', target: 'blue')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'blue')
   PrimaryTargetColor convert(ExtendedSourceColor source);
 }
 
 @Mapper()
 abstract class AnyUnmappedEnumMapper {
-  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   PrimaryTargetColor? convert(ExtendedSourceColor source);
 }

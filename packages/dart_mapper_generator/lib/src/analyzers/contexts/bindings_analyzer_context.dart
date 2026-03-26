@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper/src/value_mapping.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
@@ -79,9 +80,9 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
           ),
       );
 
-  String? get anyRemainingTarget => enumValues['<ANY_REMAINING>'];
+  String? get anyRemainingTarget => enumValues[ValueMapping.anyRemaining];
 
-  bool get hasAnyUnmapped => enumValues.containsKey('<ANY_UNMAPPED>');
+  bool get hasAnyUnmapped => enumValues.containsKey(ValueMapping.anyUnmapped);
 
   Map<String, CallableMappingMethod> get callableMap => Map.fromEntries(
         _renamingMappings

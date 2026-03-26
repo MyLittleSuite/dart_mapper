@@ -134,7 +134,7 @@ abstract class BuiltValueMapperWithCallable {
 abstract class BVAnyRemainingStatusMapper {
   const BVAnyRemainingStatusMapper();
 
-  @ValueMapping(source: '<ANY_REMAINING>', target: 'pending')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'pending')
   BVTargetStatus convert(BVSourceStatus source);
 }
 
@@ -142,7 +142,7 @@ abstract class BVAnyRemainingStatusMapper {
 abstract class BVAnyUnmappedStatusMapper {
   const BVAnyUnmappedStatusMapper();
 
-  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   BVTargetStatus? convert(BVSourceStatus source);
 }
 

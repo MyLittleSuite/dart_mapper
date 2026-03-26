@@ -55,7 +55,7 @@ enum TargetColorNullable {
 )
 @Mapper()
 abstract class AnyRemainingEnumMapper {
-  @ValueMapping(source: '<ANY_REMAINING>', target: 'blue')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'blue')
   TargetColor convert(SourceColor source);
 }
 
@@ -66,7 +66,7 @@ abstract class AnyRemainingEnumMapper {
 )
 @Mapper()
 abstract class AnyUnmappedEnumMapper {
-  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   TargetColorNullable? convert(SourceColor source);
 }
 
@@ -77,7 +77,7 @@ abstract class AnyUnmappedEnumMapper {
 )
 @Mapper()
 abstract class AnyUnmappedNonNullableEnumMapper {
-  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   TargetColor convert(SourceColor source);
 }
 
@@ -88,7 +88,7 @@ abstract class AnyUnmappedNonNullableEnumMapper {
 )
 @Mapper()
 abstract class MutualExclusionEnumMapper {
-  @ValueMapping(source: '<ANY_REMAINING>', target: 'blue')
-  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'blue')
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   TargetColor convert(SourceColor source);
 }
