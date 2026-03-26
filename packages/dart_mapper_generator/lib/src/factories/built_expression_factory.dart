@@ -42,7 +42,21 @@ class BuiltExpressionFactory extends ExpressionFactory {
   @override
   Expression create(ExpressionContext context) {
     if (context.expressionMappingMethod == null) {
-      if (context.field is IterableField) {
+      if (context.field is MapField) {
+        final basicExpression = super.basic(context);
+        final convertedMap = defaultFactory.create(context);
+
+        final builtMapExpression = refer('MapBuilder').call([
+          convertedMap.ifNullThen(literal({})),
+        ]);
+
+        return (context.field.nullable)
+            ? basicExpression.isNotNull.conditional(
+          builtMapExpression,
+          literalNull,
+        )
+            : builtMapExpression;
+      } else if (context.field is IterableField) {
         final basicExpression = super.basic(context);
         final isSet = context.field.type.isSet;
 
@@ -62,19 +76,6 @@ class BuiltExpressionFactory extends ExpressionFactory {
           )
               : cloneExpression;
         }
-      } else if (context.field is MapField) {
-        final basicExpression = super.basic(context);
-        final convertedMap = defaultFactory.create(context);
-        final builtMapExpression = refer('BuiltMap').property('from').call([
-          convertedMap.ifNullThen(literal({})),
-        ]);
-
-        return (context.field.nullable)
-            ? basicExpression.isNotNull.conditional(
-                builtMapExpression,
-                literalNull,
-              )
-            : builtMapExpression;
       } else if (context.field is NestedField &&
           context.extraMappingMethod is ExternalMappingMethod) {
         final basicExpression = super.basic(context);
