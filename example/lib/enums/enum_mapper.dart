@@ -33,7 +33,7 @@ abstract class EnumMapper {
   EnumTarget toTarget(EnumSource source);
 
   @ValueMapping(target: 'element14', source: 'element41')
-  EnumTarget toTargetCustom(EnumSource source);
+  UnbalancedEnumTarget toTargetCustom(EnumSource source);
 
   EnumTarget toTargetWithSourceString(String source);
 
@@ -42,12 +42,12 @@ abstract class EnumMapper {
   @ValueMapping(target: 'element1', source: '1')
   @ValueMapping(target: 'element2', source: '2')
   @ValueMapping(target: 'element14', source: '14')
-  EnumTarget toTargetWithSourceInt(int source);
+  UnbalancedEnumTarget toTargetWithSourceInt(int source);
 
   @ValueMapping(target: 'element1', source: '1')
   @ValueMapping(target: 'element2', source: '2')
   @ValueMapping(target: 'element14', source: '14')
-  EnumTarget? toNullableTargetWithSourceInt(int source);
+  UnbalancedEnumTarget? toNullableTargetWithSourceInt(int source);
 
   @ValueMapping(target: '1', source: 'element1')
   @ValueMapping(target: '2', source: 'element2')

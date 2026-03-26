@@ -9,7 +9,7 @@ scripts:
   generate-example-code:
     description: Generate example code
     steps:
-      - cd example
+      - cd example/
       - fvm install
       - fvm flutter pub get
       - fvm dart run build_runner build --delete-conflicting-outputs
@@ -21,3 +21,11 @@ scripts:
       - fvm install
       - fvm flutter pub get
       - fvm dart analyze
+
+  test:
+    description: Run all tests
+    run: dart test
+    packageFilters:
+      scope:
+        - dart_mapper
+        - dart_mapper_generator

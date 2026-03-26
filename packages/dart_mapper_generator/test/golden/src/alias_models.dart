@@ -23,20 +23,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+// Models used by alias_test_src.dart via aliased import.
+// Mirrors the example/lib/alias pattern where types are imported
+// with a prefix (e.g., `import '...' as models;`).
+
+enum AliasEnum {
+  element,
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
-}
+class AliasObject {
+  final String description;
+  final AliasEnum alias;
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
+  const AliasObject(this.description, this.alias);
 }

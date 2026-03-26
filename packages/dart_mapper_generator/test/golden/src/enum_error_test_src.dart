@@ -23,20 +23,28 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+// Golden test source for ENUM-03: mismatched enum values without fallback
+// should produce an InvalidGenerationSourceError at generation time.
+
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:source_gen_test/annotations.dart';
+
+enum SourceStatus {
+  active,
+  inactive,
+  pending,
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
+enum TargetStatus {
+  active,
+  inactive,
+  archived,
 }
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
+// 'pending' in source has no match in target, and no @ValueMapping is provided.
+// The generator must throw InvalidGenerationSourceError listing unmapped values.
+@ShouldThrow('Unmapped source enum values: pending. Provide @ValueMapping for each value or use <ANY_REMAINING>/<ANY_UNMAPPED> as a default fallback.')
+@Mapper()
+abstract class MismatchedEnumMapper {
+  TargetStatus toTarget(SourceStatus source);
 }

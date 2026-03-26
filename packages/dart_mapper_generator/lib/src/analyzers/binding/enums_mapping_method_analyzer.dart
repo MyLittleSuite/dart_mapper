@@ -24,6 +24,7 @@
  */
 
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
+import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/exceptions/too_many_enum_mapping_method_parameters_error.dart';
@@ -116,6 +117,27 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
             ),
           );
         }
+      }
+    }
+
+    final mappedSourceNames = bindings.map((b) => b.source.name).toSet();
+    final allSourceNames = sourceElement.enumValues
+        .map((v) => v.name)
+        .whereType<String>()
+        .toSet();
+    final unmappedSourceValues = allSourceNames.difference(mappedSourceNames);
+
+    if (unmappedSourceValues.isNotEmpty) {
+      final hasDefaultFallback = enumValuesMap.containsKey('<ANY_REMAINING>') ||
+          enumValuesMap.containsKey('<ANY_UNMAPPED>');
+
+      if (!hasDefaultFallback) {
+        throw InvalidGenerationSourceError(
+          'Unmapped source enum values: ${unmappedSourceValues.join(', ')}. '
+          'Provide @ValueMapping for each value or use '
+          '<ANY_REMAINING>/<ANY_UNMAPPED> as a default fallback.',
+          element: context.method,
+        );
       }
     }
 
