@@ -136,4 +136,32 @@ void main() async {
     'enum_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(enumErrorReader, generator);
+
+  // Group: Enum defaults (ENUM-01, ENUM-02)
+  final enumDefaultsReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'enum_defaults_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(enumDefaultsReader, generator);
+
+  // Group: Map field mapping (COLL-01)
+  final mapReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapReader, generator);
+
+  // Group: Dynamic field mapping (COLL-03)
+  final dynamicReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'dynamic_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(dynamicReader, generator);
+
+  // Group: Generic type resolution (COLL-04)
+  final genericsReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'generics_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(genericsReader, generator);
 }

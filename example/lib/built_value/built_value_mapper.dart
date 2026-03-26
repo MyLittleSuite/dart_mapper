@@ -29,6 +29,8 @@ import 'package:dart_mapper_example/built_value/models/alert.dart';
 import 'package:dart_mapper_example/built_value/models/alert_info.dart'
     as models;
 import 'package:dart_mapper_example/built_value/models/built_enum.dart';
+import 'package:dart_mapper_example/built_value/models/enum_defaults_item.dart';
+import 'package:dart_mapper_example/built_value/models/map_item.dart';
 import 'package:dart_mapper_example/built_value/models/review.dart';
 import 'package:dart_mapper_example/built_value/models/review_dto.dart';
 import 'package:dart_mapper_example/built_value/models/user.dart';
@@ -126,4 +128,36 @@ abstract class BuiltValueMapperWithCallable {
   @Mapping(target: 'thumbsUp', callable: _mapUserManuallyList)
   @Mapping(target: 'thumbsDown', callable: _mapUserManuallySet)
   ReviewDTO toReviewDTO(Review review);
+}
+
+@Mapper()
+abstract class BVAnyRemainingStatusMapper {
+  const BVAnyRemainingStatusMapper();
+
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'pending')
+  BVTargetStatus convert(BVSourceStatus source);
+}
+
+@Mapper()
+abstract class BVAnyUnmappedStatusMapper {
+  const BVAnyUnmappedStatusMapper();
+
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
+  BVTargetStatus? convert(BVSourceStatus source);
+}
+
+@Mapper(uses: {BVAnyRemainingStatusMapper})
+abstract class BVStatusItemMapper {
+  const BVStatusItemMapper();
+
+  BVMappedStatus toMapped(BVStatusItem source);
+}
+
+@Mapper()
+abstract class BVMapMapper {
+  const BVMapMapper();
+
+  BVMapTarget toTarget(BVMapSource source);
+
+  BVMapSource toSource(BVMapTarget target);
 }

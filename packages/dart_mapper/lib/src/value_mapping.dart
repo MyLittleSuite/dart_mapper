@@ -24,6 +24,10 @@
  */
 
 class ValueMapping {
+  static const String anyRemaining = '<ANY_REMAINING>';
+  static const String anyUnmapped = '<ANY_UNMAPPED>';
+  static const String nullValue = '<NULL>';
+
   final String target;
   final String source;
 

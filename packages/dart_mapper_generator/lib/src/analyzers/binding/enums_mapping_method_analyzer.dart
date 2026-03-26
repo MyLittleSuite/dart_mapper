@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:dart_mapper/src/value_mapping.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
@@ -120,6 +121,26 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
       }
     }
 
+    // Validate mutual exclusion: cannot use both sentinels on same method.
+    if (enumValuesMap.containsKey(ValueMapping.anyRemaining) &&
+        enumValuesMap.containsKey(ValueMapping.anyUnmapped)) {
+      throw InvalidGenerationSourceError(
+        '<ANY_REMAINING> and <ANY_UNMAPPED> cannot be used on the same method. '
+        'Use <ANY_REMAINING> to map to a default value, or <ANY_UNMAPPED> to map to null.',
+        element: context.method,
+      );
+    }
+
+    // Validate non-nullable return with <ANY_UNMAPPED>.
+    if (enumValuesMap.containsKey(ValueMapping.anyUnmapped) &&
+        !context.method.returnType.isNullable) {
+      throw InvalidGenerationSourceError(
+        '<ANY_UNMAPPED> requires a nullable return type. '
+        'Change the return type to a nullable enum type (e.g., TargetColor?).',
+        element: context.method,
+      );
+    }
+
     final mappedSourceNames = bindings.map((b) => b.source.name).toSet();
     final allSourceNames = sourceElement.enumValues
         .map((v) => v.name)
@@ -128,8 +149,8 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     final unmappedSourceValues = allSourceNames.difference(mappedSourceNames);
 
     if (unmappedSourceValues.isNotEmpty) {
-      final hasDefaultFallback = enumValuesMap.containsKey('<ANY_REMAINING>') ||
-          enumValuesMap.containsKey('<ANY_UNMAPPED>');
+      final hasDefaultFallback = enumValuesMap.containsKey(ValueMapping.anyRemaining) ||
+          enumValuesMap.containsKey(ValueMapping.anyUnmapped);
 
       if (!hasDefaultFallback) {
         throw InvalidGenerationSourceError(

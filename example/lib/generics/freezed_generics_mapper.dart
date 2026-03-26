@@ -23,33 +23,33 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'freezed_generics_mapper.freezed.dart';
+part 'freezed_generics_mapper.g.dart';
+
+@freezed
+abstract class FreezedWrapper<T> with _$FreezedWrapper<T> {
+  const FreezedWrapper._();
+
+  const factory FreezedWrapper({
+    required T value,
+    required String label,
+  }) = _FreezedWrapper<T>;
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
+@freezed
+abstract class FreezedTargetWrapper with _$FreezedTargetWrapper {
+  const FreezedTargetWrapper._();
+
+  const factory FreezedTargetWrapper({
+    required String value,
+    required String label,
+  }) = _FreezedTargetWrapper;
 }
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
-}
-
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
-
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+@Mapper()
+abstract class FreezedGenericMapper {
+  FreezedTargetWrapper convert(FreezedWrapper<String> source);
 }

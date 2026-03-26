@@ -95,9 +95,7 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
           ),
         );
 
-        final bindings = mappingMethodDispatcher
-            .get(mappingBehavior)
-            .analyze(BindingsAnalyzerContext(
+        final bindingsContext = BindingsAnalyzerContext(
               mapperAnnotation: context.mapperAnnotation,
               mapperClass: context.mapperClass,
               importAliases: context.importAliases,
@@ -106,7 +104,11 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
               inheritedRenaming: inheritedRenamingMap,
               inheritedRenamingReversed: inheritedRenamingMapReversed,
               method: method,
-            ));
+            );
+
+        final bindings = mappingMethodDispatcher
+            .get(mappingBehavior)
+            .analyze(bindingsContext);
 
         if (method.name != null) {
           accumulator.add(
@@ -130,6 +132,8 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
                   .toList(growable: false),
               bindings: bindings,
               behavior: mappingBehavior,
+              anyRemainingTarget: bindingsContext.anyRemainingTarget,
+              hasAnyUnmapped: bindingsContext.hasAnyUnmapped,
             ),
           );
         }

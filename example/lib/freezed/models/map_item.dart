@@ -23,33 +23,46 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'map_item.freezed.dart';
+
+@freezed
+abstract class FreezedMapItem with _$FreezedMapItem {
+  const FreezedMapItem._();
+
+  const factory FreezedMapItem({
+    required String label,
+    required int value,
+  }) = _FreezedMapItem;
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
+@freezed
+abstract class FreezedMappedItem with _$FreezedMappedItem {
+  const FreezedMappedItem._();
+
+  const factory FreezedMappedItem({
+    required String label,
+    required int value,
+  }) = _FreezedMappedItem;
 }
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
+@freezed
+abstract class FreezedMapSource with _$FreezedMapSource {
+  const FreezedMapSource._();
+
+  const factory FreezedMapSource({
+    required Map<String, int> scores,
+    required Map<String, FreezedMapItem> details,
+  }) = _FreezedMapSource;
 }
 
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
+@freezed
+abstract class FreezedMapTarget with _$FreezedMapTarget {
+  const FreezedMapTarget._();
 
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+  const factory FreezedMapTarget({
+    required Map<String, int> scores,
+    required Map<String, FreezedMappedItem> details,
+  }) = _FreezedMapTarget;
 }

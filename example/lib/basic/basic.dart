@@ -38,6 +38,7 @@ class BasicObject {
   final List<BasicEnum> types;
   final DateTime dateTime;
   final int? ignoreField;
+  final dynamic extra;
 
   BasicObject(
     this.name,
@@ -46,6 +47,7 @@ class BasicObject {
     this.types,
     this.dateTime,
     this.ignoreField,
+    this.extra,
   );
 }
 
@@ -56,6 +58,7 @@ class AnotherBasicObject {
   final List<AnotherBasicEnum> types;
   final DateTime dateTime;
   final int? ignoreField;
+  final dynamic extra;
 
   const AnotherBasicObject(
     this.name,
@@ -64,6 +67,7 @@ class AnotherBasicObject {
     this.types,
     this.dateTime, {
     this.ignoreField,
+    this.extra,
   });
 }
 

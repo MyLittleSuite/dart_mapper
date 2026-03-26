@@ -36,7 +36,7 @@ extension DartTypeExtension on DartType {
 
   bool get isIterable => isList || isSet || isDartCoreIterable;
 
-  bool get isMap => isDartCoreMap;
+  bool get isMap => isDartCoreMap || isBuiltMap;
 
   bool get isEnum => element is EnumElement || isBuiltEnum;
 
@@ -116,6 +116,12 @@ extension DartTypeBuilt on DartType {
       isLibraryBuilt &&
       {
         'BuiltList',
+      }.contains(className);
+
+  bool get isBuiltMap =>
+      isLibraryBuilt &&
+      {
+        'BuiltMap',
       }.contains(className);
 
   bool get isBuiltEnum {

@@ -23,33 +23,35 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/built_value.dart';
+
+part 'map_item.g.dart';
+
+@BuiltValue()
+abstract class BVMapSource implements Built<BVMapSource, BVMapSourceBuilder> {
+  @BuiltValueField(wireName: r'scores')
+  BuiltMap<String, int> get scores;
+
+  BVMapSource._();
+
+  // ignore: use_function_type_syntax_for_parameters
+  factory BVMapSource([void updates(BVMapSourceBuilder b)]) = _$BVMapSource;
+
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(BVMapSourceBuilder b) => b;
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
-}
+@BuiltValue()
+abstract class BVMapTarget implements Built<BVMapTarget, BVMapTargetBuilder> {
+  @BuiltValueField(wireName: r'scores')
+  BuiltMap<String, int> get scores;
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
-}
+  BVMapTarget._();
 
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
+  // ignore: use_function_type_syntax_for_parameters
+  factory BVMapTarget([void updates(BVMapTargetBuilder b)]) = _$BVMapTarget;
 
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(BVMapTargetBuilder b) => b;
 }

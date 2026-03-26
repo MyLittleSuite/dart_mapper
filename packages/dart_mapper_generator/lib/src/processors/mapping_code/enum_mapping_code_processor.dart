@@ -29,6 +29,7 @@ import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/expressions.dart';
 import 'package:dart_mapper_generator/src/misc/strings.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/defined_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
@@ -106,13 +107,36 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
               }),
             ],
             ignoreUnreachableCode: true,
-            otherwise: method.optionalReturn
-                ? literal(null)
-                : throwArgumentError(
-                    'Unknown value for enum $safeEnumDisplayName: {${interpolate(sourceField.name)}}',
-                  ),
+            otherwise: _buildOtherwiseExpression(
+              method: method,
+              safeEnumDisplayName: safeEnumDisplayName,
+              sourceFieldName: sourceField.name,
+            ),
           ).returned,
         ),
+    );
+  }
+
+  Expression _buildOtherwiseExpression({
+    required BindableMappingMethod method,
+    required String safeEnumDisplayName,
+    required String sourceFieldName,
+  }) {
+    if (method is DefinedMappingMethod && method.anyRemainingTarget != null) {
+      final targetEnumRef = refer(safeEnumDisplayName);
+      return targetEnumRef.property(method.anyRemainingTarget!);
+    }
+
+    if (method is DefinedMappingMethod && method.hasAnyUnmapped) {
+      return literal(null);
+    }
+
+    if (method.optionalReturn) {
+      return literal(null);
+    }
+
+    return throwArgumentError(
+      'Unknown value for enum $safeEnumDisplayName: {${interpolate(sourceFieldName)}}',
     );
   }
 }
