@@ -21,3 +21,11 @@ scripts:
       - fvm install
       - fvm flutter pub get
       - fvm dart analyze
+
+  test:
+    description: Run all tests
+    run: dart test
+    packageFilters:
+      scope:
+        - dart_mapper
+        - dart_mapper_generator
