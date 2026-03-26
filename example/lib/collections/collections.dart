@@ -52,12 +52,12 @@ class Source {
   final List<String> strings;
   final Set<int> setIntegers;
   final Set<String> setStrings;
-  //final Map<int, String> mapIntegersToStrings;
+  final Map<String, int> metadata;
   final Iterable<int> iterableIntegers;
 
   final List<CustomObjectSource> customObjectList;
   final Set<CustomObjectSource> customObjectSet;
-  //final Map<int, CustomObjectSource> customObjectMap;
+  final Map<String, CustomObjectSource> itemMap;
   final Iterable<CustomObjectSource> customObjectIterable;
 
   Source({
@@ -65,10 +65,10 @@ class Source {
     required this.strings,
     required this.setIntegers,
     required this.setStrings,
-    //required this.mapIntegersToStrings,
+    required this.metadata,
     required this.customObjectList,
     required this.customObjectSet,
-    //required this.customObjectMap,
+    required this.itemMap,
     required this.iterableIntegers,
     required this.customObjectIterable,
   });
@@ -79,12 +79,12 @@ class Target {
   final List<String> strings;
   final Set<int> setIntegers;
   final Set<String> setStrings;
-  //final Map<int, String> mapIntegersToStrings;
+  final Map<String, int> metadata;
   final Iterable<int> iterableIntegers;
 
   final List<CustomObjectTarget> customObjectList;
   final Set<CustomObjectTarget> customObjectSet;
-  //final Map<int, CustomObjectTarget> customObjectMap;
+  final Map<String, CustomObjectTarget> itemMap;
   final Iterable<CustomObjectTarget> customObjectIterable;
 
   Target({
@@ -92,10 +92,10 @@ class Target {
     required this.strings,
     required this.setIntegers,
     required this.setStrings,
-    //required this.mapIntegersToStrings,
+    required this.metadata,
     required this.customObjectList,
     required this.customObjectSet,
-    //required this.customObjectMap,
+    required this.itemMap,
     required this.iterableIntegers,
     required this.customObjectIterable,
   });

@@ -25,6 +25,7 @@
 
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
+import 'package:dart_mapper_generator/src/models/field/dynamic_field.dart';
 import 'package:dart_mapper_generator/src/models/field/enum_field.dart';
 import 'package:dart_mapper_generator/src/models/field/iterable_field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_field.dart';
@@ -32,6 +33,7 @@ import 'package:dart_mapper_generator/src/models/field/nested_field.dart';
 import 'package:dart_mapper_generator/src/models/field/primitive_field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
 
+export 'dynamic_field.dart';
 export 'enum_field.dart';
 export 'iterable_field.dart';
 export 'map_field.dart';
@@ -86,6 +88,14 @@ abstract class Field {
       );
     } else if (type.isEnum) {
       return EnumField(
+        name: name,
+        type: type,
+        instance: instance,
+        required: required,
+        nullable: nullable,
+      );
+    } else if (type is DynamicType) {
+      return DynamicField(
         name: name,
         type: type,
         instance: instance,

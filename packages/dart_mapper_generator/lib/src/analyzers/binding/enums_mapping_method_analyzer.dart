@@ -120,6 +120,26 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
       }
     }
 
+    // Validate mutual exclusion: cannot use both sentinels on same method.
+    if (enumValuesMap.containsKey('<ANY_REMAINING>') &&
+        enumValuesMap.containsKey('<ANY_UNMAPPED>')) {
+      throw InvalidGenerationSourceError(
+        '<ANY_REMAINING> and <ANY_UNMAPPED> cannot be used on the same method. '
+        'Use <ANY_REMAINING> to map to a default value, or <ANY_UNMAPPED> to map to null.',
+        element: context.method,
+      );
+    }
+
+    // Validate non-nullable return with <ANY_UNMAPPED>.
+    if (enumValuesMap.containsKey('<ANY_UNMAPPED>') &&
+        !context.method.returnType.isNullable) {
+      throw InvalidGenerationSourceError(
+        '<ANY_UNMAPPED> requires a nullable return type. '
+        'Change the return type to a nullable enum type (e.g., TargetColor?).',
+        element: context.method,
+      );
+    }
+
     final mappedSourceNames = bindings.map((b) => b.source.name).toSet();
     final allSourceNames = sourceElement.enumValues
         .map((v) => v.name)

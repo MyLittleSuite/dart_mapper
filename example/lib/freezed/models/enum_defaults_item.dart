@@ -23,33 +23,30 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'enum_defaults_item.freezed.dart';
+
+enum FrzSourceStatus { active, inactive, pending, archived }
+
+enum FrzTargetStatus { active, inactive, pending }
+
+@freezed
+abstract class FreezedStatusItem with _$FreezedStatusItem {
+  const FreezedStatusItem._();
+
+  const factory FreezedStatusItem({
+    required String name,
+    required FrzSourceStatus status,
+  }) = _FreezedStatusItem;
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
-}
+@freezed
+abstract class FreezedMappedStatus with _$FreezedMappedStatus {
+  const FreezedMappedStatus._();
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
-}
-
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
-
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+  const factory FreezedMappedStatus({
+    required String name,
+    required FrzTargetStatus status,
+  }) = _FreezedMappedStatus;
 }

@@ -27,6 +27,9 @@ import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bin
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
 final class DefinedMappingMethod extends BindableMappingMethod {
+  final String? anyRemainingTarget;
+  final bool hasAnyUnmapped;
+
   const DefinedMappingMethod({
     required super.name,
     super.isOverride = false,
@@ -35,6 +38,8 @@ final class DefinedMappingMethod extends BindableMappingMethod {
     super.behavior = MappingBehavior.standard,
     super.parameters = const [],
     super.bindings = const [],
+    this.anyRemainingTarget,
+    this.hasAnyUnmapped = false,
   });
 
   @override
@@ -45,6 +50,8 @@ final class DefinedMappingMethod extends BindableMappingMethod {
       'optionalReturn: $optionalReturn, '
       'behavior: $behavior, '
       'parameters: $parameters, '
-      'bindings: $bindings'
+      'bindings: $bindings, '
+      'anyRemainingTarget: $anyRemainingTarget, '
+      'hasAnyUnmapped: $hasAnyUnmapped'
       '}';
 }

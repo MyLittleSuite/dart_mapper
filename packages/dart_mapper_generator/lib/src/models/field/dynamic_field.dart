@@ -23,33 +23,23 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
-}
+import 'package:dart_mapper_generator/src/models/field/field.dart';
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
-}
+class DynamicField extends Field {
+  const DynamicField({
+    required super.name,
+    required super.type,
+    super.instance,
+    super.required = false,
+    super.nullable = false,
+  });
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
-}
-
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
-
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+  @override
+  String toString() => 'DynamicField{'
+      'name: $name, '
+      'type: $type, '
+      'required: $required, '
+      'nullable: $nullable, '
+      'instance: $instance'
+      '}';
 }

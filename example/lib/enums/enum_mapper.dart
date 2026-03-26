@@ -60,3 +60,15 @@ abstract class EnumMapper {
 
   EnumTarget? toTargetNullableBoth(EnumSource? source);
 }
+
+@Mapper()
+abstract class AnyRemainingEnumMapper {
+  @ValueMapping(source: '<ANY_REMAINING>', target: 'blue')
+  PrimaryTargetColor convert(ExtendedSourceColor source);
+}
+
+@Mapper()
+abstract class AnyUnmappedEnumMapper {
+  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  PrimaryTargetColor? convert(ExtendedSourceColor source);
+}

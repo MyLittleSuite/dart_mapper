@@ -79,6 +79,10 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
           ),
       );
 
+  String? get anyRemainingTarget => enumValues['<ANY_REMAINING>'];
+
+  bool get hasAnyUnmapped => enumValues.containsKey('<ANY_UNMAPPED>');
+
   Map<String, CallableMappingMethod> get callableMap => Map.fromEntries(
         _renamingMappings
             .where((annotation) => annotation.callable != null)

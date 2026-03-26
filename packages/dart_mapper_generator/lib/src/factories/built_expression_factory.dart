@@ -62,6 +62,19 @@ class BuiltExpressionFactory extends ExpressionFactory {
           )
               : cloneExpression;
         }
+      } else if (context.field is MapField) {
+        final basicExpression = super.basic(context);
+        final convertedMap = defaultFactory.create(context);
+        final builtMapExpression = refer('BuiltMap').property('from').call([
+          convertedMap.ifNullThen(literal({})),
+        ]);
+
+        return (context.field.nullable)
+            ? basicExpression.isNotNull.conditional(
+                builtMapExpression,
+                literalNull,
+              )
+            : builtMapExpression;
       } else if (context.field is NestedField &&
           context.extraMappingMethod is ExternalMappingMethod) {
         final basicExpression = super.basic(context);

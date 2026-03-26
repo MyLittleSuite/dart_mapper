@@ -23,33 +23,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+import 'package:dart_mapper/dart_mapper.dart';
+
+part 'generics_mapper.g.dart';
+
+class Wrapper<T> {
+  final T value;
+  final String label;
+
+  Wrapper(this.value, this.label);
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
+class TargetWrapper {
+  final String value;
+  final String label;
+
+  TargetWrapper(this.value, this.label);
 }
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
-}
+@Mapper()
+abstract class GenericMapper {
+  TargetWrapper convert(Wrapper<String> source);
 
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
-
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+  Wrapper<String> toWrapper(TargetWrapper target);
 }

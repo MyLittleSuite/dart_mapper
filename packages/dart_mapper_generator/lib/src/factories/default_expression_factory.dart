@@ -35,6 +35,11 @@ class DefaultExpressionFactory extends ExpressionFactory {
   Expression create(ExpressionContext context) {
     final basicExpression = super.basic(context);
 
+    // Dynamic fields use direct assignment, no conversion
+    if (context.field is DynamicField) {
+      return basicExpression;
+    }
+
     if (context.expressionMappingMethod == null) {
       if (context.field is MapField) {
         return _createMap(context, context.field as MapField);
@@ -55,13 +60,37 @@ class DefaultExpressionFactory extends ExpressionFactory {
     ExpressionContext context,
     MapField field,
   ) {
-    return super.basic(context).property('map').call([
-      CodeExpression(
-        Code(
-          context.extraMappingMethod?.name ??
-              '(key, value) => MapEntry(key, value)',
-        ),
-      ),
+    final basicExpression = super.basic(context);
+    final hasValueConverter = context.extraMappingMethod != null;
+
+    final mapProperty = field.nullable
+        ? basicExpression.nullSafeProperty('map')
+        : basicExpression.property('map');
+
+    if (!hasValueConverter) {
+      // No conversion needed -- identity map
+      return mapProperty.call([
+        Method((b) {
+          b.requiredParameters.add(Parameter((b) => b..name = 'key'));
+          b.requiredParameters.add(Parameter((b) => b..name = 'value'));
+          b.body = refer('MapEntry').newInstance([
+            refer('key'),
+            refer('value'),
+          ]).code;
+        }).closure,
+      ]);
+    }
+
+    // Value needs conversion via extraMappingMethod
+    return mapProperty.call([
+      Method((b) {
+        b.requiredParameters.add(Parameter((b) => b..name = 'key'));
+        b.requiredParameters.add(Parameter((b) => b..name = 'value'));
+        b.body = refer('MapEntry').newInstance([
+          refer('key'),
+          refer(context.extraMappingMethod!.name).call([refer('value')]),
+        ]).code;
+      }).closure,
     ]);
   }
 

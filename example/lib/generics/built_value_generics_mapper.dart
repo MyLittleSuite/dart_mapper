@@ -23,33 +23,40 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+import 'package:built_value/built_value.dart';
+import 'package:dart_mapper/dart_mapper.dart';
+
+part 'built_value_generics_mapper.g.dart';
+
+class GenericSource<T> {
+  final T value;
+  final String label;
+
+  GenericSource(this.value, this.label);
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
+@BuiltValue()
+abstract class BVTargetWrapper
+    implements Built<BVTargetWrapper, BVTargetWrapperBuilder> {
+  @BuiltValueField(wireName: r'value')
+  String get value;
+
+  @BuiltValueField(wireName: r'label')
+  String get label;
+
+  BVTargetWrapper._();
+
+  // ignore: use_function_type_syntax_for_parameters
+  factory BVTargetWrapper([void updates(BVTargetWrapperBuilder b)]) =
+      _$BVTargetWrapper;
+
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(BVTargetWrapperBuilder b) => b;
 }
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
-}
+@Mapper()
+abstract class BVGenericMapper {
+  const BVGenericMapper();
 
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
-
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+  BVTargetWrapper convert(GenericSource<String> source);
 }

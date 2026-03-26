@@ -30,6 +30,9 @@ import 'package:dart_mapper_example/freezed/models/another_user.dart';
 import 'package:dart_mapper_example/freezed/models/city.dart';
 import 'package:dart_mapper_example/freezed/models/coord.dart';
 import 'package:dart_mapper_example/freezed/models/credentials.dart';
+import 'package:dart_mapper_example/freezed/models/dynamic_item.dart';
+import 'package:dart_mapper_example/freezed/models/enum_defaults_item.dart';
+import 'package:dart_mapper_example/freezed/models/map_item.dart';
 import 'package:dart_mapper_example/freezed/models/user.dart';
 import 'package:dart_mapper_example/freezed/models/user_jto.dart';
 
@@ -63,4 +66,36 @@ abstract class FreezedMapper {
 
   @Mapping(target: 'coord', callable: _toCoordDTO)
   CityDTO toCityDTOWithCustomCoordinates(City city);
+}
+
+@Mapper()
+abstract class FreezedAnyRemainingStatusMapper {
+  @ValueMapping(source: '<ANY_REMAINING>', target: 'pending')
+  FrzTargetStatus convert(FrzSourceStatus source);
+}
+
+@Mapper()
+abstract class FreezedAnyUnmappedStatusMapper {
+  @ValueMapping(source: '<ANY_UNMAPPED>', target: '<NULL>')
+  FrzTargetStatus? convert(FrzSourceStatus source);
+}
+
+@Mapper(uses: {FreezedAnyRemainingStatusMapper})
+abstract class FreezedStatusItemMapper {
+  FreezedMappedStatus toMapped(FreezedStatusItem source);
+}
+
+@Mapper()
+abstract class FreezedDynamicMapper {
+  FreezedDynamicTarget toTarget(FreezedDynamicSource source);
+
+  FreezedDynamicSource toSource(FreezedDynamicTarget target);
+}
+
+@Mapper()
+abstract class FreezedMapsMapper {
+  // ignore: unused_element
+  FreezedMappedItem mapItem(FreezedMapItem source);
+
+  FreezedMapTarget toTarget(FreezedMapSource source);
 }

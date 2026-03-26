@@ -23,33 +23,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-enum EnumSource {
-  element1,
-  element2,
-  element41,
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'dynamic_item.freezed.dart';
+
+@freezed
+abstract class FreezedDynamicSource with _$FreezedDynamicSource {
+  const FreezedDynamicSource._();
+
+  const factory FreezedDynamicSource({
+    required String id,
+    required dynamic payload,
+  }) = _FreezedDynamicSource;
 }
 
-enum EnumTarget {
-  element1,
-  element2,
-  element41,
-}
+@freezed
+abstract class FreezedDynamicTarget with _$FreezedDynamicTarget {
+  const FreezedDynamicTarget._();
 
-enum UnbalancedEnumTarget {
-  element1,
-  element2,
-  element14,
-}
-
-enum ExtendedSourceColor {
-  red,
-  green,
-  blue,
-  yellow,
-}
-
-enum PrimaryTargetColor {
-  red,
-  green,
-  blue,
+  const factory FreezedDynamicTarget({
+    required String id,
+    required dynamic payload,
+  }) = _FreezedDynamicTarget;
 }

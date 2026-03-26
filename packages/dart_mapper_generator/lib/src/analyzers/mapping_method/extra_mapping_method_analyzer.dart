@@ -233,8 +233,9 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
         EnumField() => field,
         IterableField(:final item) when item is NestedField => item,
         IterableField(:final item) when item is EnumField => item,
-        MapField() =>
-          throw UnimplementedError("Map is not currently supported"),
+        MapField(:final value) when value is NestedField => value,
+        MapField(:final value) when value is EnumField => value,
+        DynamicField() => null,
         _ => null,
       };
 
