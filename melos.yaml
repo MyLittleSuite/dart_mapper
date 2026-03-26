@@ -9,7 +9,7 @@ scripts:
   generate-example-code:
     description: Generate example code
     steps:
-      - cd example
+      - cd example/
       - fvm install
       - fvm flutter pub get
       - fvm dart run build_runner build --delete-conflicting-outputs

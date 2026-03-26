@@ -32,5 +32,11 @@ enum EnumSource {
 enum EnumTarget {
   element1,
   element2,
+  element41,
+}
+
+enum UnbalancedEnumTarget {
+  element1,
+  element2,
   element14,
 }

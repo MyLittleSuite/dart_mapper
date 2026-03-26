@@ -33,7 +33,7 @@ abstract class EnumMapper {
   EnumTarget toTarget(EnumSource source);
 
   @ValueMapping(target: 'element14', source: 'element41')
-  EnumTarget toTargetCustom(EnumSource source);
+  UnbalancedEnumTarget toTargetCustom(EnumSource source);
 
   EnumTarget toTargetWithSourceString(String source);
 

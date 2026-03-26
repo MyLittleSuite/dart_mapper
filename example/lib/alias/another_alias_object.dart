@@ -25,7 +25,7 @@
  *
  */
 
-enum AliasEnum { anotherElement }
+enum AliasEnum { element }
 
 class AliasObject {
   final String description;
