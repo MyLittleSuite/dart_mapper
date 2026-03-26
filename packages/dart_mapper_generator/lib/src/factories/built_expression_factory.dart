@@ -47,7 +47,7 @@ class BuiltExpressionFactory extends ExpressionFactory {
         final convertedMap = defaultFactory.create(context);
 
         final builtMapExpression = refer('MapBuilder').call([
-          convertedMap.ifNullThen(literal({})),
+          convertedMap,
         ]);
 
         return (context.field.nullable)
