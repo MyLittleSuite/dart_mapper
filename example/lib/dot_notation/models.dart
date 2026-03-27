@@ -23,38 +23,28 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/// A function that takes a source object and returns a mapped value.
-typedef MappingCallable = Function;
+class Address {
+  final String street;
+  final String city;
 
-class Mapping {
-  final String? source;
-  final String target;
-  final bool ignore;
+  const Address({required this.street, required this.city});
+}
 
-  /// When true, forces the target field to be non-null during mapping,
-  /// even if the source field is nullable.
-  final bool forceNonNull;
+class Person {
+  final String name;
+  final Address address;
 
-  /// A function that takes the source object and returns a mapped value.
-  /// This parameter delegates you to write the mapping logic manually.
-  final MappingCallable? callable;
+  const Person({required this.name, required this.address});
+}
 
-  /// A default value to use when the source field is null or absent.
-  /// Must be a valid Dart expression string (e.g., "'default'", "0", "false").
-  final String? defaultValue;
+class FlatContact {
+  final String name;
+  final String street;
+  final String city;
 
-  /// A constant expression to use as the target field value.
-  /// Must be a valid Dart constant expression string (e.g., "'constant'", "42").
-  /// Cannot be combined with source, defaultValue, or callable.
-  final String? constant;
-
-  const Mapping({
-    required this.target,
-    this.source,
-    this.ignore = false,
-    this.forceNonNull = false,
-    this.callable,
-    this.defaultValue,
-    this.constant,
+  const FlatContact({
+    required this.name,
+    required this.street,
+    required this.city,
   });
 }

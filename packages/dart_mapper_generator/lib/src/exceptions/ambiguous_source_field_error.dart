@@ -24,34 +24,20 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:source_gen/source_gen.dart';
 
-class ResolvedMapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
-  final ExecutableElement? callable;
-  final String? defaultValue;
-  final String? constant;
-
-  const ResolvedMapping({
-    required this.target,
-    required this.source,
-    required this.ignore,
-    required this.forceNonNull,
-    required this.callable,
-    this.defaultValue,
-    this.constant,
-  });
-
-  @override
-  String toString() => 'ResolvedMapping{'
-      'source: $source, '
-      'target: $target, '
-      'ignore: $ignore, '
-      'forceNonNull: $forceNonNull, '
-      'callable: $callable, '
-      'defaultValue: $defaultValue, '
-      'constant: $constant'
-      '}';
+class AmbiguousSourceFieldError extends InvalidGenerationSourceError {
+  AmbiguousSourceFieldError({
+    required String fieldName,
+    required List<String> parameterNames,
+    required Element element,
+  }) : super(
+          "Ambiguous source field '$fieldName' found in multiple parameters: "
+          "${parameterNames.join(', ')}.\n"
+          "When multiple source parameters share a field name, you must qualify "
+          "the source explicitly.\n"
+          "Fix: Add @Mapping(target: '$fieldName', source: "
+          "'${parameterNames.first}.$fieldName') to specify which parameter to use.",
+          element: element,
+        );
 }

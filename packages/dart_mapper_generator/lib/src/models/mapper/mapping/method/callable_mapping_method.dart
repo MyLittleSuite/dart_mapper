@@ -29,28 +29,31 @@ import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_paramete
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 
 final class CallableMappingMethod extends MappingMethod {
-  final MappingParameter parameter;
+  final List<MappingParameter> parameters;
 
   CallableMappingMethod({
     required super.name,
     required super.returnType,
     required super.optionalReturn,
-    required this.parameter,
+    required this.parameters,
   });
+
+  /// Convenience getter for backwards compatibility with single-param callables.
+  MappingParameter get parameter => parameters.first;
 
   factory CallableMappingMethod.from(ExecutableElement element) {
     assert(
-      element.formalParameters.length == 1,
-      'CallableMappingMethod can only be created from a method with one parameter',
+      element.formalParameters.isNotEmpty,
+      'CallableMappingMethod requires at least one parameter',
     );
-    assert(element.formalParameters.first.name != null,
-        'CallableMappingMethod parameter name is null');
 
     return CallableMappingMethod(
       name: element.name!,
       optionalReturn: element.returnType.isNullable,
       returnType: element.returnType,
-      parameter: MappingParameter.from(element.formalParameters.first),
+      parameters: element.formalParameters
+          .map((p) => MappingParameter.from(p))
+          .toList(),
     );
   }
 
@@ -59,6 +62,6 @@ final class CallableMappingMethod extends MappingMethod {
       'name: $name, '
       'returnType: $returnType, '
       'optionalReturn: $optionalReturn, '
-      'parameter: $parameter'
+      'parameters: $parameters'
       '}';
 }

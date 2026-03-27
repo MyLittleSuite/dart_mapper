@@ -123,6 +123,9 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
               forceNonNull: binding.forceNonNull,
               expressionMappingMethod: binding.callableMappingMethod,
               extraMappingMethod: binding.extraMappingMethod,
+              defaultValue: binding.defaultValue,
+              constant: binding.constant,
+              accessChain: binding.accessChain,
             ),
           );
 }

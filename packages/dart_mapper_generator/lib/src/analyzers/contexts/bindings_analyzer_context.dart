@@ -23,8 +23,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/src/value_mapping.dart';
+import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/invalid_comma_separated_source_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/invalid_mapping_combination_error.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
@@ -44,14 +46,89 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
     this.inheritedRenamingReversed,
   });
 
-  Map<String, String> get renamingMap => Map.fromEntries(
-        _renamingMappings
-            .where((annotation) => annotation.source != null)
-            .map((element) => MapEntry(element.source!, element.target)),
+  Map<String, List<String>> get renamingMap => _renamingMappings
+      .where((annotation) => annotation.source != null)
+      .fold<Map<String, List<String>>>({}, (map, element) {
+    map.update(
+      element.source!,
+      (targets) => targets..add(element.target),
+      ifAbsent: () => [element.target],
+    );
+    return map;
+  });
+
+  Map<String, String> get renamingMapReversed => Map.fromEntries(
+        renamingMap.entries.expand(
+          (entry) => entry.value.map((target) => MapEntry(target, entry.key)),
+        ),
       );
 
-  Map<String, String> get renamingMapReversed =>
-      renamingMap.map((key, value) => MapEntry(value, key));
+  Map<String, String> get defaultValueMap => Map.fromEntries(
+        _renamingMappings
+            .where((annotation) => annotation.defaultValue != null)
+            .map(
+              (annotation) =>
+                  MapEntry(annotation.target, annotation.defaultValue!),
+            ),
+      );
+
+  Map<String, String> get constantMap => Map.fromEntries(
+        _renamingMappings
+            .where((annotation) => annotation.constant != null)
+            .map(
+              (annotation) =>
+                  MapEntry(annotation.target, annotation.constant!),
+            ),
+      );
+
+  void validateMappingCombinations() {
+    for (final annotation in _renamingMappings) {
+      if (annotation.constant != null) {
+        if (annotation.source != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription: 'constant cannot be combined with source',
+            element: method,
+          );
+        }
+        if (annotation.defaultValue != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription:
+                'constant cannot be combined with defaultValue',
+            element: method,
+          );
+        }
+        if (annotation.callable != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription: 'constant cannot be combined with callable',
+            element: method,
+          );
+        }
+      }
+      if (annotation.defaultValue != null && annotation.callable != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription: 'defaultValue cannot be combined with callable',
+          element: method,
+        );
+      }
+    }
+  }
+
+  void validateCommaSeparatedSource() {
+    for (final annotation in _renamingMappings) {
+      if (annotation.source != null &&
+          annotation.source!.contains(',') &&
+          annotation.callable == null) {
+        throw InvalidCommaSeparatedSourceError(
+          target: annotation.target,
+          element: method,
+        );
+      }
+    }
+  }
 
   Set<String> get ignoredTargets => MappingAnnotation.load(method)
       .where((annotation) => annotation.ignore)

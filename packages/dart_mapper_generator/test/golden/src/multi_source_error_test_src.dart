@@ -23,35 +23,38 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
+// Golden test source for D-02: ambiguous source field in multi-source mapping
+// should produce an InvalidGenerationSourceError at generation time.
 
-class ResolvedMapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
-  final ExecutableElement? callable;
-  final String? defaultValue;
-  final String? constant;
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:source_gen_test/annotations.dart';
 
-  const ResolvedMapping({
-    required this.target,
-    required this.source,
-    required this.ignore,
-    required this.forceNonNull,
-    required this.callable,
-    this.defaultValue,
-    this.constant,
-  });
+class AmbigSource1 {
+  final String name;
 
-  @override
-  String toString() => 'ResolvedMapping{'
-      'source: $source, '
-      'target: $target, '
-      'ignore: $ignore, '
-      'forceNonNull: $forceNonNull, '
-      'callable: $callable, '
-      'defaultValue: $defaultValue, '
-      'constant: $constant'
-      '}';
+  const AmbigSource1({required this.name});
+}
+
+class AmbigSource2 {
+  final String name;
+
+  const AmbigSource2({required this.name});
+}
+
+class AmbigTarget {
+  final String name;
+
+  const AmbigTarget({required this.name});
+}
+
+// 'name' exists in both AmbigSource1 and AmbigSource2 with no @Mapping qualification.
+// The generator must throw AmbiguousSourceFieldError.
+@ShouldThrow(
+  "Ambiguous source field 'name' found in multiple parameters: source1, source2.\n"
+  "When multiple source parameters share a field name, you must qualify the source explicitly.\n"
+  "Fix: Add @Mapping(target: 'name', source: 'source1.name') to specify which parameter to use.",
+)
+@Mapper()
+abstract class AmbiguousFieldMapper {
+  AmbigTarget merge(AmbigSource1 source1, AmbigSource2 source2);
 }

@@ -35,6 +35,9 @@ class Binding {
   final bool forceNonNull;
   final CallableMappingMethod? callableMappingMethod;
   final MappingMethod? extraMappingMethod;
+  final String? defaultValue;
+  final String? constant;
+  final List<(String segment, bool nullable)>? accessChain;
 
   Binding({
     required this.source,
@@ -43,6 +46,9 @@ class Binding {
     this.forceNonNull = false,
     this.callableMappingMethod,
     this.extraMappingMethod,
+    this.defaultValue,
+    this.constant,
+    this.accessChain,
   }) /* : assert(target.required && ignored,
             'Target field \'${target.name}\' must be required') TODO:*/
   ;
@@ -65,6 +71,9 @@ class Binding {
       'ignored: $ignored, '
       'forceNonNull: $forceNonNull, '
       'callableMappingMethod: $callableMappingMethod, '
-      'extraMappingMethod: $extraMappingMethod'
+      'extraMappingMethod: $extraMappingMethod, '
+      'defaultValue: $defaultValue, '
+      'constant: $constant, '
+      'accessChain: $accessChain'
       '}';
 }

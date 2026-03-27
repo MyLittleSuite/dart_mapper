@@ -24,34 +24,18 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:source_gen/source_gen.dart';
 
-class ResolvedMapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
-  final ExecutableElement? callable;
-  final String? defaultValue;
-  final String? constant;
-
-  const ResolvedMapping({
-    required this.target,
-    required this.source,
-    required this.ignore,
-    required this.forceNonNull,
-    required this.callable,
-    this.defaultValue,
-    this.constant,
-  });
-
-  @override
-  String toString() => 'ResolvedMapping{'
-      'source: $source, '
-      'target: $target, '
-      'ignore: $ignore, '
-      'forceNonNull: $forceNonNull, '
-      'callable: $callable, '
-      'defaultValue: $defaultValue, '
-      'constant: $constant'
-      '}';
+class InvalidMappingCombinationError extends InvalidGenerationSourceError {
+  InvalidMappingCombinationError({
+    required String target,
+    required String conflictDescription,
+    required Element element,
+  }) : super(
+          "Invalid @Mapping combination for target '$target': $conflictDescription.\n"
+          "The following combinations are not allowed: constant+source, constant+defaultValue, "
+          "constant+callable, defaultValue+callable.\n"
+          "Fix: Use only one of: source, defaultValue, constant, or callable per target field.",
+          element: element,
+        );
 }

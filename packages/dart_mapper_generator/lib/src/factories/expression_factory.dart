@@ -47,6 +47,9 @@ class ExpressionContext with AliasesMixin {
   final MappingMethod? extraMappingMethod;
   @override
   final Map<Uri, String>? importAliases;
+  final String? defaultValue;
+  final String? constant;
+  final List<(String segment, bool nullable)>? accessChain;
 
   const ExpressionContext({
     required this.field,
@@ -58,6 +61,9 @@ class ExpressionContext with AliasesMixin {
     this.expressionMappingMethod,
     this.extraMappingMethod,
     this.importAliases,
+    this.defaultValue,
+    this.constant,
+    this.accessChain,
   });
 }
 
@@ -67,6 +73,12 @@ abstract class ExpressionFactory {
   Expression create(ExpressionContext context);
 
   Expression basic(ExpressionContext context) {
+    // Constant handling: highest priority — return the constant value verbatim
+    // with no source reference at all.
+    if (context.constant != null) {
+      return CodeExpression(Code(context.constant!));
+    }
+
     if (!context.forceNonNull && !context.field.nullable && context.ignored) {
       throw ArgumentError(
         'Field ${context.field.name} is not nullable and ignored, mapping function ${context.currentMethod.name}.',
@@ -77,17 +89,37 @@ abstract class ExpressionFactory {
       return literal(null);
     }
 
-    Expression result = context.field.instance != null
-        ? refer(context.field.instance!.name).property(context.field.name)
-        : refer(context.field.name);
+    // Access chain handling: build chain using property()/nullSafeProperty().
+    Expression result;
+    if (context.accessChain != null && context.accessChain!.isNotEmpty) {
+      result = refer(context.field.instance!.name);
+      for (final (segment, parentIsNullable) in context.accessChain!) {
+        result = parentIsNullable
+            ? result.nullSafeProperty(segment)
+            : result.property(segment);
+      }
+    } else {
+      result = context.field.instance != null
+          ? refer(context.field.instance!.name).property(context.field.name)
+          : refer(context.field.name);
+    }
 
     if (context.forceNonNull == true) {
       result = result.nullChecked;
     }
 
-    return context.expressionMappingMethod != null
+    Expression finalExpr = context.expressionMappingMethod != null
         ? refer(context.expressionMappingMethod!.name).call([result])
         : _transformation(context, basic: result);
+
+    // defaultValue handling: wrap with ?? after callable/transformation.
+    if (context.defaultValue != null) {
+      finalExpr = finalExpr.ifNullThen(
+        CodeExpression(Code(context.defaultValue!)),
+      );
+    }
+
+    return finalExpr;
   }
 
   Expression _transformation(
