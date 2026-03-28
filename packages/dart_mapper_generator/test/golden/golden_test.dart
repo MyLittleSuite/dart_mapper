@@ -164,4 +164,46 @@ void main() async {
     'generics_test_src.dart',
   );
   testAnnotatedElements<Mapper>(genericsReader, generator);
+
+  // Group: Multi-source mapping (SRC-01, SRC-02)
+  final multiSourceReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'multi_source_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(multiSourceReader, generator);
+
+  // Group: Dot notation (SRC-03, SRC-04)
+  final dotNotationReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'dot_notation_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(dotNotationReader, generator);
+
+  // Group: Default/constant values (DEF-01, DEF-02)
+  final defaultsReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'defaults_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(defaultsReader, generator);
+
+  // Group: Multi-source error (D-02)
+  final multiSourceErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'multi_source_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(multiSourceErrorReader, generator);
+
+  // Group: Defaults error (D-13)
+  final defaultsErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'defaults_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(defaultsErrorReader, generator);
+
+  // Group: Multi-arg callable binding (Phase 3.6)
+  final multiArgCallableReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'multi_arg_callable_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(multiArgCallableReader, generator);
 }

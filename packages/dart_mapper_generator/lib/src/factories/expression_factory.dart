@@ -47,6 +47,11 @@ class ExpressionContext with AliasesMixin {
   final MappingMethod? extraMappingMethod;
   @override
   final Map<Uri, String>? importAliases;
+  final String? defaultValue;
+  final String? constant;
+  final List<(String segment, bool nullable)>? accessChain;
+  final List<Field>? sources;
+  final List<List<(String, bool)>?>? sourceAccessChains;
 
   const ExpressionContext({
     required this.field,
@@ -58,6 +63,11 @@ class ExpressionContext with AliasesMixin {
     this.expressionMappingMethod,
     this.extraMappingMethod,
     this.importAliases,
+    this.defaultValue,
+    this.constant,
+    this.accessChain,
+    this.sources,
+    this.sourceAccessChains,
   });
 }
 
@@ -67,6 +77,15 @@ abstract class ExpressionFactory {
   Expression create(ExpressionContext context);
 
   Expression basic(ExpressionContext context) {
+    // Constant handling: highest priority — return the constant value verbatim
+    // with no source reference at all.
+    if (context.constant != null) {
+      if (context.counterpartField.type.isDartCoreString) {
+        return literalString(context.constant!);
+      }
+      return CodeExpression(Code(context.constant!));
+    }
+
     if (!context.forceNonNull && !context.field.nullable && context.ignored) {
       throw ArgumentError(
         'Field ${context.field.name} is not nullable and ignored, mapping function ${context.currentMethod.name}.',
@@ -77,17 +96,66 @@ abstract class ExpressionFactory {
       return literal(null);
     }
 
-    Expression result = context.field.instance != null
-        ? refer(context.field.instance!.name).property(context.field.name)
-        : refer(context.field.name);
+    // Access chain handling: build chain using property()/nullSafeProperty().
+    Expression result;
+    if (context.accessChain != null && context.accessChain!.isNotEmpty) {
+      result = refer(context.field.instance!.name);
+      for (final (segment, parentIsNullable) in context.accessChain!) {
+        result = parentIsNullable
+            ? result.nullSafeProperty(segment)
+            : result.property(segment);
+      }
+    } else {
+      result = context.field.instance != null
+          ? refer(context.field.instance!.name).property(context.field.name)
+          : refer(context.field.name);
+    }
 
     if (context.forceNonNull == true) {
       result = result.nullChecked;
     }
 
-    return context.expressionMappingMethod != null
-        ? refer(context.expressionMappingMethod!.name).call([result])
-        : _transformation(context, basic: result);
+    Expression finalExpr;
+    if (context.expressionMappingMethod != null) {
+      if (context.sources != null && context.sources!.isNotEmpty) {
+        // Multi-arg callable: emit callable(source.a, source.b, ...)
+        final args = <Expression>[];
+        for (var i = 0; i < context.sources!.length; i++) {
+          final src = context.sources![i];
+          final chain = context.sourceAccessChains?[i];
+          Expression expr;
+          if (chain != null && chain.isNotEmpty) {
+            expr = refer(src.instance!.name);
+            for (final (segment, parentIsNullable) in chain) {
+              expr = parentIsNullable
+                  ? expr.nullSafeProperty(segment)
+                  : expr.property(segment);
+            }
+          } else {
+            expr = src.instance != null
+                ? refer(src.instance!.name).property(src.name)
+                : refer(src.name);
+          }
+          args.add(expr);
+        }
+        finalExpr = refer(context.expressionMappingMethod!.name).call(args);
+      } else {
+        // Single-arg callable (existing behaviour — unchanged).
+        finalExpr = refer(context.expressionMappingMethod!.name).call([result]);
+      }
+    } else {
+      finalExpr = _transformation(context, basic: result);
+    }
+
+    // defaultValue handling: wrap with ?? after callable/transformation.
+    if (context.defaultValue != null) {
+      final defaultExpr = context.counterpartField.type.isDartCoreString
+          ? literalString(context.defaultValue!)
+          : CodeExpression(Code(context.defaultValue!));
+      finalExpr = finalExpr.ifNullThen(defaultExpr);
+    }
+
+    return finalExpr;
   }
 
   Expression _transformation(

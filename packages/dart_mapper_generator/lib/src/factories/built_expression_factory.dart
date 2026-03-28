@@ -41,6 +41,11 @@ class BuiltExpressionFactory extends ExpressionFactory {
 
   @override
   Expression create(ExpressionContext context) {
+    // Constant bindings: skip all collection/nested/map special handling.
+    if (context.constant != null) {
+      return super.basic(context);
+    }
+
     if (context.expressionMappingMethod == null) {
       if (context.field is MapField) {
         final basicExpression = super.basic(context);

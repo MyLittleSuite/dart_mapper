@@ -67,6 +67,9 @@ extension MappingAnnotation on Mapping {
               forceNonNull:
                   annotation.getField('forceNonNull')?.toBoolValue() ?? false,
               callable: annotation.getField('callable')?.toFunctionValue(),
+              defaultValue:
+                  annotation.getField('defaultValue')?.toStringValue(),
+              constant: annotation.getField('constant')?.toStringValue(),
             ),
           );
 }

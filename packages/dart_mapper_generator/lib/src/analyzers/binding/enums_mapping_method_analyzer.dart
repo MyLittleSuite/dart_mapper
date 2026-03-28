@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/src/value_mapping.dart';
+import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';

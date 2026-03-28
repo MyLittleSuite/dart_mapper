@@ -80,7 +80,9 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
         if (binding?.forceNonNull == false &&
             !parameter.isOptional &&
             binding?.source.nullable == true &&
-            binding?.target.nullable == false) {
+            binding?.target.nullable == false &&
+            binding?.defaultValue == null &&
+            binding?.constant == null) {
           throw TargetFieldRequiresNonOptionalSourceFieldError(
             parameter: parameter,
             targetClass: targetClass,
@@ -101,6 +103,11 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
             expressionMappingMethod: binding.callableMappingMethod,
             extraMappingMethod: binding.extraMappingMethod,
             importAliases: context.importAliases,
+            defaultValue: binding.defaultValue,
+            constant: binding.constant,
+            accessChain: binding.accessChain,
+            sources: binding.sources,
+            sourceAccessChains: binding.sourceAccessChains,
           ),
         )
             : null;

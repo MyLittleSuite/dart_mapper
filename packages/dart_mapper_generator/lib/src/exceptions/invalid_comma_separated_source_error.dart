@@ -24,34 +24,18 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:source_gen/source_gen.dart';
 
-class ResolvedMapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
-  final ExecutableElement? callable;
-  final String? defaultValue;
-  final String? constant;
-
-  const ResolvedMapping({
-    required this.target,
-    required this.source,
-    required this.ignore,
-    required this.forceNonNull,
-    required this.callable,
-    this.defaultValue,
-    this.constant,
-  });
-
-  @override
-  String toString() => 'ResolvedMapping{'
-      'source: $source, '
-      'target: $target, '
-      'ignore: $ignore, '
-      'forceNonNull: $forceNonNull, '
-      'callable: $callable, '
-      'defaultValue: $defaultValue, '
-      'constant: $constant'
-      '}';
+class InvalidCommaSeparatedSourceError extends InvalidGenerationSourceError {
+  InvalidCommaSeparatedSourceError({
+    required String target,
+    required Element element,
+  }) : super(
+          "Comma-separated source values in @Mapping(target: '$target') are only valid "
+          "when callable is set.\n"
+          "Without a callable function, source must reference a single field or "
+          "use dot notation for nested access.\n"
+          "Fix: Either add a callable function or use a single source field.",
+          element: element,
+        );
 }

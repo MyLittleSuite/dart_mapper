@@ -24,34 +24,18 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:source_gen/source_gen.dart';
 
-class ResolvedMapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
-  final ExecutableElement? callable;
-  final String? defaultValue;
-  final String? constant;
-
-  const ResolvedMapping({
-    required this.target,
-    required this.source,
-    required this.ignore,
-    required this.forceNonNull,
-    required this.callable,
-    this.defaultValue,
-    this.constant,
-  });
-
-  @override
-  String toString() => 'ResolvedMapping{'
-      'source: $source, '
-      'target: $target, '
-      'ignore: $ignore, '
-      'forceNonNull: $forceNonNull, '
-      'callable: $callable, '
-      'defaultValue: $defaultValue, '
-      'constant: $constant'
-      '}';
+class InvalidCommaSeparatedSourcePartError extends InvalidGenerationSourceError {
+  InvalidCommaSeparatedSourcePartError({
+    required String part,
+    required String target,
+    required Element element,
+  }) : super(
+          "Comma-separated source part '$part' in @Mapping(target: '$target') "
+          "could not be resolved on any source parameter.\n"
+          "Fix: Check that each comma-separated part refers to a valid field or "
+          "qualified dot-path (paramName.fieldName).",
+          element: element,
+        );
 }

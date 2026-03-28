@@ -33,6 +33,11 @@ import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/map
 class DefaultExpressionFactory extends ExpressionFactory {
   @override
   Expression create(ExpressionContext context) {
+    // Constant bindings: skip all collection/nested/map special handling.
+    if (context.constant != null) {
+      return super.basic(context);
+    }
+
     final basicExpression = super.basic(context);
 
     // Dynamic fields use direct assignment, no conversion
