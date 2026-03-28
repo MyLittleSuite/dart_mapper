@@ -37,6 +37,8 @@ class Binding {
   final MappingMethod? extraMappingMethod;
   final String? defaultValue;
   final String? constant;
+  final String? expression;
+  final String? conditionExpression;
   final List<(String segment, bool nullable)>? accessChain;
   final List<Field>? sources;
   final List<List<(String, bool)>?>? sourceAccessChains;
@@ -50,6 +52,8 @@ class Binding {
     this.extraMappingMethod,
     this.defaultValue,
     this.constant,
+    this.expression,
+    this.conditionExpression,
     this.accessChain,
     this.sources,
     this.sourceAccessChains,
@@ -78,6 +82,8 @@ class Binding {
       'extraMappingMethod: $extraMappingMethod, '
       'defaultValue: $defaultValue, '
       'constant: $constant, '
+      'expression: $expression, '
+      'conditionExpression: $conditionExpression, '
       'accessChain: $accessChain, '
       'sources: $sources, '
       'sourceAccessChains: $sourceAccessChains'

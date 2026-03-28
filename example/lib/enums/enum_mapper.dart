@@ -59,6 +59,9 @@ abstract class EnumMapper {
   EnumTarget? toTargetNullable(EnumSource source);
 
   EnumTarget? toTargetNullableBoth(EnumSource? source);
+
+  // COLL-05: auto-populates switch cases from enum value .name — no @ValueMapping needed
+  EnumTarget toTargetFromStringAutoPopulated(String source);
 }
 
 @Mapper()

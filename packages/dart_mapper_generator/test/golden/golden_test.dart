@@ -206,4 +206,11 @@ void main() async {
     'multi_arg_callable_test_src.dart',
   );
   testAnnotatedElements<Mapper>(multiArgCallableReader, generator);
+
+  // Group: String→Enum auto-population (COLL-05)
+  final stringToEnumReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'string_to_enum_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(stringToEnumReader, generator);
 }

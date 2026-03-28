@@ -70,6 +70,8 @@ extension MappingAnnotation on Mapping {
               defaultValue:
                   annotation.getField('defaultValue')?.toStringValue(),
               constant: annotation.getField('constant')?.toStringValue(),
+              expression: annotation.getField('expression')?.toStringValue(),
+              conditionExpression: annotation.getField('conditionExpression')?.toStringValue(),
             ),
           );
 }

@@ -49,6 +49,8 @@ class ExpressionContext with AliasesMixin {
   final Map<Uri, String>? importAliases;
   final String? defaultValue;
   final String? constant;
+  final String? expression;
+  final String? conditionExpression;
   final List<(String segment, bool nullable)>? accessChain;
   final List<Field>? sources;
   final List<List<(String, bool)>?>? sourceAccessChains;
@@ -65,6 +67,8 @@ class ExpressionContext with AliasesMixin {
     this.importAliases,
     this.defaultValue,
     this.constant,
+    this.expression,
+    this.conditionExpression,
     this.accessChain,
     this.sources,
     this.sourceAccessChains,
@@ -77,7 +81,12 @@ abstract class ExpressionFactory {
   Expression create(ExpressionContext context);
 
   Expression basic(ExpressionContext context) {
-    // Constant handling: highest priority — return the constant value verbatim
+    // Expression handling: highest priority — emit verbatim Dart expression.
+    if (context.expression != null) {
+      return CodeExpression(Code(resolveExpression(context.expression!)));
+    }
+
+    // Constant handling: next priority — return the constant value verbatim
     // with no source reference at all.
     if (context.constant != null) {
       if (context.counterpartField.type.isDartCoreString) {
@@ -263,4 +272,46 @@ abstract class ExpressionFactory {
 
     return basic;
   }
+
+}
+
+/// Detects string interpolation syntax (`${...}`) in [expression] and
+/// auto-wraps the **entire expression** in a string literal when it isn't
+/// already one. Use for `expression:` fields where the whole value is a
+/// string — e.g. `"\${source.first} \${source.last}"` produces
+/// `'${source.first} ${source.last}'` in generated code.
+String resolveExpression(String expression) {
+  if (expression.startsWith("'") || expression.startsWith('"')) {
+    return expression;
+  }
+
+  final hasInterpolation = expression.contains(r'${') ||
+      RegExp(r'\$[a-zA-Z_]').hasMatch(expression);
+
+  if (!hasInterpolation) return expression;
+
+  final quote = expression.contains("'") ? '"' : "'";
+  return '$quote$expression$quote';
+}
+
+/// Detects bare `${...}` tokens in [expression] and wraps **each token
+/// individually** in single quotes. Use for `conditionExpression:` fields
+/// where only parts of the expression are strings — e.g.
+/// `r"${source.label}.isNotEmpty"` produces `'${source.label}'.isNotEmpty`.
+///
+/// Tokens already preceded by a quote character are left untouched to avoid
+/// double-wrapping.
+String resolveConditionExpression(String expression) {
+  if (!expression.contains(r'${')) return expression;
+
+  return expression.replaceAllMapped(
+    RegExp(r"\$\{[^}]+\}"),
+    (match) {
+      final start = match.start;
+      if (start > 0 && (expression[start - 1] == "'" || expression[start - 1] == '"')) {
+        return match.group(0)!;
+      }
+      return "'${match.group(0)}'";
+    },
+  );
 }
