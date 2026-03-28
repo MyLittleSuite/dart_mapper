@@ -106,6 +106,8 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
             defaultValue: binding.defaultValue,
             constant: binding.constant,
             accessChain: binding.accessChain,
+            sources: binding.sources,
+            sourceAccessChains: binding.sourceAccessChains,
           ),
         )
             : null;

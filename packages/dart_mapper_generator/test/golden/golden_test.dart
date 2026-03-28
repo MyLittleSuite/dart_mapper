@@ -199,4 +199,11 @@ void main() async {
     'defaults_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(defaultsErrorReader, generator);
+
+  // Group: Multi-arg callable binding (Phase 3.6)
+  final multiArgCallableReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'multi_arg_callable_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(multiArgCallableReader, generator);
 }

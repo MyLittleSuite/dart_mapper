@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper/src/value_mapping.dart';
+import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_comma_separated_source_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_mapping_combination_error.dart';

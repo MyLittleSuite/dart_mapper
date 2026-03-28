@@ -38,6 +38,8 @@ class Binding {
   final String? defaultValue;
   final String? constant;
   final List<(String segment, bool nullable)>? accessChain;
+  final List<Field>? sources;
+  final List<List<(String, bool)>?>? sourceAccessChains;
 
   Binding({
     required this.source,
@@ -49,6 +51,8 @@ class Binding {
     this.defaultValue,
     this.constant,
     this.accessChain,
+    this.sources,
+    this.sourceAccessChains,
   }) /* : assert(target.required && ignored,
             'Target field \'${target.name}\' must be required') TODO:*/
   ;
@@ -74,6 +78,8 @@ class Binding {
       'extraMappingMethod: $extraMappingMethod, '
       'defaultValue: $defaultValue, '
       'constant: $constant, '
-      'accessChain: $accessChain'
+      'accessChain: $accessChain, '
+      'sources: $sources, '
+      'sourceAccessChains: $sourceAccessChains'
       '}';
 }

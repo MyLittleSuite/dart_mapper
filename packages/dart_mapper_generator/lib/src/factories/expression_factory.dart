@@ -50,6 +50,8 @@ class ExpressionContext with AliasesMixin {
   final String? defaultValue;
   final String? constant;
   final List<(String segment, bool nullable)>? accessChain;
+  final List<Field>? sources;
+  final List<List<(String, bool)>?>? sourceAccessChains;
 
   const ExpressionContext({
     required this.field,
@@ -64,6 +66,8 @@ class ExpressionContext with AliasesMixin {
     this.defaultValue,
     this.constant,
     this.accessChain,
+    this.sources,
+    this.sourceAccessChains,
   });
 }
 
@@ -111,9 +115,37 @@ abstract class ExpressionFactory {
       result = result.nullChecked;
     }
 
-    Expression finalExpr = context.expressionMappingMethod != null
-        ? refer(context.expressionMappingMethod!.name).call([result])
-        : _transformation(context, basic: result);
+    Expression finalExpr;
+    if (context.expressionMappingMethod != null) {
+      if (context.sources != null && context.sources!.isNotEmpty) {
+        // Multi-arg callable: emit callable(source.a, source.b, ...)
+        final args = <Expression>[];
+        for (var i = 0; i < context.sources!.length; i++) {
+          final src = context.sources![i];
+          final chain = context.sourceAccessChains?[i];
+          Expression expr;
+          if (chain != null && chain.isNotEmpty) {
+            expr = refer(src.instance!.name);
+            for (final (segment, parentIsNullable) in chain) {
+              expr = parentIsNullable
+                  ? expr.nullSafeProperty(segment)
+                  : expr.property(segment);
+            }
+          } else {
+            expr = src.instance != null
+                ? refer(src.instance!.name).property(src.name)
+                : refer(src.name);
+          }
+          args.add(expr);
+        }
+        finalExpr = refer(context.expressionMappingMethod!.name).call(args);
+      } else {
+        // Single-arg callable (existing behaviour — unchanged).
+        finalExpr = refer(context.expressionMappingMethod!.name).call([result]);
+      }
+    } else {
+      finalExpr = _transformation(context, basic: result);
+    }
 
     // defaultValue handling: wrap with ?? after callable/transformation.
     if (context.defaultValue != null) {

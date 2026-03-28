@@ -37,6 +37,7 @@ import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/exceptions/invalid_comma_separated_source_part_error.dart';
 import 'package:source_gen/source_gen.dart';
 
 class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
@@ -95,12 +96,139 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
         .asMap()
         .map((_, value) => MapEntry(value.name!, value));
 
+    // --- Step 0: Process comma-source callable targets ---
+    // Must run before Step 1 so that targets with comma+dot sources (e.g. "a.x,b.y")
+    // are bound here and skipped by Step 1's dot-check.
+    for (final entry in renamingMapReversed.entries) {
+      final targetName = entry.key;
+      final sourceExpression = entry.value;
+
+      if (!sourceExpression.contains(',')) continue;
+      if (boundTargets.contains(targetName)) continue;
+
+      // validateCommaSeparatedSource() already guarantees callable is present when ',' appears.
+      // Be defensive: skip if callableMap has no entry (should never happen post-validation).
+      final callableMappingMethod = callableMap[targetName];
+      if (callableMappingMethod == null) continue;
+
+      final resolvedTargetParam = targetParam?[targetName];
+      if (resolvedTargetParam == null) continue;
+
+      final parts = sourceExpression.split(',').map((p) => p.trim()).toList();
+      final resolvedSources = <Field>[];
+      final resolvedChains = <List<(String, bool)>?>[];
+
+      for (final part in parts) {
+        if (part.contains('.')) {
+          // Dot-path part — resolve using same param-detection logic as Step 1.
+          final segments = part.split('.');
+          FormalParameterElement? sourceMethodParam;
+          List<String> traversalSegments;
+
+          if (isMultiSource) {
+            final paramName = segments.first;
+            sourceMethodParam = method.formalParameters
+                .where((p) => p.name == paramName)
+                .firstOrNull;
+            if (sourceMethodParam == null) {
+              throw InvalidCommaSeparatedSourcePartError(
+                part: part,
+                target: targetName,
+                element: method,
+              );
+            }
+            traversalSegments = segments.sublist(1);
+          } else {
+            sourceMethodParam = method.formalParameters.firstOrNull;
+            if (sourceMethodParam == null) continue;
+            traversalSegments = segments;
+          }
+
+          if (traversalSegments.isEmpty) continue;
+
+          final (resolvedField, accessChain) = _resolveDotNotation(
+            segments: traversalSegments,
+            startType: sourceMethodParam.type,
+            instanceName: sourceMethodParam.name!,
+            errorElement: method,
+          );
+          resolvedSources.add(resolvedField);
+          resolvedChains.add(accessChain);
+        } else {
+          // Bare name — find which source param has this getter.
+          // Ambiguity rules same as Step 3.
+          FormalParameterElement? matchedParam;
+          VariableElement? matchedGetter;
+
+          for (final param in method.formalParameters) {
+            final sourceClass = param.type.element?.classElementOrNull;
+            final getter = sourceClass?.getterElements
+                .where((g) => g.name == part)
+                .firstOrNull;
+            if (getter != null) {
+              if (matchedParam != null) {
+                // Ambiguous — found in multiple params.
+                final params = fieldToParams[part] ?? [param.name ?? ''];
+                throw AmbiguousSourceFieldError(
+                  fieldName: part,
+                  parameterNames: params,
+                  element: method,
+                );
+              }
+              matchedParam = param;
+              matchedGetter = getter;
+            }
+          }
+
+          if (matchedParam == null || matchedGetter == null) {
+            throw InvalidCommaSeparatedSourcePartError(
+              part: part,
+              target: targetName,
+              element: method,
+            );
+          }
+
+          resolvedSources.add(
+            Field.from(
+              name: matchedGetter.name!,
+              type: matchedGetter.type,
+              required: matchedGetter.isRequired,
+              nullable: matchedGetter.type.isNullable,
+              instance: Instance(name: matchedParam.name!),
+            ),
+          );
+          resolvedChains.add(null); // No access chain for bare field access.
+        }
+      }
+
+      final targetField = Field.from(
+        name: targetName,
+        type: resolvedTargetParam.type,
+        required: resolvedTargetParam.isRequired,
+        nullable: resolvedTargetParam.type.isNullable,
+      );
+
+      bindings.add(
+        Binding(
+          source: resolvedSources.first, // keeps existing nullability guard working
+          sources: resolvedSources,
+          target: targetField,
+          callableMappingMethod: callableMappingMethod,
+          sourceAccessChains: resolvedChains,
+          // Multi-arg callable owns nullability — suppress nullability throw (same as
+          // callable+dot-path today). forceNonNull not needed.
+        ),
+      );
+      boundTargets.add(targetName);
+    }
+
     // --- Step 1: Process explicit dot-notation and qualified source mappings ---
     // For each target in renamingMapReversed, if the source contains a dot, resolve it.
     for (final entry in renamingMapReversed.entries) {
       final targetName = entry.key;
       final sourceExpression = entry.value;
 
+      if (boundTargets.contains(targetName)) continue;
       if (!sourceExpression.contains('.')) {
         // Not dot notation — handled by the auto-resolution loop below (via renamingMap).
         continue;
