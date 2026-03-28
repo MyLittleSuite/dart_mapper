@@ -38,14 +38,13 @@ final class CallableMappingMethod extends MappingMethod {
     required this.parameters,
   });
 
-  /// Convenience getter for backwards compatibility with single-param callables.
-  MappingParameter get parameter => parameters.first;
-
   factory CallableMappingMethod.from(ExecutableElement element) {
-    assert(
-      element.formalParameters.isNotEmpty,
-      'CallableMappingMethod requires at least one parameter',
-    );
+    if (element.formalParameters.isEmpty) {
+      throw ArgumentError(
+        'CallableMappingMethod requires at least one parameter '
+        '(callable: ${element.name})',
+      );
+    }
 
     return CallableMappingMethod(
       name: element.name!,

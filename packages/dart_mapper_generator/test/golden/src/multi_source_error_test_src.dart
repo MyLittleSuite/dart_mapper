@@ -58,3 +58,17 @@ class AmbigTarget {
 abstract class AmbiguousFieldMapper {
   AmbigTarget merge(AmbigSource1 source1, AmbigSource2 source2);
 }
+
+// Fix 2: explicit @Mapping(source: 'source2.name') correctly resolves without ambiguity.
+// This verifies that qualifying source2.name generates from source2, not source1.
+@ShouldGenerate(
+  r'''AmbigTarget merge(AmbigSource1 source1, AmbigSource2 source2) {
+    return AmbigTarget(name: source2.name);
+  }''',
+  contains: true,
+)
+@Mapper()
+abstract class AmbiguityStillThrowsMapper {
+  @Mapping(target: 'name', source: 'source2.name')
+  AmbigTarget merge(AmbigSource1 source1, AmbigSource2 source2);
+}

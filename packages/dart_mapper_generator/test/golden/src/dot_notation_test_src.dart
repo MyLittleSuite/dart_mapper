@@ -135,3 +135,36 @@ abstract class DeepDotNotationMapper {
   @Mapping(target: 'streetZip', source: 'address.street.zip')
   FlatPersonDeep flattenDeep(NullablePerson source);
 }
+
+// ----- Fix 1: callable on nullable dot-path does not throw -----
+
+String _upperCase(String? value) => value?.toUpperCase() ?? '';
+
+class NullableStreetPerson {
+  final String fullName;
+  final NullableAddress? address;
+
+  const NullableStreetPerson({required this.fullName, this.address});
+}
+
+class FlatCallableTarget {
+  final String fullName;
+  final String streetName;
+
+  const FlatCallableTarget({required this.fullName, required this.streetName});
+}
+
+@ShouldGenerate(
+  r'''FlatCallableTarget flattenCallable(NullableStreetPerson source) {
+    return FlatCallableTarget(
+      fullName: source.fullName,
+      streetName: _upperCase(source.address?.street?.name),
+    );
+  }''',
+  contains: true,
+)
+@Mapper()
+abstract class CallableNullableDotNotationMapper {
+  @Mapping(target: 'streetName', source: 'address.street.name', callable: _upperCase)
+  FlatCallableTarget flattenCallable(NullableStreetPerson source);
+}

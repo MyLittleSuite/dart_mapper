@@ -155,14 +155,26 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
         nullable: resolvedTargetParam.type.isNullable,
       );
 
+      // Validate constant/defaultValue type compatibility for dot-notation targets.
+      final dotConstant = constantMap[targetName];
+      final dotDefault = defaultValueMap[targetName];
+      if (dotConstant != null) {
+        _validateValueType(dotConstant, resolvedTargetParam.type, targetName, method);
+      }
+      if (dotDefault != null) {
+        _validateValueType(dotDefault, resolvedTargetParam.type, targetName, method);
+      }
+
       // Per D-07: if the resolved source is nullable (due to nullable intermediates)
       // and the target is non-null, and forceNonNull is not set, throw.
       final chainHasNullable = accessChain.any((e) => e.$2);
       final resolvedIsNullable = resolvedField.nullable || chainHasNullable;
+      final callableMappingMethod = callableMap[targetName];
       if (resolvedIsNullable &&
           !targetField.nullable &&
           !forceNonNullTargets.contains(targetName) &&
-          defaultValueMap[targetName] == null) {
+          defaultValueMap[targetName] == null &&
+          callableMappingMethod == null) {
         throw InvalidGenerationSourceError(
           "Target field '$targetName' is non-nullable but the dot notation source "
           "'$sourceExpression' may be null (nullable intermediate in chain).\n"
@@ -170,8 +182,6 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
           element: method,
         );
       }
-
-      final callableMappingMethod = callableMap[targetName];
       final extraMappingMethod = callableMappingMethod == null
           ? extraMappingMethodAnalyzer.analyze(
               FieldsAnalyzerContext(
@@ -218,6 +228,10 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
         required: resolvedTargetParam.isRequired,
         nullable: resolvedTargetParam.type.isNullable,
       );
+
+      // Validate constant type compatibility.
+      _validateValueType(constantValue, resolvedTargetParam.type, targetName, method);
+
       final placeholderSource = Field.from(
         name: targetName,
         type: resolvedTargetParam.type,
@@ -262,9 +276,11 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
             if (isMultiSource) {
               final params = fieldToParams[sourceClassParam.name!];
               if (params != null && params.length > 1) {
-                // Only throw if there's no explicit @Mapping that resolves this target.
-                final hasExplicitMapping =
-                    renamingMapReversed.containsKey(targetClassParamName);
+                // Only throw if there's no explicit @Mapping that resolves this target
+                // from the current source parameter (prefix check prevents false suppression).
+                final mappedSource = renamingMapReversed[targetClassParamName];
+                final hasExplicitMapping = mappedSource != null &&
+                    mappedSource.startsWith('${sourceClassParam.name}.');
                 if (!hasExplicitMapping) {
                   throw AmbiguousSourceFieldError(
                     fieldName: sourceClassParam.name!,
@@ -380,5 +396,50 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     );
 
     return (resolvedField, accessChain);
+  }
+
+  void _validateValueType(
+    String value,
+    DartType type,
+    String targetName,
+    Element method,
+  ) {
+    final targetType = type.getDisplayString();
+    final baseType = type.isDartCoreNull ? null : targetType.replaceAll('?', '');
+
+    if (baseType == 'bool') {
+      if (value != 'true' && value != 'false') {
+        throw InvalidGenerationSourceError(
+          "@Mapping constant/defaultValue '$value' is not compatible with target field '$targetName' "
+          "of type '$targetType'. Expected a $targetType literal.",
+          element: method,
+        );
+      }
+    } else if (baseType == 'int') {
+      if (int.tryParse(value) == null) {
+        throw InvalidGenerationSourceError(
+          "@Mapping constant/defaultValue '$value' is not compatible with target field '$targetName' "
+          "of type '$targetType'. Expected a $targetType literal.",
+          element: method,
+        );
+      }
+    } else if (baseType == 'double') {
+      if (double.tryParse(value) == null) {
+        throw InvalidGenerationSourceError(
+          "@Mapping constant/defaultValue '$value' is not compatible with target field '$targetName' "
+          "of type '$targetType'. Expected a $targetType literal.",
+          element: method,
+        );
+      }
+    } else if (baseType == 'num') {
+      if (int.tryParse(value) == null && double.tryParse(value) == null) {
+        throw InvalidGenerationSourceError(
+          "@Mapping constant/defaultValue '$value' is not compatible with target field '$targetName' "
+          "of type '$targetType'. Expected a $targetType literal.",
+          element: method,
+        );
+      }
+    }
+    // String and other types: skip validation
   }
 }

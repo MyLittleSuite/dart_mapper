@@ -49,7 +49,7 @@ class ErrorOutput {
 )
 @Mapper()
 abstract class ConstantWithSourceMapper {
-  @Mapping(target: 'name', source: 'fullName', constant: "'test'")
+  @Mapping(target: "name", source: "fullName", constant: "test")
   ErrorOutput toOutput(ErrorInput source);
 }
 
@@ -61,6 +61,114 @@ abstract class ConstantWithSourceMapper {
 )
 @Mapper()
 abstract class ConstantWithDefaultValueMapper {
-  @Mapping(target: 'name', constant: "'test'", defaultValue: "'fallback'")
+  @Mapping(target: "name", constant: "test", defaultValue: "fallback")
   ErrorOutput toOutput(ErrorInput source);
+}
+
+// Fix 3: constant + ignore combination throws
+@ShouldThrow(
+  "Invalid @Mapping combination for target 'name': constant cannot be combined with ignore.\n"
+  "The following combinations are not allowed: constant+source, constant+defaultValue, constant+callable, defaultValue+callable.\n"
+  "Fix: Use only one of: source, defaultValue, constant, or callable per target field.",
+)
+@Mapper()
+abstract class ConstantWithIgnoreMapper {
+  @Mapping(target: 'name', constant: "test", ignore: true)
+  ErrorOutput toOutput(ErrorInput source);
+}
+
+// Fix 6: int target with String constant → type mismatch
+class CountInput {
+  final String label;
+
+  const CountInput({required this.label});
+}
+
+class CountOutput {
+  final String label;
+  final int count;
+
+  const CountOutput({required this.label, required this.count});
+}
+
+@ShouldThrow(
+  "@Mapping constant/defaultValue 'hello' is not compatible with target field 'count' "
+  "of type 'int'. Expected a int literal.",
+)
+@Mapper()
+abstract class IntConstantTypeMismatchMapper {
+  @Mapping(target: 'count', constant: 'hello')
+  CountOutput toOutput(CountInput source);
+}
+
+// Fix 6: bool target with invalid constant → type mismatch
+class FlagInput2 {
+  final String name;
+
+  const FlagInput2({required this.name});
+}
+
+class FlagOutput2 {
+  final String name;
+  final bool active;
+
+  const FlagOutput2({required this.name, required this.active});
+}
+
+@ShouldThrow(
+  "@Mapping constant/defaultValue 'maybe' is not compatible with target field 'active' "
+  "of type 'bool'. Expected a bool literal.",
+)
+@Mapper()
+abstract class BoolConstantTypeMismatchMapper {
+  @Mapping(target: 'active', constant: 'maybe')
+  FlagOutput2 toOutput(FlagInput2 source);
+}
+
+// Fix 6: double target with invalid constant → type mismatch
+class ScoreInput {
+  final String name;
+
+  const ScoreInput({required this.name});
+}
+
+class ScoreOutput {
+  final String name;
+  final double score;
+
+  const ScoreOutput({required this.name, required this.score});
+}
+
+@ShouldThrow(
+  "@Mapping constant/defaultValue 'abc' is not compatible with target field 'score' "
+  "of type 'double'. Expected a double literal.",
+)
+@Mapper()
+abstract class DoubleConstantTypeMismatchMapper {
+  @Mapping(target: 'score', constant: 'abc')
+  ScoreOutput toOutput(ScoreInput source);
+}
+
+// Fix 6: num target with invalid constant → type mismatch
+class AmountInput {
+  final String name;
+
+  const AmountInput({required this.name});
+}
+
+class AmountOutput {
+  final String name;
+  final num amount;
+
+  const AmountOutput({required this.name, required this.amount});
+}
+
+@ShouldThrow(
+  "@Mapping constant/defaultValue 'abc' is not compatible with target field 'amount' "
+  "of type 'num'. Expected a num literal.",
+)
+@Mapper()
+abstract class NumConstantTypeMismatchMapper {
+  @Mapping(target: 'amount', constant: 'abc')
+  AmountOutput toOutput(AmountInput source);
 }

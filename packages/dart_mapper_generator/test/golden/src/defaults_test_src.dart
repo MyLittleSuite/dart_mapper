@@ -52,7 +52,7 @@ class UserOutput {
 )
 @Mapper()
 abstract class DefaultValueMapper {
-  @Mapping(target: 'status', defaultValue: "'active'")
+  @Mapping(target: "status", defaultValue: "active")
   UserOutput toOutput(UserInput source);
 }
 
@@ -79,7 +79,7 @@ class VersionOutput {
 )
 @Mapper()
 abstract class ConstantMapper {
-  @Mapping(target: 'version', constant: "'1.0'")
+  @Mapping(target: "version", constant: "1.0")
   VersionOutput toOutput(VersionInput source);
 }
 
@@ -116,7 +116,7 @@ class FlatContact {
 )
 @Mapper()
 abstract class DotNotationDefaultMapper {
-  @Mapping(target: 'city', source: 'address.city', defaultValue: "'unknown'")
+  @Mapping(target: "city", source: "address.city", defaultValue: "unknown")
   FlatContact flatten(Contact source);
 }
 

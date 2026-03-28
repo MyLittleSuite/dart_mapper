@@ -76,6 +76,9 @@ abstract class ExpressionFactory {
     // Constant handling: highest priority — return the constant value verbatim
     // with no source reference at all.
     if (context.constant != null) {
+      if (context.counterpartField.type.isDartCoreString) {
+        return literalString(context.constant!);
+      }
       return CodeExpression(Code(context.constant!));
     }
 
@@ -114,9 +117,10 @@ abstract class ExpressionFactory {
 
     // defaultValue handling: wrap with ?? after callable/transformation.
     if (context.defaultValue != null) {
-      finalExpr = finalExpr.ifNullThen(
-        CodeExpression(Code(context.defaultValue!)),
-      );
+      final defaultExpr = context.counterpartField.type.isDartCoreString
+          ? literalString(context.defaultValue!)
+          : CodeExpression(Code(context.defaultValue!));
+      finalExpr = finalExpr.ifNullThen(defaultExpr);
     }
 
     return finalExpr;
