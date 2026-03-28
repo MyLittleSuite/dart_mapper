@@ -32,8 +32,8 @@ part 'mapper.g.dart';
 abstract class UserMapper {
   const UserMapper();
 
-  @Mapping(target: 'status', defaultValue: "'active'")
-  @Mapping(target: 'bio', defaultValue: "'No bio provided'")
-  @Mapping(target: 'version', constant: "'1.0'")
+  @Mapping(target: 'status', defaultValue: "active")
+  @Mapping(target: 'bio', defaultValue: "No bio provided")
+  @Mapping(target: 'version', constant: "1.0")
   UserOutput toOutput(UserInput input);
 }
