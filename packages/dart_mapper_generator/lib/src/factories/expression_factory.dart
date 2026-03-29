@@ -290,7 +290,24 @@ String resolveExpression(String expression) {
 
   if (!hasInterpolation) return expression;
 
-  final quote = expression.contains("'") ? '"' : "'";
+  final hasSingle = expression.contains("'");
+  final hasDouble = expression.contains('"');
+
+  String quote;
+  if (!hasSingle) {
+    // No single quotes — wrap with single quotes, no escaping needed.
+    quote = "'";
+  } else if (!hasDouble) {
+    // Has single quotes but no double quotes — wrap with double quotes.
+    quote = '"';
+  } else {
+    // Both quote types present — pick single quote and escape inner content.
+    // Escape backslashes first, then escape single quotes.
+    quote = "'";
+    expression = expression
+        .replaceAll('\\', '\\\\')
+        .replaceAll("'", "\\'");
+  }
   return '$quote$expression$quote';
 }
 

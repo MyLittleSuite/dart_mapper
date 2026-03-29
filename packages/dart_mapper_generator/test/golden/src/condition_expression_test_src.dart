@@ -92,6 +92,12 @@ class TagOutput {
   const TagOutput({this.label});
 }
 
+// Null-label behavior note:
+// When source.label is null the generated condition '${source.label}'.isNotEmpty
+// evaluates as 'null'.isNotEmpty which is TRUE (4 chars), so the true-branch
+// runs and returns source.label — which is still null. The output label is null.
+// This is expected: the condition guards the non-null path but does not
+// guarantee a non-null result when the source field itself is null.
 @ShouldGenerate(
   r"""TagOutput toOutput(TagInput source) {
     return TagOutput(label: '${source.label}'.isNotEmpty ? source.label : null);
