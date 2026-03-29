@@ -109,14 +109,8 @@ class SubclassMappingAnalyzer {
   bool _isSubtypeOf(DartType subtype, DartType base) {
     final subtypeElement = subtype.element?.classElementOrNull;
     if (subtypeElement == null) return false;
-    final baseLibUri = base.element?.library?.firstFragment.source.uri;
-    // Normalize nullability on BOTH sides so that e.g. `Pet?` matches `Pet`.
-    final baseDisplayNormalized = base.displayString.replaceAll('?', '');
     return subtypeElement.allSupertypes.any(
-      (supertype) =>
-          supertype.element.library.firstFragment.source.uri == baseLibUri &&
-          supertype.getDisplayString().replaceAll('?', '') ==
-              baseDisplayNormalized,
+      (supertype) => supertype.same(base, useNullability: false),
     );
   }
 
