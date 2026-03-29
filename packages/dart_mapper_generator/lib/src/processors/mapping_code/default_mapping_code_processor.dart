@@ -106,9 +106,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
             expressionMappingMethod: binding.callableMappingMethod,
             extraMappingMethod: binding.extraMappingMethod,
             importAliases: context.importAliases,
-            // When conditionExpression is set, suppress defaultValue from ExpressionContext
-            // (defaultValue is used in the ternary false-branch, not in basic()'s ifNullThen).
-            defaultValue: binding.conditionExpression != null ? null : binding.defaultValue,
+            defaultValue: binding.defaultValue,
             constant: binding.constant,
             expression: binding.expression,
             conditionExpression: binding.conditionExpression,

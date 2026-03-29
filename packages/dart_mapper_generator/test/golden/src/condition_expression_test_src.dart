@@ -69,9 +69,7 @@ class StatusOutput {
 }
 
 @ShouldGenerate(
-  r'''StatusOutput toOutput(StatusInput source) {
-    return StatusOutput(label: source.active ? source.label : 'inactive');
-  }''',
+  r"label: source.active ? source.label ?? 'inactive' : 'inactive',",
   contains: true,
 )
 @Mapper()

@@ -126,9 +126,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
             forceNonNull: binding.forceNonNull,
             expressionMappingMethod: binding.callableMappingMethod,
             extraMappingMethod: binding.extraMappingMethod,
-            // When conditionExpression is set, suppress defaultValue from ExpressionContext
-            // (defaultValue is used in the ternary false-branch, not in basic()'s ifNullThen).
-            defaultValue: binding.conditionExpression != null ? null : binding.defaultValue,
+            defaultValue: binding.defaultValue,
             constant: binding.constant,
             expression: binding.expression,
             conditionExpression: binding.conditionExpression,

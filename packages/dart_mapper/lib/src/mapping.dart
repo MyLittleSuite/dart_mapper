@@ -55,7 +55,9 @@ class Mapping {
   final String? expression;
 
   /// A raw Dart boolean expression. When true, the field is mapped normally.
-  /// When false, falls back to defaultValue (if set) or null (if target is nullable).
+  /// When false, falls back to [defaultValue] (if set) or null (if target is nullable).
+  /// On a non-nullable target, [defaultValue] must be provided — the generator throws
+  /// if [conditionExpression] is used without [defaultValue] on a non-nullable target.
   /// Cannot be combined with constant or callable.
   final String? conditionExpression;
 

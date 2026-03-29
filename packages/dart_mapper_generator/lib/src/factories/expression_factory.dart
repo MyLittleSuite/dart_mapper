@@ -294,18 +294,22 @@ String resolveExpression(String expression) {
   return '$quote$expression$quote';
 }
 
-/// Detects bare `${...}` tokens in [expression] and wraps **each token
-/// individually** in single quotes. Use for `conditionExpression:` fields
-/// where only parts of the expression are strings — e.g.
-/// `r"${source.label}.isNotEmpty"` produces `'${source.label}'.isNotEmpty`.
+/// Detects bare `${...}` tokens and `$identifier` tokens in [expression] and
+/// wraps **each token individually** in single quotes. Use for
+/// `conditionExpression:` fields where only parts of the expression are
+/// strings — e.g. `r"${source.label}.isNotEmpty"` produces
+/// `'${source.label}'.isNotEmpty`, and `r"$label.isNotEmpty"` produces
+/// `'$label'.isNotEmpty`.
 ///
 /// Tokens already preceded by a quote character are left untouched to avoid
 /// double-wrapping.
 String resolveConditionExpression(String expression) {
-  if (!expression.contains(r'${')) return expression;
+  final hasInterpolation = expression.contains(r'${') ||
+      RegExp(r'\$[A-Za-z_]').hasMatch(expression);
+  if (!hasInterpolation) return expression;
 
   return expression.replaceAllMapped(
-    RegExp(r"\$\{[^}]+\}"),
+    RegExp(r"\$\{[^}]+\}|\$[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*"),
     (match) {
       final start = match.start;
       if (start > 0 && (expression[start - 1] == "'" || expression[start - 1] == '"')) {
