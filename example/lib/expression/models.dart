@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 MyLittleSuite
+ * Copyright (c) 2024 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,41 +23,39 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
+class PersonInput {
+  final String firstName;
+  final String lastName;
+  final int score;
 
-class ResolvedMapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
-  final ExecutableElement? callable;
-  final String? defaultValue;
-  final String? constant;
-  final String? expression;
-  final String? conditionExpression;
-
-  const ResolvedMapping({
-    required this.target,
-    required this.source,
-    required this.ignore,
-    required this.forceNonNull,
-    required this.callable,
-    this.defaultValue,
-    this.constant,
-    this.expression,
-    this.conditionExpression,
+  const PersonInput({
+    required this.firstName,
+    required this.lastName,
+    required this.score,
   });
+}
 
-  @override
-  String toString() => 'ResolvedMapping{'
-      'source: $source, '
-      'target: $target, '
-      'ignore: $ignore, '
-      'forceNonNull: $forceNonNull, '
-      'callable: $callable, '
-      'defaultValue: $defaultValue, '
-      'constant: $constant, '
-      'expression: $expression, '
-      'conditionExpression: $conditionExpression'
-      '}';
+class PersonOutput {
+  final String fullName;
+  final String scoreLabel;
+
+  const PersonOutput({
+    required this.fullName,
+    required this.scoreLabel,
+  });
+}
+
+class UserInfo {
+  final String name;
+  const UserInfo({required this.name});
+}
+
+class CompanyInfo {
+  final String name;
+  const CompanyInfo({required this.name});
+}
+
+class CombinedOutput {
+  final String combined;
+  const CombinedOutput({required this.combined});
 }

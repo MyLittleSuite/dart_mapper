@@ -188,9 +188,18 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
     }
 
     for (final targetValue in targetEnum.enumValues) {
-      final sourceClassValues = enumValuesMap[targetValue.name] ?? [];
+      // Use user-provided @ValueMapping sources; if none provided and source is
+      // String, auto-populate from .name. For non-String sources (e.g. int),
+      // only user-provided @ValueMapping bindings are created — .index-based or
+      // other mappings must be explicit.
+      final userSourceValues = enumValuesMap[targetValue.name] ?? [];
+      final effectiveSourceValues = userSourceValues.isNotEmpty
+          ? userSourceValues
+          : (sourceType.isDartCoreString && targetValue.name != null
+              ? [targetValue.name!]
+              : <String>[]);
 
-      for (final sourceClassValue in sourceClassValues) {
+      for (final sourceClassValue in effectiveSourceValues) {
         if (sourceElement.name != null &&
             targetEnum.name != null &&
             targetValue.name != null) {

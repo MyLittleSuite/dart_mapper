@@ -24,6 +24,7 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
@@ -112,22 +113,49 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
     );
   }
 
-  Expression _buildExpression(BindableMappingMethod method, Binding binding) =>
-      expressionStrategyDispatcher.get(method.behavior).create(
-            ExpressionContext(
-              field: binding.source,
-              origin: FieldOrigin.source,
-              counterpartField: binding.target,
-              currentMethod: method,
-              ignored: binding.ignored,
-              forceNonNull: binding.forceNonNull,
-              expressionMappingMethod: binding.callableMappingMethod,
-              extraMappingMethod: binding.extraMappingMethod,
-              defaultValue: binding.defaultValue,
-              constant: binding.constant,
-              accessChain: binding.accessChain,
-              sources: binding.sources,
-              sourceAccessChains: binding.sourceAccessChains,
-            ),
-          );
+  Expression _buildExpression(BindableMappingMethod method, Binding binding) {
+    final targetClass = method.returnType!.element!.classElement;
+
+    var result = expressionStrategyDispatcher.get(method.behavior).create(
+          ExpressionContext(
+            field: binding.source,
+            origin: FieldOrigin.source,
+            counterpartField: binding.target,
+            currentMethod: method,
+            ignored: binding.ignored,
+            forceNonNull: binding.forceNonNull,
+            expressionMappingMethod: binding.callableMappingMethod,
+            extraMappingMethod: binding.extraMappingMethod,
+            defaultValue: binding.defaultValue,
+            constant: binding.constant,
+            expression: binding.expression,
+            conditionExpression: binding.conditionExpression,
+            accessChain: binding.accessChain,
+            sources: binding.sources,
+            sourceAccessChains: binding.sourceAccessChains,
+          ),
+        );
+
+    // Ternary wrapping for conditionExpression (D-07)
+    if (binding.conditionExpression != null) {
+      final isTargetNullable = binding.target.nullable;
+      if (!isTargetNullable && binding.defaultValue == null) {
+        throw InvalidGenerationSourceError(
+          "conditionExpression on non-nullable target '${binding.target.name}': "
+          "requires a defaultValue or a nullable target type.\n"
+          "Fix: Add defaultValue: '...' to the @Mapping annotation, or make the target field nullable.",
+          element: targetClass,
+        );
+      }
+      final condition = CodeExpression(Code(resolveConditionExpression(binding.conditionExpression!)));
+      final falseExpr = binding.defaultValue != null
+          ? (binding.target.type.isDartCoreString
+              ? literalString(binding.defaultValue!)
+              : CodeExpression(Code(binding.defaultValue!)))
+          : literalNull;
+      result = condition.conditional(result, falseExpr);
+    }
+
+    return result;
+  }
 }
