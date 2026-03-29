@@ -46,31 +46,21 @@ class SubclassMappingAnalyzer {
     final pairs = SubclassMappingAnnotation.loadAll(context.mapperClass).toList();
     if (pairs.isEmpty) return [];
 
-    // Group pairs by base type (the abstract method's parameter type).
-    // Each unique base type becomes one dispatch method.
-    // We detect which abstract methods are "base" methods by checking whether
-    // any @SubclassMapping pair's source type is a subtype of the method's
-    // parameter type.
-    final baseTypes = <DartType>{};
-    for (final pair in pairs) {
-      for (final method in context.mapperClass.methods.where((m) => m.isAbstract)) {
-        if (method.formalParameters.length != 1) continue;
-        final paramType = method.formalParameters.first.type;
-        // Check: is pair.sourceType a subtype of paramType?
-        if (_isSubtypeOf(pair.sourceType, paramType)) {
-          baseTypes.add(paramType);
-        }
-      }
-    }
-
+    // Bucket by abstract method, not by base type set.
+    // Each abstract method with exactly one parameter gets its own
+    // SubclassMappingMethod — avoids collision when two abstract methods
+    // share the same parameter type but have different return types.
     final result = <SubclassMappingMethod>[];
-    for (final baseType in baseTypes) {
-      // Collect all pairs that are subtypes of this base type.
+    for (final method in context.mapperClass.methods.where(
+      (m) => m.isAbstract && m.formalParameters.length == 1,
+    )) {
+      final paramType = method.formalParameters.first.type;
+      // Collect only the pairs applicable to THIS abstract method.
       final matchingPairs = pairs
-          .where((p) => _isSubtypeOf(p.sourceType, baseType))
+          .where((p) => _isSubtypeOf(p.sourceType, paramType))
           .toList();
+      if (matchingPairs.isEmpty) continue;
 
-      // Resolve delegate methods and compute dispatch pairs.
       final dispatchPairs = <SubclassDispatchPair>[];
       for (final pair in matchingPairs) {
         final delegateName = _resolveDelegateMethod(
@@ -85,26 +75,17 @@ class SubclassMappingAnalyzer {
         ));
       }
 
-      // Find the abstract dispatch method (the one with baseType as parameter).
-      final abstractMethod = context.mapperClass.methods.firstWhere(
-        (m) =>
-            m.isAbstract &&
-            m.formalParameters.length == 1 &&
-            m.formalParameters.first.type.same(baseType, useNullability: false),
-      );
-
-      // Compute needsWildcard per D-04.
       final needsWildcard = _computeNeedsWildcard(
-        baseType: baseType,
+        baseType: paramType,
         dispatchPairs: dispatchPairs,
       );
 
       result.add(SubclassMappingMethod(
-        name: abstractMethod.name!,
-        returnType: abstractMethod.returnType,
-        optionalReturn: abstractMethod.returnType.isNullable,
+        name: method.name!,
+        returnType: method.returnType,
+        optionalReturn: method.returnType.isNullable,
         isOverride: true,
-        parameters: abstractMethod.formalParameters
+        parameters: method.formalParameters
             .map((p) => MappingParameter(
                   field: Field.from(
                     name: p.name!,
@@ -129,11 +110,13 @@ class SubclassMappingAnalyzer {
     final subtypeElement = subtype.element?.classElementOrNull;
     if (subtypeElement == null) return false;
     final baseLibUri = base.element?.library?.firstFragment.source.uri;
-    final baseDisplayString = base.displayString;
+    // Normalize nullability on BOTH sides so that e.g. `Pet?` matches `Pet`.
+    final baseDisplayNormalized = base.displayString.replaceAll('?', '');
     return subtypeElement.allSupertypes.any(
       (supertype) =>
           supertype.element.library.firstFragment.source.uri == baseLibUri &&
-          supertype.getDisplayString().replaceAll('?', '') == baseDisplayString,
+          supertype.getDisplayString().replaceAll('?', '') ==
+              baseDisplayNormalized,
     );
   }
 
@@ -177,10 +160,11 @@ class SubclassMappingAnalyzer {
     final baseElement = baseType.element?.classElementOrNull;
     if (baseElement == null || !baseElement.isSealed) return true;
 
-    // Scan the sealed class's own library for direct subtypes only.
-    // (Sealed classes can only be extended within the same library.)
+    // Scan the sealed class's own library for subtypes.
+    // Uses allSupertypes to include classes that implement or mixin the sealed
+    // base (not just direct extends), so sealed interface coverage is complete.
     final directSubtypes = baseElement.library.classes
-        .where((cls) => cls.supertype?.element == baseElement)
+        .where((cls) => cls.allSupertypes.any((t) => t.element == baseElement))
         .toList();
 
     if (directSubtypes.isEmpty) return true;

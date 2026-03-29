@@ -106,10 +106,19 @@ class SubclassMappingCodeProcessor extends ComponentProcessor<Code> {
   /// trailing underscores, and lowercases the first character. This handles
   /// GQL-style type names with $ characters (e.g.,
   /// Mutation$CreateTodo$createTodoOfMine$data$$ProductTemplateDto).
+  /// Appends `$` if the resulting identifier collides with a Dart reserved word.
   String _sanitizeVarName(String raw) {
+    const dartReservedWords = {
+      'assert', 'break', 'case', 'catch', 'class', 'const', 'continue',
+      'default', 'do', 'else', 'enum', 'extends', 'false', 'final',
+      'finally', 'for', 'if', 'in', 'is', 'new', 'null', 'rethrow',
+      'return', 'super', 'switch', 'this', 'throw', 'true', 'try',
+      'var', 'void', 'while', 'with',
+    };
     final sanitized = raw.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
     final trimmed = sanitized.replaceAll(RegExp(r'^_+|_+$'), '');
     if (trimmed.isEmpty) return 'source';
-    return trimmed[0].toLowerCase() + trimmed.substring(1);
+    final candidate = trimmed[0].toLowerCase() + trimmed.substring(1);
+    return dartReservedWords.contains(candidate) ? '$candidate\$' : candidate;
   }
 }

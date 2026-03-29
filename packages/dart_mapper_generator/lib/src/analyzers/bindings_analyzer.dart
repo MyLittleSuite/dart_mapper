@@ -55,16 +55,15 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
       mappingMethodDispatcher;
   final SubclassMappingAnalyzer subclassMappingAnalyzer;
 
-  BindingsAnalyzer({
+  const BindingsAnalyzer({
     required this.mapperUsageAnalyzer,
     required this.internalMapperUsageAnalyzer,
     required this.inheritConfigurationAnalyzer,
     required this.inverseInheritConfigurationAnalyzer,
     required this.mappingBehaviorAnalyzer,
     required this.mappingMethodDispatcher,
-    SubclassMappingAnalyzer? subclassMappingAnalyzer,
-  }) : subclassMappingAnalyzer =
-           subclassMappingAnalyzer ?? const SubclassMappingAnalyzer();
+    required this.subclassMappingAnalyzer,
+  });
 
   @override
   Bindings analyze(AnalyzerContext context) {
@@ -80,6 +79,13 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
     final mappingMethods = context.mappingMethods.fold(
       <MappingMethod>[],
       (accumulator, method) {
+        // Skip methods handled by SubclassMappingCodeProcessor — no field-binding
+        // analysis needed, and analyzers may throw on stub methods.
+        if (method.name != null &&
+            subclassBaseMethodNames.contains(method.name)) {
+          return accumulator;
+        }
+
         final inheritContext = MethodAnalyzerContext(
           mapperAnnotation: context.mapperAnnotation,
           mapperUsages: mapperUsages,
@@ -119,12 +125,6 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
         final bindings = mappingMethodDispatcher
             .get(mappingBehavior)
             .analyze(bindingsContext);
-
-        // Skip methods that are handled by SubclassMappingCodeProcessor.
-        if (method.name != null &&
-            subclassBaseMethodNames.contains(method.name)) {
-          return accumulator;
-        }
 
         if (method.name != null) {
           accumulator.add(

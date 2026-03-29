@@ -36,9 +36,9 @@
 /// @SubclassMapping(source: Cat, target: CatDto)
 /// @Mapper()
 /// abstract class AnimalMapper {
-///   AnimalDto toDto(Animal source);
-///   DogDto toDto(Dog source);
-///   CatDto toDto(Cat source);
+///   AnimalDto toAnimalDto(Animal source);
+///   DogDto toDogDto(Dog source);
+///   CatDto toCatDto(Cat source);
 /// }
 /// ```
 class SubclassMapping {

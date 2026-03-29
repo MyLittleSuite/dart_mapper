@@ -24,7 +24,6 @@
  */
 
 // Golden test source for ADV-01 and ADV-02: @SubclassMapping dispatch.
-// These tests are RED until Plan 02 wires the analyzer and processor.
 
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:source_gen_test/annotations.dart';
@@ -49,12 +48,12 @@ class AnimalDto {
   const AnimalDto();
 }
 
-class DogDto {
+class DogDto extends AnimalDto {
   final String breed;
   const DogDto({required this.breed});
 }
 
-class CatDto {
+class CatDto extends AnimalDto {
   final String color;
   const CatDto({required this.color});
 }
@@ -102,12 +101,12 @@ class VehicleDto {
   const VehicleDto();
 }
 
-class CarDto {
+class CarDto extends VehicleDto {
   final String make;
   const CarDto({required this.make});
 }
 
-class TruckDto {
+class TruckDto extends VehicleDto {
   final String payload;
   const TruckDto({required this.payload});
 }
@@ -137,7 +136,7 @@ class PartialVehicleDto {
   const PartialVehicleDto();
 }
 
-class PartialCarDto {
+class PartialCarDto extends PartialVehicleDto {
   final String make;
   const PartialCarDto({required this.make});
 }
@@ -181,7 +180,7 @@ class CreateTodoOutput {
   const CreateTodoOutput();
 }
 
-class ProductTemplateDtoOutput {
+class ProductTemplateDtoOutput extends CreateTodoOutput {
   final String id;
   const ProductTemplateDtoOutput({required this.id});
 }
