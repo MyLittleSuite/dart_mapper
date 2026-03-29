@@ -48,6 +48,25 @@ class Mapping {
   /// Cannot be combined with source, defaultValue, or callable.
   final String? constant;
 
+  /// A raw Dart expression emitted verbatim as the target field value.
+  /// The expression has access to source method parameters by their declared names.
+  /// Single-source: use `source`. Multi-source: use parameter names as declared.
+  /// Cannot be combined with source, defaultValue, constant, or callable.
+  final String? expression;
+
+  /// A raw Dart boolean expression. When true, the field is mapped normally.
+  /// When false, falls back to [defaultValue] (if set) or null (if target is nullable).
+  /// On a non-nullable target, [defaultValue] must be provided — the generator throws
+  /// if [conditionExpression] is used without [defaultValue] on a non-nullable target.
+  /// Cannot be combined with constant or callable.
+  ///
+  /// String interpolation inside this expression is auto-wrapped per token.
+  /// Bare `$identifier` chains are captured greedily: `$source.name.length > 5`
+  /// wraps `$source.name.length` as a string, producing a string-to-int
+  /// comparison. Use `${...}` to control interpolation scope precisely:
+  /// `${source.name}.length > 5` wraps only `source.name`.
+  final String? conditionExpression;
+
   const Mapping({
     required this.target,
     this.source,
@@ -56,5 +75,7 @@ class Mapping {
     this.callable,
     this.defaultValue,
     this.constant,
+    this.expression,
+    this.conditionExpression,
   });
 }

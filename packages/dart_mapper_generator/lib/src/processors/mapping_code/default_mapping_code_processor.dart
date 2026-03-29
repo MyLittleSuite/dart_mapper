@@ -24,6 +24,7 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 import 'package:dart_mapper_generator/src/exceptions/no_relation_found_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/target_field_requires_non_optional_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.dart';
@@ -82,7 +83,9 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
             binding?.source.nullable == true &&
             binding?.target.nullable == false &&
             binding?.defaultValue == null &&
-            binding?.constant == null) {
+            binding?.constant == null &&
+            binding?.expression == null &&
+            binding?.conditionExpression == null) {
           throw TargetFieldRequiresNonOptionalSourceFieldError(
             parameter: parameter,
             targetClass: targetClass,
@@ -91,7 +94,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
           );
         }
 
-        final sourceExpression = binding != null
+        var sourceExpression = binding != null
             ? expressionStrategyDispatcher.get(method.behavior).create(
           ExpressionContext(
             field: binding.source,
@@ -105,12 +108,35 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
             importAliases: context.importAliases,
             defaultValue: binding.defaultValue,
             constant: binding.constant,
+            expression: binding.expression,
+            conditionExpression: binding.conditionExpression,
             accessChain: binding.accessChain,
             sources: binding.sources,
             sourceAccessChains: binding.sourceAccessChains,
           ),
         )
             : null;
+
+        // Ternary wrapping for conditionExpression (D-07)
+        if (binding?.conditionExpression != null && sourceExpression != null) {
+          final isTargetNullable = binding!.target.nullable;
+          if (!isTargetNullable && binding.defaultValue == null) {
+            throw InvalidGenerationSourceError(
+              "conditionExpression on non-nullable target '${binding.target.name}': "
+              "requires a defaultValue or a nullable target type.\n"
+              "Fix: Add defaultValue: '...' to the @Mapping annotation, or make the target field nullable.",
+              element: targetClass,
+            );
+          }
+          final condition = CodeExpression(Code(resolveConditionExpression(binding.conditionExpression!)));
+          final falseExpr = binding.defaultValue != null
+              ? (binding.target.type.isDartCoreString
+                  ? literalString(binding.defaultValue!)
+                  : CodeExpression(Code(binding.defaultValue!)))
+              : literalNull;
+          sourceExpression = condition.conditional(sourceExpression, falseExpr);
+        }
+
         if (sourceExpression != null) {
           if (parameter.isNamed) {
             namedArguments[parameter.name!] = sourceExpression;

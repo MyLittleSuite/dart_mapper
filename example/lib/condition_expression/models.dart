@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 MyLittleSuite
+ * Copyright (c) 2024 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,41 +23,36 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:analyzer/dart/element/element.dart';
+class MemberInput {
+  final int age;
+  final String? accessLevel;
+  final bool premium;
+  final String? premiumLabel;
 
-class ResolvedMapping {
-  final String? source;
-  final String target;
-  final bool ignore;
-  final bool forceNonNull;
-  final ExecutableElement? callable;
-  final String? defaultValue;
-  final String? constant;
-  final String? expression;
-  final String? conditionExpression;
-
-  const ResolvedMapping({
-    required this.target,
-    required this.source,
-    required this.ignore,
-    required this.forceNonNull,
-    required this.callable,
-    this.defaultValue,
-    this.constant,
-    this.expression,
-    this.conditionExpression,
+  const MemberInput({
+    required this.age,
+    this.accessLevel,
+    required this.premium,
+    this.premiumLabel,
   });
+}
 
-  @override
-  String toString() => 'ResolvedMapping{'
-      'source: $source, '
-      'target: $target, '
-      'ignore: $ignore, '
-      'forceNonNull: $forceNonNull, '
-      'callable: $callable, '
-      'defaultValue: $defaultValue, '
-      'constant: $constant, '
-      'expression: $expression, '
-      'conditionExpression: $conditionExpression'
-      '}';
+class MemberOutput {
+  final String? accessLevel;
+  final String? premiumLabel;
+
+  const MemberOutput({
+    this.accessLevel,
+    this.premiumLabel,
+  });
+}
+
+class TagInput {
+  final String? label;
+  const TagInput({this.label});
+}
+
+class TagOutput {
+  final String? label;
+  const TagOutput({this.label});
 }

@@ -81,6 +81,24 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
             ),
       );
 
+  Map<String, String> get expressionMap => Map.fromEntries(
+        _renamingMappings
+            .where((annotation) => annotation.expression != null)
+            .map(
+              (annotation) =>
+                  MapEntry(annotation.target, annotation.expression!),
+            ),
+      );
+
+  Map<String, String> get conditionExpressionMap => Map.fromEntries(
+        _renamingMappings
+            .where((annotation) => annotation.conditionExpression != null)
+            .map(
+              (annotation) =>
+                  MapEntry(annotation.target, annotation.conditionExpression!),
+            ),
+      );
+
   void validateMappingCombinations() {
     for (final annotation in _renamingMappings) {
       if (annotation.constant != null) {
@@ -110,6 +128,53 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
           throw InvalidMappingCombinationError(
             target: annotation.target,
             conflictDescription: 'constant cannot be combined with ignore',
+            element: method,
+          );
+        }
+      }
+      if (annotation.expression != null) {
+        if (annotation.source != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription: 'expression cannot be combined with source',
+            element: method,
+          );
+        }
+        if (annotation.defaultValue != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription:
+                'expression cannot be combined with defaultValue',
+            element: method,
+          );
+        }
+        if (annotation.constant != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription: 'expression cannot be combined with constant',
+            element: method,
+          );
+        }
+        if (annotation.callable != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription: 'expression cannot be combined with callable',
+            element: method,
+          );
+        }
+      }
+      if (annotation.conditionExpression != null) {
+        if (annotation.constant != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription: 'conditionExpression cannot be combined with constant',
+            element: method,
+          );
+        }
+        if (annotation.callable != null) {
+          throw InvalidMappingCombinationError(
+            target: annotation.target,
+            conflictDescription: 'conditionExpression cannot be combined with callable',
             element: method,
           );
         }

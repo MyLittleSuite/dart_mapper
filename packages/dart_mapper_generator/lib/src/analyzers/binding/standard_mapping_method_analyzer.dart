@@ -68,6 +68,8 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     final callableMap = context.callableMap;
     final defaultValueMap = context.defaultValueMap;
     final constantMap = context.constantMap;
+    final expressionMap = context.expressionMap;
+    final conditionExpressionMap = context.conditionExpressionMap;
 
     final isMultiSource = method.formalParameters.length > 1;
 
@@ -334,6 +336,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
           extraMappingMethod: extraMappingMethod,
           defaultValue: defaultValueMap[targetName],
           accessChain: accessChain,
+          conditionExpression: conditionExpressionMap[targetName],
         ),
       );
       boundTargets.add(targetName);
@@ -374,6 +377,42 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
           ignored: false,
           forceNonNull: false,
           constant: constantValue,
+        ),
+      );
+      boundTargets.add(targetName);
+    }
+
+    // --- Step 2.5: Process expression-only mappings (no source reference) ---
+    for (final entry in expressionMap.entries) {
+      final targetName = entry.key;
+      final expressionValue = entry.value;
+
+      if (boundTargets.contains(targetName)) continue;
+
+      final resolvedTargetParam = targetParam?[targetName];
+      if (resolvedTargetParam == null) continue;
+
+      final targetField = Field.from(
+        name: targetName,
+        type: resolvedTargetParam.type,
+        required: resolvedTargetParam.isRequired,
+        nullable: resolvedTargetParam.type.isNullable,
+      );
+
+      final placeholderSource = Field.from(
+        name: targetName,
+        type: resolvedTargetParam.type,
+        required: false,
+        nullable: true,
+      );
+
+      bindings.add(
+        Binding(
+          source: placeholderSource,
+          target: targetField,
+          ignored: false,
+          forceNonNull: false,
+          expression: expressionValue,
         ),
       );
       boundTargets.add(targetName);
@@ -460,6 +499,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
                 callableMappingMethod: callableMappingMethod,
                 extraMappingMethod: extraMappingMethod,
                 defaultValue: defaultValueMap[targetClassParamName],
+                conditionExpression: conditionExpressionMap[targetClassParamName],
               ),
             );
             boundTargets.add(targetClassParamName);
