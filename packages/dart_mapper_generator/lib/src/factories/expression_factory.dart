@@ -320,6 +320,15 @@ String resolveExpression(String expression) {
 ///
 /// Tokens already preceded by a quote character are left untouched to avoid
 /// double-wrapping.
+///
+/// **Property chain ambiguity**: the `$identifier` pattern greedily captures
+/// dotted chains. `r"$source.name.length > 5"` matches `$source.name.length`
+/// as one token and produces `'$source.name.length' > 5` — a string-to-int
+/// comparison, not a numeric length check. To interpolate only part of a chain,
+/// use `${...}` syntax: `r"${source.name}.length > 5"` correctly produces
+/// `'${source.name}'.length > 5` (integer comparison). Prefer `${...}` over
+/// bare `$identifier` whenever the expression uses the interpolated value as
+/// anything other than a plain string.
 String resolveConditionExpression(String expression) {
   final hasInterpolation = expression.contains(r'${') ||
       RegExp(r'\$[A-Za-z_]').hasMatch(expression);

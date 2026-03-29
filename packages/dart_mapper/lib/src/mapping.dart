@@ -59,6 +59,12 @@ class Mapping {
   /// On a non-nullable target, [defaultValue] must be provided — the generator throws
   /// if [conditionExpression] is used without [defaultValue] on a non-nullable target.
   /// Cannot be combined with constant or callable.
+  ///
+  /// String interpolation inside this expression is auto-wrapped per token.
+  /// Bare `$identifier` chains are captured greedily: `$source.name.length > 5`
+  /// wraps `$source.name.length` as a string, producing a string-to-int
+  /// comparison. Use `${...}` to control interpolation scope precisely:
+  /// `${source.name}.length > 5` wraps only `source.name`.
   final String? conditionExpression;
 
   const Mapping({
