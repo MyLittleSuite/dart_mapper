@@ -24,6 +24,7 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
 import 'package:dart_mapper_generator/src/models/annotations/resolved_value_mapping.dart';
@@ -102,4 +103,18 @@ extension InheritInverseConfigurationAnnotation on InheritInverseConfiguration {
 
     return annotation != null ? InheritInverseConfiguration() : null;
   }
+}
+
+extension SubclassMappingAnnotation on SubclassMapping {
+  /// Returns all @SubclassMapping annotations on [mapperClass] as
+  /// (sourceType, targetType) pairs. Returns empty list if none present.
+  static Iterable<({DartType sourceType, DartType targetType})> loadAll(
+    ClassElement mapperClass,
+  ) =>
+      TypeChecker.typeNamed(SubclassMapping)
+          .annotationsOf(mapperClass)
+          .map((annotation) => (
+                sourceType: annotation.getField('source')!.toTypeValue()!,
+                targetType: annotation.getField('target')!.toTypeValue()!,
+              ));
 }

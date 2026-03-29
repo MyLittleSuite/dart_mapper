@@ -207,10 +207,52 @@ void main() async {
   );
   testAnnotatedElements<Mapper>(multiArgCallableReader, generator);
 
+  // Group: Expression mapping (EXPR-01, EXPR-02)
+  final expressionReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'expression_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(expressionReader, generator);
+
+  // Group: Expression mapping errors (D-04 mutual exclusion)
+  final expressionErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'expression_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(expressionErrorReader, generator);
+
+  // Group: Condition expression (EXPR-03, EXPR-04)
+  final conditionExpressionReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'condition_expression_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(conditionExpressionReader, generator);
+
+  // Group: Condition expression errors (D-07)
+  final conditionExpressionErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'condition_expression_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(conditionExpressionErrorReader, generator);
+
   // Group: String→Enum auto-population (COLL-05)
   final stringToEnumReader = await initializeLibraryReaderForDirectory(
     'test/golden/src',
     'string_to_enum_test_src.dart',
   );
   testAnnotatedElements<Mapper>(stringToEnumReader, generator);
+
+  // Group: Subclass mapping — ADV-01, ADV-02
+  final subclassMappingReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'subclass_mapping_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(subclassMappingReader, generator);
+
+  // Group: Subclass mapping errors — D-06
+  final subclassMappingErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'subclass_mapping_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(subclassMappingErrorReader, generator);
 }

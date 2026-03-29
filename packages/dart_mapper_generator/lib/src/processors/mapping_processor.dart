@@ -27,16 +27,20 @@ import 'package:code_builder/code_builder.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/subclass_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
+import 'package:dart_mapper_generator/src/processors/mapping_code/subclass_mapping_code_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 
 class MappingProcessor extends ComponentProcessor<Method> {
   final StrategyDispatcher<MappingBehavior, ComponentProcessor<Code>>
       methodCodeDispatcher;
+  final SubclassMappingCodeProcessor subclassMappingCodeProcessor;
 
   const MappingProcessor({
     required this.methodCodeDispatcher,
+    this.subclassMappingCodeProcessor = const SubclassMappingCodeProcessor(),
   });
 
   @override
@@ -66,7 +70,9 @@ class MappingProcessor extends ComponentProcessor<Method> {
             _processParameters(context, optionalParameters),
           )
           ..returns = _processReturns(context, method)
-          ..body = methodCodeDispatcher.get(method.behavior).process(context);
+          ..body = method is SubclassMappingMethod
+              ? subclassMappingCodeProcessor.process(context)
+              : methodCodeDispatcher.get(method.behavior).process(context);
       },
     );
   }

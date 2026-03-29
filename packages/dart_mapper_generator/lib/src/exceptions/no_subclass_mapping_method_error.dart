@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 MyLittleSuite
+ * Copyright (c) 2025 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,11 +23,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
+import 'package:source_gen/source_gen.dart';
 
-export 'src/inherit_configuration.dart';
-export 'src/inherit_inverse_configuration.dart';
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/subclass_mapping.dart';
-export 'src/value_mapping.dart';
+/// Thrown when a @SubclassMapping annotation references a source/target pair
+/// for which no matching mapping method exists on the mapper class.
+///
+/// Per D-06: the generator must throw a build-time error (not silently skip)
+/// when the delegate method is missing.
+class NoSubclassMappingMethodError extends InvalidGenerationSourceError {
+  NoSubclassMappingMethodError({
+    required DartType sourceType,
+    required DartType targetType,
+    required ClassElement mapperClass,
+  }) : super(
+          'No mapping method found for '
+          '@SubclassMapping(source: ${sourceType.getDisplayString()}, '
+          'target: ${targetType.getDisplayString()}). '
+          'Add a method with signature: '
+          '${targetType.getDisplayString()} method(${sourceType.getDisplayString()} source).',
+          element: mapperClass,
+        );
+}
