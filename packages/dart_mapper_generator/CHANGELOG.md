@@ -1,3 +1,11 @@
+## 1.0.0
+
+- Implement @SubclassMapping support for runtime-type dispatch in mappers (#76)
+- Add support for conditional field mapping with expressions and default values (#75)
+- Add support for default, constant values, dot notation and multiple params access (#74)
+- Add dynamic and generic field support with corresponding mappers (#73)
+- Add golden tests for mapping validation (#72)
+
 ## 0.9.0
 
 - Escape ArgumentError for enum by sanitizing display name (#64)

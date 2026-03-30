@@ -1,3 +1,8 @@
+## 1.0.0
+
+- Implement @SubclassMapping support for runtime-type dispatch in mappers (#76)
+- Add support for default, constant values, dot notation and multiple params access (#74)
+
 ## 0.9.0
 
 - Update dependency lints to v6 (#42)
