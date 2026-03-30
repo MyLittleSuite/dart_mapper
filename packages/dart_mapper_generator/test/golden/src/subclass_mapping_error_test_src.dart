@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 MyLittleSuite
+ * Copyright (c) 2025 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,11 +23,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+// Golden test source for D-06 error: missing delegate method.
 
-export 'src/inherit_configuration.dart';
-export 'src/inherit_inverse_configuration.dart';
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/subclass_mapping.dart';
-export 'src/value_mapping.dart';
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:source_gen_test/annotations.dart';
+
+class Pet {}
+
+class Dog extends Pet {}
+
+class PetDto {}
+
+class DogDto {}
+
+// No toDogDto(Dog) method exists on this mapper → generator must throw.
+@ShouldThrow(
+  'No mapping method found for @SubclassMapping(source: Dog, target: DogDto). '
+  'Add a method with signature: DogDto method(Dog source).',
+)
+@Mapper()
+abstract class MissingDelegateMapper {
+  @SubclassMapping(source: Dog, target: DogDto)
+  PetDto toPetDto(Pet source);
+  // DogDto toDogDto(Dog source);  ← intentionally absent
+}

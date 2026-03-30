@@ -32,6 +32,7 @@ import 'package:dart_mapper_generator/src/analyzers/inherit_configuration_analyz
 import 'package:dart_mapper_generator/src/analyzers/internal_uses_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/mapping_behavior_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/mapping_method/extra_mapping_method_analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/subclass_mapping_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/uses_analyzer.dart';
 import 'package:dart_mapper_generator/src/dart_mapper_generator.dart';
 import 'package:dart_mapper_generator/src/factories/built_expression_factory.dart';
@@ -98,6 +99,7 @@ DartMapperGenerator createTestGenerator() {
       ),
       mappingBehaviorAnalyzer: MappingBehaviorAnalyzer(),
       mappingMethodDispatcher: mappingMethodDispatcher,
+      subclassMappingAnalyzer: SubclassMappingAnalyzer(),
     ),
   );
 }

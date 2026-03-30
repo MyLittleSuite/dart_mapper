@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 MyLittleSuite
+ * Copyright (c) 2025 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,11 +23,30 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-library;
+/// Instructs the generator to produce a runtime-type dispatch body for the
+/// annotated dispatch method. Stacked on the method (not the mapper class).
+///
+/// For each [SubclassMapping] annotation, the generator locates the existing
+/// mapping method on the mapper whose signature is `target method(source)` and
+/// emits a switch arm `SourceType var => delegateMethod(var)`.
+///
+/// Example:
+/// ```dart
+/// @Mapper()
+/// abstract class AnimalMapper {
+///   @SubclassMapping(source: Dog, target: DogDto)
+///   @SubclassMapping(source: Cat, target: CatDto)
+///   AnimalDto toAnimalDto(Animal source);
+///   DogDto toDogDto(Dog source);
+///   CatDto toCatDto(Cat source);
+/// }
+/// ```
+class SubclassMapping {
+  /// The source subtype to match at runtime.
+  final Type source;
 
-export 'src/inherit_configuration.dart';
-export 'src/inherit_inverse_configuration.dart';
-export 'src/mapper.dart';
-export 'src/mapping.dart';
-export 'src/subclass_mapping.dart';
-export 'src/value_mapping.dart';
+  /// The target type to produce for this subtype.
+  final Type target;
+
+  const SubclassMapping({required this.source, required this.target});
+}

@@ -27,6 +27,7 @@ import 'package:dart_mapper_generator/src/models/mapper/constructor/mapper_const
 import 'package:dart_mapper_generator/src/models/mapper/mapper_instance_field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/defined_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/subclass_mapping_method.dart';
 
 class MapperClass {
   final String name;
@@ -50,6 +51,10 @@ class MapperClass {
     for (final method in internalMappingMethods) {
       yield* method.bindings.expand((binding) => binding.mappingMethods);
     }
+
+    // SubclassMappingMethod instances are handled separately from field-binding
+    // methods and must be yielded directly (they are not DefinedMappingMethod).
+    yield* _mappingMethods.whereType<SubclassMappingMethod>();
   }
 
   @override

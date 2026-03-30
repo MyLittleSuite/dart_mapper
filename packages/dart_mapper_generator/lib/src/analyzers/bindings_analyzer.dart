@@ -27,6 +27,7 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/subclass_mapping_analyzer.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
@@ -52,14 +53,16 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
   final Analyzer<MappingBehavior> mappingBehaviorAnalyzer;
   final StrategyDispatcher<MappingBehavior, Analyzer<List<Binding>>>
       mappingMethodDispatcher;
+  final SubclassMappingAnalyzer subclassMappingAnalyzer;
 
-  BindingsAnalyzer({
+  const BindingsAnalyzer({
     required this.mapperUsageAnalyzer,
     required this.internalMapperUsageAnalyzer,
     required this.inheritConfigurationAnalyzer,
     required this.inverseInheritConfigurationAnalyzer,
     required this.mappingBehaviorAnalyzer,
     required this.mappingMethodDispatcher,
+    required this.subclassMappingAnalyzer,
   });
 
   @override
@@ -67,9 +70,22 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
     final mapperUsages = mapperUsageAnalyzer.analyze(context);
     final internalMapperUsages = internalMapperUsageAnalyzer.analyze(context);
 
+    // Analyze @SubclassMapping annotations before the field-binding fold.
+    // SubclassMapping methods are handled by SubclassMappingCodeProcessor,
+    // not by the standard field-binding pipeline.
+    final subclassMethods = subclassMappingAnalyzer.analyze(context);
+    final subclassBaseMethodNames = subclassMethods.map((m) => m.name).toSet();
+
     final mappingMethods = context.mappingMethods.fold(
       <MappingMethod>[],
       (accumulator, method) {
+        // Skip methods handled by SubclassMappingCodeProcessor — no field-binding
+        // analysis needed, and analyzers may throw on stub methods.
+        if (method.name != null &&
+            subclassBaseMethodNames.contains(method.name)) {
+          return accumulator;
+        }
+
         final inheritContext = MethodAnalyzerContext(
           mapperAnnotation: context.mapperAnnotation,
           mapperUsages: mapperUsages,
@@ -142,12 +158,15 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
       },
     );
 
+    // Append SubclassMappingMethod instances after the field-binding fold.
+    final allMethods = [...mappingMethods, ...subclassMethods];
+
     return Bindings(
       mapperClass: MapperClass(
         name: context.mapperClass.name!, //TODO: null safety
         instanceFields: _createInstanceFields(context),
         constructors: _createMapperConstructors(context),
-        mappingMethods: mappingMethods,
+        mappingMethods: allMethods,
       ),
     );
   }
