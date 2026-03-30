@@ -1,0 +1,75 @@
+---
+title: dart_mapper
+description: MapStruct-style object mapping for Dart. Define type-safe mappings declaratively and get generated implementations at compile time.
+---
+
+# dart_mapper
+
+MapStruct-style object mapping for Dart. Annotate abstract mapper classes and get generated implementations at compile time via `build_runner`.
+
+## Why dart_mapper?
+
+Writing boilerplate mapping code between DTOs, domain objects, and view models is tedious and error-prone. dart_mapper generates that code for you — with full type safety, null safety support, and zero runtime overhead.
+
+## Features
+
+- **Standard class mapping** — auto-matches fields by name, with renaming via `@Mapping`
+- **Freezed & Built Value** — first-class support for immutable object patterns
+- **Enum mapping** — value-by-value mapping with `@ValueMapping`, including fallback sentinels
+- **Multi-source mapping** — merge multiple source parameters into one target
+- **Dot notation** — access nested fields directly (`source: 'address.city'`)
+- **Expression mapping** — emit raw Dart expressions as field values
+- **Conditional mapping** — map conditionally with a boolean expression and fallback
+- **Subclass mapping** — polymorphic mapping using Dart 3 pattern matching
+- **Default values & constants** — `defaultValue` for null fallback, `constant` for fixed values
+- **Callable mapping** — delegate a field to a custom function
+- **Collections** — `List`, `Set`, `Map`, `BuiltList`, `BuiltSet`, `BuiltMap`
+- **Configuration inheritance** — reuse or invert `@Mapping` annotations across methods
+- **External mapper injection** — compose mappers with `@Mapper(uses: {...})`
+
+## Quick Example
+
+```dart
+// models.dart
+class UserDto {
+  final String firstName;
+  final String email;
+  UserDto(this.firstName, this.email);
+}
+
+class User {
+  final String name;
+  final String email;
+  User(this.name, this.email);
+}
+```
+
+```dart
+// user_mapper.dart
+import 'package:dart_mapper/dart_mapper.dart';
+part 'user_mapper.g.dart';
+
+@Mapper()
+abstract class UserMapper {
+  @Mapping(target: 'name', source: 'firstName')
+  User toUser(UserDto dto);
+}
+```
+
+```dart
+// user_mapper.g.dart (generated)
+class UserMapperImpl extends UserMapper {
+  UserMapperImpl();
+
+  @override
+  User toUser(UserDto dto) {
+    return User(dto.firstName, dto.email);
+  }
+}
+```
+
+## Next Steps
+
+- [Getting Started](/getting-started) — installation, setup, and your first mapper
+- [@Mapper reference](/annotations/mapper) — annotation parameters
+- [@Mapping reference](/annotations/mapping) — field-level mapping control

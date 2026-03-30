@@ -1,0 +1,100 @@
+---
+title: "Callable Mapping"
+description: Delegate target field computation to a function using callable:.
+---
+
+# Callable Mapping
+
+The `callable:` parameter on `@Mapping` lets you delegate computing a target field's value to a top-level function. The generator calls the function and assigns its return value to the target field.
+
+## Basic Callable
+
+Define a top-level function and reference it as the callable:
+
+```dart
+class SourceObject {
+  final String name;
+  final int price;
+  const SourceObject(this.name, this.price);
+}
+
+class TargetObject {
+  final String name;
+  final int price;
+  const TargetObject(this.name, this.price);
+}
+
+int _doublePrice(dynamic price) => price * 2;
+
+@Mapper()
+abstract class PriceMapper {
+  @Mapping(target: 'price', callable: _doublePrice)
+  TargetObject toTarget(SourceObject source);
+}
+```
+
+Generated:
+
+```dart
+@override
+TargetObject toTarget(SourceObject source) {
+  return TargetObject(
+    name: source.name,
+    price: _doublePrice(source.price),
+  );
+}
+```
+
+## Callable with BuiltValue
+
+`callable:` works with BuiltValue targets too:
+
+```dart
+@Mapping(target: 'price', callable: _doublePrice)
+BuiltObject toBuiltObject(SourceObject source);
+```
+
+Generated uses the builder pattern:
+
+```dart
+@override
+BuiltObject toBuiltObject(SourceObject source) {
+  return BuiltObject((b) => b
+    ..name = source.name
+    ..price = _doublePrice(source.price));
+}
+```
+
+## Combining with Other Mappings
+
+Other `@Mapping` annotations on the same method are unaffected — each one independently controls its target field:
+
+```dart
+@Mapper()
+abstract class OrderMapper {
+  @Mapping(target: 'total', callable: _calculateTotal)
+  @Mapping(target: 'currency', constant: "'USD'")
+  @Mapping(target: 'internalRef', ignore: true)
+  OrderSummary toSummary(OrderInput order);
+}
+```
+
+## Mutual Exclusion Rules
+
+`callable:` cannot be combined with:
+
+| Forbidden Combination | Reason |
+|-----------------------|--------|
+| `callable` + `constant` | Both provide the value |
+| `callable` + `defaultValue` | Both provide the value |
+| `callable` + `expression` | Both compute the value |
+| `callable` + `conditionExpression` | Both control the output flow |
+
+## Function Signature Requirements
+
+The callable must be a top-level function (not a method). The generator passes the relevant source field value as the single argument. The return type must be assignable to the target field's type.
+
+## See Also
+
+- [@Mapping annotation reference](/annotations/mapping)
+- [Expressions guide](/guides/expressions) — inline expression alternative

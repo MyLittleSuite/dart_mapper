@@ -33,8 +33,11 @@ class UnknownTargetClassError extends InvalidGenerationSourceError {
     required ClassElement mapperClass,
     required MethodElement method,
   }) : super(
-          'Unknown target class of method '
-          '\'${mapperClass.name}.${method.name}\'.',
+          'Cannot resolve target return type of \'${mapperClass.name}.${method.name}\'. '
+          'The target class is not visible from the mapper file.',
           element: method,
+          todo: 'Check the import for the target class. '
+              'If you are importing a barrel file, '
+              'switch to importing the file that directly defines the class.',
         );
 }

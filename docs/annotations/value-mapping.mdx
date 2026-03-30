@@ -1,0 +1,99 @@
+---
+title: "@ValueMapping"
+description: Maps a specific enum source value to a target value by name.
+---
+
+# @ValueMapping
+
+Maps a specific enum constant from the source enum to a named constant in the target enum. Apply multiple `@ValueMapping` annotations on the same method to configure the full enum mapping.
+
+## Signature
+
+```dart
+const ValueMapping({
+  required String source,
+  required String target,
+})
+```
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `source` | `String` | The name of the source enum constant, or a sentinel value (see below). |
+| `target` | `String` | The name of the target enum constant, or a sentinel value (see below). |
+
+## Basic Usage
+
+Map source enum constants to target enum constants by name:
+
+```dart
+enum OrderStatus { pending, confirmed, shipped, cancelled }
+enum DisplayStatus { waiting, approved, inTransit, rejected }
+
+@Mapper()
+abstract class StatusMapper {
+  @ValueMapping(source: 'pending', target: 'waiting')
+  @ValueMapping(source: 'confirmed', target: 'approved')
+  @ValueMapping(source: 'shipped', target: 'inTransit')
+  @ValueMapping(source: 'cancelled', target: 'rejected')
+  DisplayStatus toDisplayStatus(OrderStatus status);
+}
+```
+
+Unmapped source constants that share no matching name with any target constant produce a build error unless a sentinel mapping covers them.
+
+## Sentinel Values
+
+Two sentinel strings have special meaning:
+
+| Sentinel | Allowed in | Meaning |
+|----------|-----------|---------|
+| `<ANY_REMAINING>` | `source` | Matches all source constants not covered by an explicit `@ValueMapping`. |
+| `<ANY_UNMAPPED>` | `target` | Maps matched constants to `null` (only valid on methods with a nullable return type). |
+
+### Map All Remaining to a Default
+
+```dart
+@Mapper()
+abstract class StatusMapper {
+  @ValueMapping(source: 'confirmed', target: 'approved')
+  @ValueMapping(source: '<ANY_REMAINING>', target: 'unknown')
+  DisplayStatus toDisplayStatus(OrderStatus status);
+}
+```
+
+All `OrderStatus` values except `confirmed` map to `DisplayStatus.unknown`.
+
+### Null-Out Unhandled Values
+
+```dart
+@Mapper()
+abstract class StatusMapper {
+  @ValueMapping(source: 'confirmed', target: 'approved')
+  @ValueMapping(source: '<ANY_REMAINING>', target: '<ANY_UNMAPPED>')
+  DisplayStatus? toDisplayStatus(OrderStatus status);
+}
+```
+
+Unhandled values map to `null`. The return type must be nullable.
+
+## Same-Name Convention
+
+When source and target share the same constant name, no `@ValueMapping` is needed for that value — the generator maps them automatically:
+
+```dart
+enum A { alpha, beta, gamma }
+enum B { alpha, beta, other }
+
+@Mapper()
+abstract class MyMapper {
+  // alpha → alpha and beta → beta are automatic
+  @ValueMapping(source: 'gamma', target: 'other')
+  B toB(A a);
+}
+```
+
+## See Also
+
+- [Enum Mapping guide](/guides/enum-mapping) — full enum mapping walkthrough

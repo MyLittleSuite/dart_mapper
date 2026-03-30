@@ -1,0 +1,129 @@
+---
+title: "Subclass Mapping"
+description: Dispatch mapping to the correct concrete subtype at runtime using @SubclassMapping.
+---
+
+# Subclass Mapping
+
+`@SubclassMapping` lets you map a polymorphic source hierarchy to a matching target hierarchy. The generator produces a Dart 3 switch expression that dispatches to the appropriate sub-mapper based on the runtime type of the source.
+
+## Setup
+
+Define your source and target hierarchies, then annotate the dispatch method:
+
+```dart
+// Source hierarchy (open class — not sealed)
+class MediaContent { const MediaContent(); }
+
+class Article extends MediaContent {
+  final String title;
+  final String body;
+  const Article({required this.title, required this.body});
+}
+
+class Video extends MediaContent {
+  final String title;
+  final int durationSeconds;
+  const Video({required this.title, required this.durationSeconds});
+}
+
+// Target hierarchy
+class MediaContentDto { const MediaContentDto(); }
+
+class ArticleDto extends MediaContentDto {
+  final String title;
+  final String body;
+  const ArticleDto({required this.title, required this.body});
+}
+
+class VideoDto extends MediaContentDto {
+  final String title;
+  final int durationSeconds;
+  const VideoDto({required this.title, required this.durationSeconds});
+}
+
+@Mapper()
+abstract class MediaMapper {
+  @SubclassMapping(source: Article, target: ArticleDto)
+  @SubclassMapping(source: Video, target: VideoDto)
+  MediaContentDto toDto(MediaContent source);
+
+  // Delegate methods — generated dispatch calls these
+  ArticleDto toArticleDto(Article source);
+  VideoDto toVideoDto(Video source);
+}
+```
+
+## Generated Code
+
+For a non-sealed base class, the generator emits a wildcard fallthrough:
+
+```dart
+@override
+MediaContentDto toDto(MediaContent source) {
+  return switch (source) {
+    Article article => toArticleDto(article),
+    Video video => toVideoDto(video),
+    _ => throw ArgumentError('Unexpected subtype: ${source.runtimeType}'),
+  };
+}
+```
+
+## Sealed Classes
+
+When the base class is `sealed`, no wildcard is needed — Dart's exhaustiveness check handles it:
+
+```dart
+sealed class Shape {}
+class Circle extends Shape { final double radius; Circle(this.radius); }
+class Rect extends Shape { final double w, h; Rect(this.w, this.h); }
+
+sealed class ShapeDto {}
+class CircleDto extends ShapeDto { final double radius; CircleDto(this.radius); }
+class RectDto extends ShapeDto { final double w, h; RectDto(this.w, this.h); }
+
+@Mapper()
+abstract class ShapeMapper {
+  @SubclassMapping(source: Circle, target: CircleDto)
+  @SubclassMapping(source: Rect, target: RectDto)
+  ShapeDto toDto(Shape shape);
+
+  CircleDto toCircleDto(Circle source);
+  RectDto toRectDto(Rect source);
+}
+```
+
+Generated:
+
+```dart
+@override
+ShapeDto toDto(Shape shape) {
+  return switch (shape) {
+    Circle() => toCircleDto(shape),
+    Rect() => toRectDto(shape),
+  };
+}
+```
+
+## Customizing Subclass Mapping
+
+Apply `@Mapping` on the delegate methods to control field-level behavior for each subtype:
+
+```dart
+@Mapper()
+abstract class MediaMapper {
+  @SubclassMapping(source: Article, target: ArticleDto)
+  @SubclassMapping(source: Video, target: VideoDto)
+  MediaContentDto toDto(MediaContent source);
+
+  @Mapping(target: 'summary', source: 'body')
+  ArticleDto toArticleDto(Article source);
+
+  @Mapping(target: 'lengthSeconds', source: 'durationSeconds')
+  VideoDto toVideoDto(Video source);
+}
+```
+
+## See Also
+
+- [@SubclassMapping annotation reference](/annotations/subclass-mapping)

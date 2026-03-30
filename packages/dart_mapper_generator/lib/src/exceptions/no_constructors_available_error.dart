@@ -31,8 +31,10 @@ import 'package:source_gen/source_gen.dart';
 class NoConstructorsAvailableError extends InvalidGenerationSourceError {
   NoConstructorsAvailableError(ClassElement element)
       : super(
-          '${element.name} has no constructors.',
+          '\'${element.name}\' has no usable constructors. '
+          'dart_mapper requires at least one constructor to generate a mapping implementation.',
           element: element,
-          todo: 'Please, specify a valid constructor.',
+          todo: 'Add a constructor to ${element.name}, '
+              'or use a named constructor if the default is private.',
         );
 }

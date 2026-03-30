@@ -1,0 +1,103 @@
+---
+title: "Multi-Source Mapping"
+description: Combine multiple source parameters into a single target object.
+---
+
+# Multi-Source Mapping
+
+A mapper method can accept more than one source parameter. The generator resolves target fields from all sources automatically.
+
+## Basic Multi-Source
+
+Declare multiple parameters — the generator picks up fields from each:
+
+```dart
+class UserInfo {
+  final String name;
+  final int age;
+  const UserInfo({required this.name, required this.age});
+}
+
+class CompanyInfo {
+  final String companyName;
+  final String department;
+  const CompanyInfo({required this.companyName, required this.department});
+}
+
+class EmployeeProfile {
+  final String name;
+  final int age;
+  final String companyName;
+  final String department;
+  const EmployeeProfile({
+    required this.name,
+    required this.age,
+    required this.companyName,
+    required this.department,
+  });
+}
+
+@Mapper()
+abstract class EmployeeMapper {
+  EmployeeProfile toProfile(UserInfo user, CompanyInfo company);
+}
+```
+
+Generated:
+
+```dart
+@override
+EmployeeProfile toProfile(UserInfo user, CompanyInfo company) {
+  return EmployeeProfile(
+    name: user.name,
+    age: user.age,
+    companyName: company.companyName,
+    department: company.department,
+  );
+}
+```
+
+## Resolving Ambiguity
+
+If two source parameters have fields with the same name, the generator cannot resolve which to use and produces a build error. Use `@Mapping(source: 'paramName.fieldName')` to qualify:
+
+```dart
+class Primary {
+  final String label;
+  const Primary({required this.label});
+}
+
+class Secondary {
+  final String label;
+  const Secondary({required this.label});
+}
+
+class Result {
+  final String label;
+  const Result({required this.label});
+}
+
+@Mapper()
+abstract class ResultMapper {
+  @Mapping(target: 'label', source: 'primary.label')
+  Result combine(Primary primary, Secondary secondary);
+}
+```
+
+## Combining with @Mapping
+
+Any `@Mapping` annotation applies to the combined view of all sources. Field renames, ignores, expressions, and dot-notation all work normally with multi-source methods:
+
+```dart
+@Mapper()
+abstract class EmployeeMapper {
+  @Mapping(target: 'displayName', expression: r'${user.name} @ ${company.companyName}')
+  @Mapping(target: 'departmentCode', source: 'company.department')
+  EmployeeProfile toProfile(UserInfo user, CompanyInfo company);
+}
+```
+
+## See Also
+
+- [Dot Notation guide](/guides/dot-notation) — `source: 'param.nested.field'`
+- [Expressions guide](/guides/expressions) — reference multiple parameters in expressions

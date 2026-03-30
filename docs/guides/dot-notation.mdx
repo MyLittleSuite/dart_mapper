@@ -1,0 +1,115 @@
+---
+title: "Dot Notation"
+description: Flatten nested source fields into a target using dot-separated paths.
+---
+
+# Dot Notation
+
+Use dot-separated paths in `@Mapping(source: '...')` to extract fields from nested objects.
+
+## Flattening Nested Objects
+
+Access a nested field and map it to a flat target field:
+
+```dart
+class Address {
+  final String street;
+  final String city;
+  const Address({required this.street, required this.city});
+}
+
+class Person {
+  final String name;
+  final Address address;
+  const Person({required this.name, required this.address});
+}
+
+class FlatContact {
+  final String name;
+  final String street;
+  final String city;
+  const FlatContact({required this.name, required this.street, required this.city});
+}
+
+@Mapper()
+abstract class ContactMapper {
+  @Mapping(target: 'street', source: 'address.street')
+  @Mapping(target: 'city', source: 'address.city')
+  FlatContact toFlatContact(Person person);
+}
+```
+
+Generated:
+
+```dart
+@override
+FlatContact toFlatContact(Person person) {
+  return FlatContact(
+    name: person.name,
+    street: person.address.street,
+    city: person.address.city,
+  );
+}
+```
+
+## Nullable Intermediate Properties
+
+When an intermediate property is nullable, the generator emits safe null-propagation (`?.`). The target field type must be compatible (nullable or have a `forceNonNull`):
+
+```dart
+class Person {
+  final String name;
+  final Address? address;  // nullable
+  const Person({required this.name, this.address});
+}
+
+class FlatContact {
+  final String name;
+  final String? city;  // nullable target
+  const FlatContact({required this.name, this.city});
+}
+
+@Mapper()
+abstract class ContactMapper {
+  @Mapping(target: 'city', source: 'address.city')
+  FlatContact toFlatContact(Person person);
+}
+```
+
+Generated:
+
+```dart
+@override
+FlatContact toFlatContact(Person person) {
+  return FlatContact(
+    name: person.name,
+    city: person.address?.city,
+  );
+}
+```
+
+## Deep Paths
+
+Paths work at any depth:
+
+```dart
+@Mapping(target: 'postalCode', source: 'contact.address.location.postalCode')
+ShippingLabel toLabel(Order order);
+```
+
+## Multi-Source with Dot Notation
+
+Qualify the source parameter when using dot notation on multi-source methods:
+
+```dart
+@Mapper()
+abstract class EmployeeMapper {
+  @Mapping(target: 'city', source: 'company.hqAddress.city')
+  EmployeeView toView(UserInfo user, CompanyInfo company);
+}
+```
+
+## See Also
+
+- [@Mapping annotation reference](/annotations/mapping)
+- [Multi-Source Mapping guide](/guides/multi-source)

@@ -1,0 +1,134 @@
+---
+title: "Enum Mapping"
+description: Map between enum types, strings, and integers using @ValueMapping.
+---
+
+# Enum Mapping
+
+`dart_mapper` can map between:
+- Two enum types
+- An enum type and a `String` (using the enum constant `.name`)
+- An enum type and an `int` (using `@ValueMapping` to declare the values)
+
+## Same-Name Enum to Enum
+
+When source and target enum constants share the same name, mapping just works with no configuration:
+
+```dart
+enum OrderStatus { pending, confirmed, shipped }
+enum DisplayStatus { pending, confirmed, shipped }
+
+@Mapper()
+abstract class StatusMapper {
+  DisplayStatus toDisplay(OrderStatus source);
+}
+```
+
+Generated:
+
+```dart
+@override
+DisplayStatus toDisplay(OrderStatus source) {
+  return switch (source) {
+    OrderStatus.pending => DisplayStatus.pending,
+    OrderStatus.confirmed => DisplayStatus.confirmed,
+    OrderStatus.shipped => DisplayStatus.shipped,
+  };
+}
+```
+
+## Renamed Enum Values
+
+Use `@ValueMapping` to map source constants to differently-named target constants:
+
+```dart
+enum OrderStatus { pending, confirmed, shipped, cancelled }
+enum DisplayStatus { waiting, approved, inTransit, rejected }
+
+@Mapper()
+abstract class StatusMapper {
+  @ValueMapping(source: 'pending', target: 'waiting')
+  @ValueMapping(source: 'confirmed', target: 'approved')
+  @ValueMapping(source: 'shipped', target: 'inTransit')
+  @ValueMapping(source: 'cancelled', target: 'rejected')
+  DisplayStatus toDisplay(OrderStatus source);
+}
+```
+
+## Default Fallback with `<ANY_REMAINING>`
+
+Map all unmatched source constants to a single target constant:
+
+```dart
+enum ExtendedColor { red, green, blue, yellow }
+enum PrimaryColor { red, green, blue }
+
+@Mapper()
+abstract class ColorMapper {
+  @ValueMapping(source: '<ANY_REMAINING>', target: 'blue')
+  PrimaryColor toPrimary(ExtendedColor source);
+}
+```
+
+All `ExtendedColor` values that don't share a name with a `PrimaryColor` constant (i.e., `yellow`) map to `PrimaryColor.blue`.
+
+## Null Fallback with `<ANY_UNMAPPED>`
+
+Map unmatched source constants to `null` (only for nullable return types):
+
+```dart
+@Mapper()
+abstract class ColorMapper {
+  @ValueMapping(source: '<ANY_REMAINING>', target: '<ANY_UNMAPPED>')
+  PrimaryColor? toPrimaryOrNull(ExtendedColor source);
+}
+```
+
+## Enum to String
+
+Map an enum to its string name automatically — no annotations needed:
+
+```dart
+@Mapper()
+abstract class OrderMapper {
+  String orderStatusToString(OrderStatus source);
+}
+```
+
+Generated: `return source.name;`
+
+## String to Enum
+
+Map a string back to an enum constant by matching on `.name`:
+
+```dart
+@Mapper()
+abstract class OrderMapper {
+  OrderStatus stringToOrderStatus(String source);
+}
+```
+
+Generated: uses `EnumStatus.values.byName(source)`.
+
+## Enum to Int / Int to Enum
+
+Use `@ValueMapping` to specify numeric values:
+
+```dart
+@Mapper()
+abstract class PriorityMapper {
+  @ValueMapping(source: 'low', target: '1')
+  @ValueMapping(source: 'medium', target: '2')
+  @ValueMapping(source: 'high', target: '3')
+  int priorityToInt(Priority source);
+
+  @ValueMapping(target: 'low', source: '1')
+  @ValueMapping(target: 'medium', source: '2')
+  @ValueMapping(target: 'high', source: '3')
+  Priority intToPriority(int source);
+}
+```
+
+## See Also
+
+- [@ValueMapping annotation reference](/annotations/value-mapping)

@@ -31,7 +31,11 @@ import 'package:source_gen/source_gen.dart';
 class TooManyConstructorParametersError extends InvalidGenerationSourceError {
   TooManyConstructorParametersError(Element element)
       : super(
-          'Too many parameters number for constructor \'${element.name}\'.',
+          '\'${element.name}\' constructor has too many parameters for BuiltValue mapping.\n'
+          'BuiltValue targets are mapped through a single builder function — '
+          'the constructor must accept exactly one parameter.\n'
+          'Fix: Ensure the target class uses the standard BuiltValue builder pattern '
+          'where the constructor takes a single `void Function(builder)` parameter.',
           element: element,
         );
 }

@@ -1,0 +1,65 @@
+---
+title: "@InheritInverseConfiguration"
+description: Re-uses @Mapping annotations from another method but inverts source and target.
+---
+
+# @InheritInverseConfiguration
+
+Copies `@Mapping` annotations from a designated source method and swaps the `source` and `target` in each annotation. This produces a reverse mapping without duplicating the annotation list.
+
+## Signature
+
+```dart
+const InheritInverseConfiguration()
+```
+
+No parameters.
+
+## Usage
+
+Define a forward mapping, then declare the reverse method and annotate it with `@InheritInverseConfiguration`:
+
+```dart
+@Mapper()
+abstract class PersonMapper {
+  @Mapping(target: 'fullName', source: 'name')
+  @Mapping(target: 'yearsOld', source: 'age')
+  PersonDto toDto(Person person);
+
+  @InheritInverseConfiguration()
+  Person fromDto(PersonDto dto);
+}
+```
+
+The generator inverts each `@Mapping`:
+- `target: 'fullName', source: 'name'` becomes `target: 'name', source: 'fullName'`
+- `target: 'yearsOld', source: 'age'` becomes `target: 'age', source: 'yearsOld'`
+
+The resulting `fromDto` reads `dto.fullName` → `person.name` and `dto.yearsOld` → `person.age`.
+
+## Requirements
+
+- The annotated method's parameter type must be assignment-compatible with the return type of the method it inherits from — the generator needs to align source and target roles.
+- `ignore: true` annotations are silently dropped during inversion (an ignored target field in the forward direction does not become a mapped field in the reverse direction).
+
+## Combining with Additional @Mapping
+
+Add `@Mapping` alongside `@InheritInverseConfiguration` to further customize the inverse mapping:
+
+```dart
+@Mapper()
+abstract class PersonMapper {
+  @Mapping(target: 'fullName', source: 'name')
+  PersonDto toDto(Person person);
+
+  @InheritInverseConfiguration()
+  @Mapping(target: 'createdAt', ignore: true)
+  Person fromDto(PersonDto dto);
+}
+```
+
+`fromDto` inherits the inverted name rename and additionally ignores `createdAt`.
+
+## See Also
+
+- [@InheritConfiguration](/annotations/inherit-configuration) — inherit mappings in the same direction

@@ -34,9 +34,9 @@ class TooManyEnumMappingMethodParametersError
     required ClassElement mapperClass,
     required MethodElement method,
   }) : super(
-          'Enum mapping method \'${method.name}\' '
-          'in mapper \'${mapperClass.name}\' '
-          'must have only one enum parameter.',
+          'Enum mapping method \'${method.name}\' in \'${mapperClass.name}\' '
+          'must have exactly one enum parameter, but has multiple.\n'
+          'Fix: Remove extra parameters — enum mapping methods accept only the single source enum.',
           element: method,
         );
 }

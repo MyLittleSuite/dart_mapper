@@ -38,10 +38,11 @@ class TargetFieldRequiresNonOptionalSourceFieldError
     required MapperClass mapperClass,
     required MappingMethod method,
   }) : super(
-          'Target field \'${parameter.name}\' '
-          'in class \'${targetClass.name}\', '
-          'method \'${method.name}\' in class \'${mapperClass.name}\', '
-          'requires a non-optional source field.',
+          'Target field \'${parameter.name}\' of \'${targetClass.name}\' '
+          'in \'${mapperClass.name}.${method.name}\' requires a non-nullable source, '
+          'but the source field is nullable.\n'
+          'Fix: Add @Mapping(target: \'${parameter.name}\', forceNonNull: true) '
+          'to force-unwrap the nullable source field, or make the source field non-nullable.',
           element: targetClass,
         );
 }

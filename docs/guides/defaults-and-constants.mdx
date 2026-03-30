@@ -1,0 +1,96 @@
+---
+title: "Defaults & Constants"
+description: Provide fallback values for null source fields and fixed constant values.
+---
+
+# Defaults & Constants
+
+Two `@Mapping` parameters let you inject values that don't come from the source object:
+
+- `defaultValue:` — used as the fallback when the source field is `null`
+- `constant:` — always used, regardless of the source
+
+## Default Value
+
+Provide a Dart expression string as the fallback for a nullable source field:
+
+```dart
+class UserInput {
+  final String name;
+  final String? status;  // nullable
+  final String? bio;     // nullable
+  const UserInput({required this.name, this.status, this.bio});
+}
+
+class UserOutput {
+  final String name;
+  final String status;  // non-nullable
+  final String bio;     // non-nullable
+  final String version;
+  const UserOutput({
+    required this.name,
+    required this.status,
+    required this.bio,
+    required this.version,
+  });
+}
+
+@Mapper()
+abstract class UserMapper {
+  @Mapping(target: 'status', defaultValue: 'active')
+  @Mapping(target: 'bio', defaultValue: 'No bio provided')
+  @Mapping(target: 'version', constant: '1.0')
+  UserOutput toOutput(UserInput input);
+}
+```
+
+Generated:
+
+```dart
+@override
+UserOutput toOutput(UserInput input) {
+  return UserOutput(
+    name: input.name,
+    status: input.status ?? 'active',
+    bio: input.bio ?? 'No bio provided',
+    version: '1.0',
+  );
+}
+```
+
+## Constant Value
+
+`constant:` always emits the given expression — the source field is not read:
+
+```dart
+@Mapping(target: 'apiVersion', constant: "'v2'")
+ResponseDto toDto(ResponseData data);
+```
+
+Generated:
+
+```dart
+apiVersion: 'v2',
+```
+
+Because the value is emitted verbatim, string constants require inner quotes:
+- `constant: "'active'"` → emits `'active'`
+- `constant: "42"` → emits `42`
+- `constant: "true"` → emits `true`
+
+## Difference: defaultValue vs constant
+
+| Parameter | When applied | Source field read? |
+|-----------|-------------|-------------------|
+| `defaultValue` | Source field is `null` | Yes (checked for null) |
+| `constant` | Always | No |
+
+## Mutual Exclusion Rules
+
+- `constant` cannot be combined with `source`, `defaultValue`, or `callable`
+- `defaultValue` cannot be combined with `callable`
+
+## See Also
+
+- [@Mapping annotation reference](/annotations/mapping)
+- [Conditional Expressions guide](/guides/conditional-expressions) — condition-based fallback

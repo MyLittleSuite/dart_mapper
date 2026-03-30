@@ -1,0 +1,111 @@
+---
+title: "@Mapper"
+description: Marks an abstract class for dart_mapper code generation.
+---
+
+# @Mapper
+
+Marks an abstract class for code generation. dart_mapper generates a concrete implementation class containing all declared mapping methods.
+
+## Signature
+
+```dart
+const Mapper({
+  String implementationName = '<CLASS_NAME>Impl',
+  Set<Object>? uses,
+})
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `implementationName` | `String` | `'<CLASS_NAME>Impl'` | The name for the generated implementation class. Use `<CLASS_NAME>` as a placeholder for the annotated class name. |
+| `uses` | `Set<Object>?` | `null` | A set of external mapper types to inject. The generated class will accept these as constructor parameters and delegate to them for nested object conversion. |
+
+## Basic Usage
+
+```dart
+import 'package:dart_mapper/dart_mapper.dart';
+part 'user_mapper.g.dart';
+
+@Mapper()
+abstract class UserMapper {
+  UserDto toDto(User user);
+  User fromDto(UserDto dto);
+}
+```
+
+The `part` directive is required. The generator writes the implementation into the `.g.dart` file.
+
+## Custom Implementation Name
+
+Use `implementationName` to override the default `<ClassName>Impl` naming:
+
+```dart
+@Mapper(implementationName: 'UserMapperImpl')
+abstract class UserMapper {
+  UserDto toDto(User user);
+}
+```
+
+The `<CLASS_NAME>` token is replaced with the annotated class name at generation time:
+
+```dart
+// Generates: class UserTypeMapper extends UserMapper
+@Mapper(implementationName: '<CLASS_NAME>TypeMapper')
+abstract class UserMapper { ... }
+```
+
+## External Mapper Injection
+
+Use `uses` to compose mappers. The generator injects the listed mappers as required constructor parameters:
+
+```dart
+@Mapper()
+abstract class AddressMapper {
+  AddressDto toDto(Address address);
+}
+
+// UserMapper delegates nested Address conversion to AddressMapper
+@Mapper(uses: {AddressMapper})
+abstract class UserMapper {
+  UserDto toDto(User user);
+}
+```
+
+Generated:
+
+```dart
+class UserMapperImpl extends UserMapper {
+  UserMapperImpl({required this.addressMapper});
+
+  final AddressMapper addressMapper;
+
+  @override
+  UserDto toDto(User user) {
+    return UserDto(
+      user.name,
+      addressMapper.toDto(user.address),
+    );
+  }
+}
+```
+
+Instantiate with dependency injection or manually:
+
+```dart
+final addressMapper = AddressMapperImpl();
+final userMapper = UserMapperImpl(addressMapper: addressMapper);
+```
+
+## Requirements
+
+- The annotated class must be `abstract`.
+- The file must include `part '<filename>.g.dart';`.
+- The generator creates one `.g.dart` file per source file containing `@Mapper`.
+
+## See Also
+
+- [@Mapping](/annotations/mapping) — field-level mapping control
+- [External Mapper Injection guide](/guides/callable-mapping)

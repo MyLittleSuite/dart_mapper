@@ -1,0 +1,49 @@
+{
+  "$schema": "https://docs.page/schema.json",
+  "name": "dart_mapper",
+  "description": "MapStruct-style object mapping for Dart",
+  "theme": {
+    "primary": "#0175C2"
+  },
+  "header": {
+    "showName": true,
+    "showThemeToggle": true,
+    "showGitHubCard": true
+  },
+  "sidebar": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        { "title": "Introduction", "href": "/" },
+        { "title": "Getting Started", "href": "/getting-started" }
+      ]
+    },
+    {
+      "group": "Annotations",
+      "pages": [
+        { "title": "@Mapper", "href": "/annotations/mapper" },
+        { "title": "@Mapping", "href": "/annotations/mapping" },
+        { "title": "@ValueMapping", "href": "/annotations/value-mapping" },
+        { "title": "@SubclassMapping", "href": "/annotations/subclass-mapping" },
+        { "title": "@InheritConfiguration", "href": "/annotations/inherit-configuration" },
+        { "title": "@InheritInverseConfiguration", "href": "/annotations/inherit-inverse-configuration" }
+      ]
+    },
+    {
+      "group": "Feature Guides",
+      "pages": [
+        { "title": "Enum Mapping", "href": "/guides/enum-mapping" },
+        { "title": "Multi-Source Mapping", "href": "/guides/multi-source" },
+        { "title": "Dot Notation", "href": "/guides/dot-notation" },
+        { "title": "Expressions", "href": "/guides/expressions" },
+        { "title": "Conditional Expressions", "href": "/guides/conditional-expressions" },
+        { "title": "Subclass Mapping", "href": "/guides/subclass-mapping" },
+        { "title": "Defaults & Constants", "href": "/guides/defaults-and-constants" },
+        { "title": "Callable Mapping", "href": "/guides/callable-mapping" },
+        { "title": "Freezed Support", "href": "/guides/freezed-support" },
+        { "title": "Built Value Support", "href": "/guides/built-value-support" },
+        { "title": "Collections", "href": "/guides/collections" }
+      ]
+    }
+  ]
+}

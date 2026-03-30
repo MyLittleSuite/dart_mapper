@@ -1,0 +1,156 @@
+---
+title: "@Mapping"
+description: Controls field-level mapping behavior within a @Mapper method.
+---
+
+# @Mapping
+
+Controls field-level mapping for a single target field. Apply multiple `@Mapping` annotations to the same method to configure multiple fields.
+
+## Signature
+
+```dart
+const Mapping({
+  required String target,
+  String? source,
+  bool ignore = false,
+  bool forceNonNull = false,
+  MappingCallable? callable,
+  String? defaultValue,
+  String? constant,
+  String? expression,
+  String? conditionExpression,
+})
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `target` | `String` | — (required) | Name of the target field to configure. |
+| `source` | `String?` | `null` | Name of the source field. Use dot notation for nested access (`'address.city'`). Defaults to the target field name if omitted. |
+| `ignore` | `bool` | `false` | When `true`, the target field is skipped entirely. The target class must handle the missing value (e.g., with a default or nullable type). |
+| `forceNonNull` | `bool` | `false` | When `true`, force-unwraps a nullable source field. Use when you know the source will not be null at runtime. |
+| `callable` | `MappingCallable?` | `null` | A function reference that computes the target field value. The function receives the source parameter(s) and returns the target field value. |
+| `defaultValue` | `String?` | `null` | A Dart expression string used as the value when the source field is `null`. Examples: `"'unknown'"`, `"0"`, `"false"`. |
+| `constant` | `String?` | `null` | A constant Dart expression emitted as the target field value regardless of the source. Examples: `"'v1'"`, `"42"`. |
+| `expression` | `String?` | `null` | A raw Dart expression emitted verbatim. Access source parameters by their declared names. Cannot combine with `source`, `defaultValue`, `constant`, or `callable`. |
+| `conditionExpression` | `String?` | `null` | A boolean Dart expression. When `true`, the field maps normally. When `false`, falls back to `defaultValue` (or `null` if nullable). Cannot combine with `constant` or `callable`. |
+
+## Field Renaming
+
+Map a source field with a different name to the target field:
+
+```dart
+@Mapping(target: 'name', source: 'firstName')
+User toUser(UserDto dto);
+```
+
+## Ignoring a Field
+
+Skip a target field — the target class must handle the missing value:
+
+```dart
+@Mapping(target: 'internalId', ignore: true)
+User toUser(UserDto dto);
+```
+
+## Force Non-Null
+
+When the source is nullable but you know it won't be `null` at runtime:
+
+```dart
+@Mapping(target: 'email', source: 'email', forceNonNull: true)
+User toUser(UserDto dto);
+```
+
+## Default Value
+
+Provide a fallback value when the source field is `null`:
+
+```dart
+@Mapping(target: 'role', source: 'role', defaultValue: "'user'")
+User toUser(UserDto dto);
+```
+
+The `defaultValue` must be a string representation of a valid Dart expression.
+
+## Constant Value
+
+Always use a fixed value regardless of the source:
+
+```dart
+@Mapping(target: 'version', constant: "'1.0'")
+UserDto toDto(User user);
+```
+
+## Callable
+
+Delegate the field computation to a function:
+
+```dart
+String _formatName(UserDto dto) => '${dto.firstName} ${dto.lastName}';
+
+@Mapper()
+abstract class UserMapper {
+  @Mapping(target: 'name', callable: _formatName)
+  User toUser(UserDto dto);
+}
+```
+
+See [Callable Mapping guide](/guides/callable-mapping) for multi-argument callables.
+
+## Expression
+
+Emit a raw Dart expression directly:
+
+```dart
+@Mapping(target: 'fullName', expression: 'source.firstName + " " + source.lastName')
+User toUser(UserDto dto);
+```
+
+For multi-source methods, use parameter names as declared:
+
+```dart
+@Mapping(target: 'displayName', expression: 'user.name + " (" + profile.handle + ")"')
+UserView combine(User user, Profile profile);
+```
+
+## Conditional Expression
+
+Map conditionally — falls back to `defaultValue` when the condition is false:
+
+```dart
+@Mapping(
+  target: 'name',
+  source: 'name',
+  conditionExpression: 'source.name.isNotEmpty',
+  defaultValue: "'Anonymous'",
+)
+User toUser(UserDto dto);
+```
+
+## Combination Rules
+
+These combinations are **not allowed** and produce a build-time error:
+
+| Combination | Reason |
+|-------------|--------|
+| `constant` + `source` | Constant ignores the source |
+| `constant` + `defaultValue` | Constant is always set — default is unreachable |
+| `constant` + `callable` | Both compute the value — ambiguous |
+| `defaultValue` + `callable` | Both compute the value — ambiguous |
+| `expression` + `source` | Expression renders the source access verbatim |
+| `expression` + `constant` | Expression renders a value verbatim |
+| `expression` + `defaultValue` | Expression renders a value verbatim |
+| `expression` + `callable` | Both compute the value — ambiguous |
+| `conditionExpression` + `constant` | Condition needs source access |
+| `conditionExpression` + `callable` | Both control the output flow |
+
+## See Also
+
+- [Dot Notation guide](/guides/dot-notation) — `source: 'nested.field'`
+- [Expressions guide](/guides/expressions) — `expression:` deep dive
+- [Conditional Expressions guide](/guides/conditional-expressions) — `conditionExpression:` deep dive
+- [Callable Mapping guide](/guides/callable-mapping) — `callable:` deep dive
+- [Defaults & Constants guide](/guides/defaults-and-constants) — `defaultValue:` and `constant:`

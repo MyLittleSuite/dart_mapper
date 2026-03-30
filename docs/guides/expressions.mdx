@@ -1,0 +1,111 @@
+---
+title: "Expressions"
+description: Emit verbatim Dart expressions as target field values.
+---
+
+# Expressions
+
+The `expression:` parameter on `@Mapping` lets you write an arbitrary Dart expression that the generator emits verbatim as the target field value. Use this for transformations that aren't expressible through direct field mapping.
+
+## Basic Expression
+
+Reference the source parameter — for single-source methods the variable is named `source`:
+
+```dart
+class PersonInput {
+  final String firstName;
+  final String lastName;
+  final int score;
+  const PersonInput({required this.firstName, required this.lastName, required this.score});
+}
+
+class PersonOutput {
+  final String fullName;
+  final String scoreLabel;
+  const PersonOutput({required this.fullName, required this.scoreLabel});
+}
+
+@Mapper()
+abstract class PersonMapper {
+  @Mapping(
+    target: 'fullName',
+    expression: r'${source.firstName} ${source.lastName}',
+  )
+  @Mapping(
+    target: 'scoreLabel',
+    expression: 'source.score.toString()',
+  )
+  PersonOutput toOutput(PersonInput source);
+}
+```
+
+Generated:
+
+```dart
+@override
+PersonOutput toOutput(PersonInput source) {
+  return PersonOutput(
+    fullName: '${source.firstName} ${source.lastName}',
+    scoreLabel: source.score.toString(),
+  );
+}
+```
+
+## String Interpolation
+
+Raw string literals (`r'...'`) are recommended when using `${}` syntax to avoid Dart's own string interpolation from expanding variables at annotation parse time:
+
+```dart
+@Mapping(
+  target: 'display',
+  expression: r'${source.firstName.toUpperCase()} — ${source.score}',
+)
+PersonOutput toOutput(PersonInput source);
+```
+
+## Multi-Source Expressions
+
+For multi-source methods, variable names match the declared parameter names:
+
+```dart
+class UserInfo { final String name; const UserInfo({required this.name}); }
+class CompanyInfo { final String name; const CompanyInfo({required this.name}); }
+class CombinedOutput { final String combined; const CombinedOutput({required this.combined}); }
+
+@Mapper()
+abstract class CombinedMapper {
+  @Mapping(
+    target: 'combined',
+    expression: r'${user.name} @ ${company.name}',
+  )
+  CombinedOutput toOutput(UserInfo user, CompanyInfo company);
+}
+```
+
+Generated:
+
+```dart
+@override
+CombinedOutput toOutput(UserInfo user, CompanyInfo company) {
+  return CombinedOutput(combined: '${user.name} @ ${company.name}');
+}
+```
+
+## Mutual Exclusion Rules
+
+`expression:` cannot be combined with these parameters — the generator produces a build error if you attempt it:
+
+| Forbidden Combination | Reason |
+|-----------------------|--------|
+| `expression` + `source` | Expression already defines the source access |
+| `expression` + `constant` | Both provide the target value |
+| `expression` + `defaultValue` | Both provide the target value |
+| `expression` + `callable` | Both compute the value |
+
+For transformations that need a null fallback, use `conditionExpression:` instead.
+
+## See Also
+
+- [Conditional Expressions guide](/guides/conditional-expressions) — boolean conditions with fallback
+- [Callable Mapping guide](/guides/callable-mapping) — function-reference alternative
+- [@Mapping annotation reference](/annotations/mapping)

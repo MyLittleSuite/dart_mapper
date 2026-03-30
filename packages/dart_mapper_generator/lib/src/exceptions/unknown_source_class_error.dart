@@ -33,8 +33,11 @@ class UnknownSourceClassError extends InvalidGenerationSourceError {
     required ClassElement mapperClass,
     required MethodElement method,
   }) : super(
-          'Unknown parameter class of method '
-          '\'${mapperClass.name}.${method.name}\'.',
+          'Cannot resolve source parameter type of \'${mapperClass.name}.${method.name}\'. '
+          'The source class is not visible from the mapper file.',
           element: method,
+          todo: 'Check the import for the source class. '
+              'If you are importing a barrel file, '
+              'switch to importing the file that directly defines the class.',
         );
 }
