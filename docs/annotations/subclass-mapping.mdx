@@ -1,0 +1,89 @@
+---
+title: "@SubclassMapping"
+description: Routes subclass source values to subclass target types in a sealed-class hierarchy.
+---
+
+# @SubclassMapping
+
+Instructs `dart_mapper` to dispatch the mapping to a different target subtype depending on the runtime type of the source. Apply one `@SubclassMapping` per source subclass.
+
+## Signature
+
+```dart
+const SubclassMapping({
+  required Type source,
+  required Type target,
+})
+```
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `source` | `Type` | The source subclass type to match at runtime. |
+| `target` | `Type` | The target subclass type to produce for the matched source. |
+
+## Usage
+
+Define the source and target sealed class hierarchies, then annotate the mapping method:
+
+```dart
+// Source hierarchy
+sealed class Shape {}
+class Circle extends Shape { final double radius; Circle(this.radius); }
+class Rectangle extends Shape { final double width, height; Rectangle(this.width, this.height); }
+
+// Target hierarchy
+sealed class ShapeDto {}
+class CircleDto extends ShapeDto { final double radius; CircleDto(this.radius); }
+class RectangleDto extends ShapeDto { final double width, height; RectangleDto(this.width, this.height); }
+
+@Mapper()
+abstract class ShapeMapper {
+  @SubclassMapping(source: Circle, target: CircleDto)
+  @SubclassMapping(source: Rectangle, target: RectangleDto)
+  ShapeDto toDto(Shape shape);
+}
+```
+
+The generated code uses a Dart 3 switch expression to dispatch:
+
+```dart
+// Generated
+@override
+ShapeDto toDto(Shape shape) {
+  return switch (shape) {
+    Circle c => _circleToCircleDto(c),
+    Rectangle r => _rectangleToRectangleDto(r),
+  };
+}
+```
+
+## Requirements
+
+- Each `source` type listed must be a concrete subtype of the method's source parameter type.
+- Each `target` type listed must be a concrete subtype of the method's return type.
+- Additional mapping methods for the subclass pairs are generated automatically by the mapper. You do not have to declare them.
+- The parent mapping method (`toDto(Shape shape)`) must be **abstract** — the generator overwrites it completely.
+
+## Field-Level Customization
+
+To customize field mappings for a specific subclass pair, declare an explicit mapping method for it:
+
+```dart
+@Mapper()
+abstract class ShapeMapper {
+  @SubclassMapping(source: Circle, target: CircleDto)
+  @SubclassMapping(source: Rectangle, target: RectangleDto)
+  ShapeDto toDto(Shape shape);
+
+  @Mapping(target: 'r', source: 'radius')
+  CircleDto circleToDto(Circle circle);
+}
+```
+
+When an explicit method for a subclass pair exists the generator uses it; otherwise it auto-generates one.
+
+## See Also
+
+- [Subclass Mapping guide](/guides/subclass-mapping) — full walkthrough with sealed classes

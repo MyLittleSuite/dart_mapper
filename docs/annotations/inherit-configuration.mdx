@@ -1,0 +1,61 @@
+---
+title: "@InheritConfiguration"
+description: Re-uses @Mapping annotations from another method in the same mapper.
+---
+
+# @InheritConfiguration
+
+Copies all `@Mapping` annotations from a designated source method onto the annotated method. Use this when two mapping methods share the same field configuration and you want to avoid repetition.
+
+## Signature
+
+```dart
+const InheritConfiguration()
+```
+
+No parameters.
+
+## Usage
+
+Declare the shared configuration on one method, then inherit it on another with the same signature shape:
+
+```dart
+@Mapper()
+abstract class PersonMapper {
+  @Mapping(target: 'fullName', source: 'name')
+  @Mapping(target: 'yearsOld', source: 'age')
+  PersonDto toDto(Person person);
+
+  @InheritConfiguration()
+  PersonDto updateDto(Person person);
+}
+```
+
+The generator applies the `@Mapping` annotations from `toDto` to `updateDto`, producing identical field-mapping logic.
+
+## When to Use
+
+- Two methods map the same types and require the same field renames or ignores.
+- An "update" method and a "create" method share identical configuration.
+
+## Combining with Additional @Mapping
+
+You can add extra `@Mapping` annotations alongside `@InheritConfiguration` to extend or override the inherited configuration:
+
+```dart
+@Mapper()
+abstract class PersonMapper {
+  @Mapping(target: 'fullName', source: 'name')
+  PersonDto toDto(Person person);
+
+  @InheritConfiguration()
+  @Mapping(target: 'internalId', ignore: true)
+  PersonDto toPublicDto(Person person);
+}
+```
+
+`toPublicDto` inherits the `fullName → name` rename and additionally ignores `internalId`.
+
+## See Also
+
+- [@InheritInverseConfiguration](/annotations/inherit-inverse-configuration) — inherit mappings in reverse direction

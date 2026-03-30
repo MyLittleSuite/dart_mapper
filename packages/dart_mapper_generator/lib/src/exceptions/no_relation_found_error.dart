@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2024 MyLittleSuite
+ *  * Copyright (c) 2026 MyLittleSuite
  *  *
  *  * Permission is hereby granted, free of charge, to any person
  *  * obtaining a copy of this software and associated documentation
@@ -37,8 +37,11 @@ class NoRelationFoundError extends InvalidGenerationSourceError {
     required MappingMethod method,
     required ClassElement targetClass,
   }) : super(
-          'No relation found for required \'${parameter.name}\' '
-          'in method \'${mapperClass.name}.${method.name}\'.',
+          'No relation found for required field \'${parameter.name}\' '
+          'in \'${mapperClass.name}.${method.name}\'.\n'
+          'Fix: Add @Mapping(target: \'${parameter.name}\', source: \'sourceField\') '
+          'to map from a differently named source field, or '
+          '@Mapping(target: \'${parameter.name}\', ignore: true) to skip it.',
           element: targetClass,
         );
 }

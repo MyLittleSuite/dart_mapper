@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2024 MyLittleSuite
+ *  * Copyright (c) 2026 MyLittleSuite
  *  *
  *  * Permission is hereby granted, free of charge, to any person
  *  * obtaining a copy of this software and associated documentation
@@ -34,9 +34,11 @@ class TooManyEnumMappingMethodParametersError
     required ClassElement mapperClass,
     required MethodElement method,
   }) : super(
-          'Enum mapping method \'${method.name}\' '
-          'in mapper \'${mapperClass.name}\' '
-          'must have only one enum parameter.',
+          'Enum mapping method \'${method.name}\' in \'${mapperClass.name}\' '
+          'must have exactly one enum parameter, but has '
+          '${method.formalParameters.isEmpty ? 'none' : 'multiple'}.\n'
+          'Fix: ${method.formalParameters.isEmpty ? 'Add the source enum parameter' : 'Remove extra parameters'} '
+          '— enum mapping methods accept only the single source enum.',
           element: method,
         );
 }

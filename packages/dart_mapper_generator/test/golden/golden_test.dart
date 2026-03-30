@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 MyLittleSuite
+ * Copyright (c) 2026 MyLittleSuite
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -255,4 +255,25 @@ void main() async {
     'subclass_mapping_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(subclassMappingErrorReader, generator);
+
+  // Group: InheritConfiguration / InheritInverseConfiguration
+  final inheritConfigReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'inherit_config_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(inheritConfigReader, generator);
+
+  // Group: External mapper injection (@Mapper(uses: {...}))
+  final usesReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'uses_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(usesReader, generator);
+
+  // Group: Custom implementation name (@Mapper(implementationName: '...'))
+  final implementationNameReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'implementation_name_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(implementationNameReader, generator);
 }

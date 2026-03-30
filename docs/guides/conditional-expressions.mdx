@@ -1,0 +1,112 @@
+---
+title: "Conditional Expressions"
+description: Map a field only when a boolean condition is true, with optional fallback.
+---
+
+# Conditional Expressions
+
+The `conditionExpression:` parameter evaluates a boolean Dart expression at runtime. When `true`, the source field is mapped normally. When `false`, the field falls back to `defaultValue` — or `null` for nullable targets.
+
+## Nullable Target (Fallback to Null)
+
+When the target field is nullable and no `defaultValue` is given, a `false` condition produces `null`:
+
+```dart
+class MemberInput {
+  final int age;
+  final String? accessLevel;
+  const MemberInput({required this.age, this.accessLevel});
+}
+
+class MemberOutput {
+  final String? accessLevel;
+  const MemberOutput({this.accessLevel});
+}
+
+@Mapper()
+abstract class MemberMapper {
+  @Mapping(
+    target: 'accessLevel',
+    conditionExpression: 'source.age >= 18',
+  )
+  MemberOutput toOutput(MemberInput source);
+}
+```
+
+Generated:
+
+```dart
+@override
+MemberOutput toOutput(MemberInput source) {
+  return MemberOutput(
+    accessLevel: source.age >= 18 ? source.accessLevel : null,
+  );
+}
+```
+
+## With Default Value
+
+When `defaultValue` is provided, a `false` condition emits the default:
+
+```dart
+@Mapper()
+abstract class MemberMapper {
+  @Mapping(
+    target: 'premiumLabel',
+    conditionExpression: 'source.premium',
+    defaultValue: 'standard',
+  )
+  MemberOutput toOutput(MemberInput source);
+}
+```
+
+Generated:
+
+```dart
+premiumLabel: source.premium ? source.premiumLabel : 'standard',
+```
+
+## Non-Nullable Target Requires Default
+
+If the target field is non-nullable and no `defaultValue` is set, the generator produces a build error — the false branch would produce a type mismatch. Always provide `defaultValue` for non-nullable targets:
+
+```dart
+@Mapping(
+  target: 'role',           // String (non-nullable)
+  conditionExpression: 'source.isAdmin',
+  defaultValue: "'viewer'",  // required
+)
+UserOutput toOutput(UserInput source);
+```
+
+## String Interpolation in Conditions
+
+Use raw strings to avoid annotation-time interpolation:
+
+```dart
+@Mapping(
+  target: 'label',
+  conditionExpression: r'${source.label}.isNotEmpty',
+)
+TagOutput toOutput(TagInput source);
+```
+
+Generated:
+
+```dart
+label: '${source.label}'.isNotEmpty ? source.label : null,
+```
+
+## Mutual Exclusion Rules
+
+`conditionExpression:` cannot be combined with:
+
+| Forbidden Combination | Reason |
+|-----------------------|--------|
+| `conditionExpression` + `constant` | Constant ignores conditions |
+| `conditionExpression` + `callable` | Callable computes the value unconditionally |
+
+## See Also
+
+- [Expressions guide](/guides/expressions) — unconditional verbatim expressions
+- [@Mapping annotation reference](/annotations/mapping)

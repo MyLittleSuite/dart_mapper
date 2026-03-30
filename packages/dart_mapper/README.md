@@ -1,82 +1,46 @@
 # dart_mapper
 
-A simple library to map Dart objects.
+MapStruct-style object mapping for Dart. Define type-safe mappings declaratively with annotations and get generated implementations at compile time via `build_runner`.
 
-## Getting started
+[![pub.dev](https://img.shields.io/pub/v/dart_mapper.svg)](https://pub.dev/packages/dart_mapper)
+[![Docs](https://img.shields.io/badge/docs-docs.page-blue)](https://docs.page/MyLittleSuite/dart_mapper)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Features
+
+- Standard class mapping with field renaming and ignores
+- [Freezed](https://pub.dev/packages/freezed) and [Built Value](https://pub.dev/packages/built_value) support
+- Enum mapping with default and fallback values
+- Multi-source mapping (multiple input parameters per method)
+- Dot notation for nested property access
+- Expression-based computed fields
+- Conditional mapping with fallback values
+- Subclass mapping with Dart 3 pattern matching
+- Default values and constants
+- Callable functions for custom mapping logic
+- Collection support (`List`, `Set`, `Map`, `BuiltList`, `BuiltSet`, `BuiltMap`)
+- Configuration inheritance (`@InheritConfiguration`, `@InheritInverseConfiguration`)
+- External mapper injection via `uses`
+
+## Quick Start
 
 Add the following dependencies to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dart_mapper: latest
+  dart_mapper: ^1.0.0
 
 dev_dependencies:
-  build_runner: ^2.4.13
-  dart_mapper_generator: latest
+  build_runner: ^2.4.8
+  dart_mapper_generator: ^1.0.0
 ```
 
-Create an abstract mapper class with the Mapper and Mapping annotation:
+## Documentation
 
-```dart
+Full documentation, feature guides, and API reference are available at:
 
-import 'package:dart_mapper/dart_mapper.dart';
+**https://docs.page/MyLittleSuite/dart_mapper**
 
-part 'mixed.g.dart';
+## License
 
-class MixedObject {
-  final String name;
-  final int age;
-  final bool isAdult;
-  final DateTime? birthday;
-
-  MixedObject(this.name,
-      this.age, {
-        required this.isAdult,
-        this.birthday,
-      },);
-}
-
-class AnotherMixedObject {
-  final String name;
-  final int age;
-  final bool adult;
-  final DateTime? birthday;
-
-  AnotherMixedObject(this.name,
-      this.age, {
-        required this.adult,
-        this.birthday,
-      },);
-}
-
-@Mapper()
-abstract class MixedMapper {
-  @Mapping(target: 'adult', source: 'isAdult')
-  AnotherMixedObject toAnotherMixedObject(MixedObject mixedObject);
-
-  @Mapping(target: 'isAdult', source: 'adult')
-  MixedObject toMixedObject(AnotherMixedObject anotherMixedObject);
-}
-```
-
-Run the following command to generate the barrel files:
-
-```shell
-dart run build_runner build --delete-conflicting-outputs
-```
-
-### Code generations
-
-If you objects depend on other generators, you need to specify the build order in your `build.yaml`
-file.
-Below an example using `freezed` and/or `built_value`:
-
-```yaml
-global_options:
-  freezed:
-    runs_before:
-      - dart_mapper_generator
-  built_value_generator:built_value:
-    runs_before:
-      - dart_mapper_generator
-```
+MIT — see [LICENSE](LICENSE).

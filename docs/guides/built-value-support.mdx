@@ -1,0 +1,170 @@
+---
+title: "Built Value Support"
+description: Map to and from built_value immutable classes.
+---
+
+# Built Value Support
+
+`dart_mapper` generates builder-pattern mapping code for [built_value](https://pub.dev/packages/built_value) classes automatically.
+
+## Setup
+
+### 1. Add Dependencies
+
+```yaml
+# pubspec.yaml
+dependencies:
+  built_value: ^8.9.0
+  built_collection: ^5.1.0  # for BuiltList, BuiltSet, BuiltMap
+  dart_mapper: ^1.0.0
+
+dev_dependencies:
+  built_value_generator: ^8.9.0
+  dart_mapper_generator: ^1.0.0
+  build_runner: ^2.4.0
+```
+
+### 2. Configure Build Order
+
+Add a `build.yaml` so `built_value_generator` runs before `dart_mapper_generator`:
+
+```yaml
+# build.yaml
+global_options:
+  built_value_generator|built_value:
+    runs_before:
+      - dart_mapper_generator
+```
+
+### 3. Define a BuiltValue Model
+
+```dart
+import 'package:built_value/built_value.dart';
+
+part 'user_dto.g.dart';
+
+@BuiltValue()
+abstract class UserDTO implements Built<UserDTO, UserDTOBuilder> {
+  @BuiltValueField(wireName: 'id')
+  String get id;
+
+  @BuiltValueField(wireName: 'username')
+  String? get username;
+
+  UserDTO._();
+
+  factory UserDTO([void Function(UserDTOBuilder) updates]) = _$UserDTO;
+}
+```
+
+### 4. Define the Mapper
+
+```dart
+import 'package:dart_mapper/dart_mapper.dart';
+import 'user.dart';       // regular or freezed class
+import 'user_dto.dart';   // BuiltValue class
+
+part 'user_mapper.g.dart';
+
+@Mapper()
+abstract class UserMapper {
+  UserDTO toDto(User user);
+  User fromDto(UserDTO dto);
+}
+```
+
+## Generated Code
+
+The generator detects the BuiltValue type and uses the builder pattern:
+
+```dart
+@override
+UserDTO toDto(User user) {
+  return UserDTO((b) => b
+    ..id = user.id
+    ..username = user.username);
+}
+
+@override
+User fromDto(UserDTO dto) {
+  return User(
+    id: dto.id,
+    username: dto.username,
+  );
+}
+```
+
+## BuiltList, BuiltSet, BuiltMap
+
+Fields typed as `BuiltList<T>`, `BuiltSet<T>`, or `BuiltMap<K, V>` are converted automatically from their standard Dart counterparts:
+
+```dart
+@BuiltValue()
+abstract class TeamDTO implements Built<TeamDTO, TeamDTOBuilder> {
+  BuiltList<String> get members;
+  TeamDTO._();
+  factory TeamDTO([void Function(TeamDTOBuilder) updates]) = _$TeamDTO;
+}
+
+class Team {
+  final List<String> members;
+  const Team({required this.members});
+}
+
+@Mapper()
+abstract class TeamMapper {
+  TeamDTO toDto(Team team);
+}
+```
+
+Generated:
+
+```dart
+@override
+TeamDTO toDto(Team team) {
+  return TeamDTO((b) => b
+    ..members.addAll(team.members));
+}
+```
+
+## External Mapper with `uses:`
+
+When a BuiltValue mapper method needs an enum-to-int converter (or another secondary mapper), use `@Mapper(uses: {...})`:
+
+```dart
+@Mapper()
+abstract class AlertTypeMapper {
+  @ValueMapping(target: 'missingPhoneNumber', source: '1')
+  @ValueMapping(target: 'missingEmail', source: '2')
+  AlertType? fromRaw(int? raw);
+}
+
+@Mapper(uses: {AlertTypeMapper})
+abstract class BuiltValueMapper {
+  AlertModel toModel(AlertDTO dto);
+}
+```
+
+## Field-Level Customization
+
+All `@Mapping` annotations work normally:
+
+```dart
+@Mapper()
+abstract class UserMapper {
+  @Mapping(target: 'displayName', source: 'username')
+  @Mapping(target: 'legacy', ignore: true)
+  UserDTO toDto(User user);
+}
+```
+
+## Run the Generator
+
+```sh
+dart run build_runner build
+```
+
+## See Also
+
+- [Freezed Support guide](/guides/freezed-support)
+- [Collections guide](/guides/collections)

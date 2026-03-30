@@ -1,0 +1,149 @@
+---
+title: "Collections"
+description: Map List, Set, Iterable, Map, and Built Collection fields automatically.
+---
+
+# Collections
+
+`dart_mapper` maps collection fields automatically. When element types need conversion (e.g., `CustomSource` → `CustomTarget`), the generator calls the appropriate mapper method for each element.
+
+## Primitive Collections
+
+Collections of primitive types (`int`, `String`, `bool`, etc.) are passed through directly:
+
+```dart
+class Source {
+  final List<int> integers;
+  final Set<String> labels;
+  final Map<String, int> metadata;
+  final Iterable<int> counts;
+  Source({required this.integers, required this.labels, required this.metadata, required this.counts});
+}
+
+class Target {
+  final List<int> integers;
+  final Set<String> labels;
+  final Map<String, int> metadata;
+  final Iterable<int> counts;
+  Target({required this.integers, required this.labels, required this.metadata, required this.counts});
+}
+
+@Mapper()
+abstract class DataMapper {
+  Target toTarget(Source source);
+}
+```
+
+Generated:
+
+```dart
+@override
+Target toTarget(Source source) {
+  return Target(
+    integers: source.integers,
+    labels: source.labels,
+    metadata: source.metadata,
+    counts: source.counts,
+  );
+}
+```
+
+## Object Element Conversion
+
+When element types differ, the generator looks for a mapper method converting the element type and calls it per element:
+
+```dart
+class ItemSource { final String name; const ItemSource(this.name); }
+class ItemTarget { final String name; const ItemTarget(this.name); }
+
+class Container {
+  final List<ItemSource> items;
+  const Container({required this.items});
+}
+
+class ContainerDto {
+  final List<ItemTarget> items;
+  const ContainerDto({required this.items});
+}
+
+@Mapper()
+abstract class ContainerMapper {
+  ContainerDto toDto(Container container);
+  ItemTarget toItemTarget(ItemSource source);
+}
+```
+
+Generated:
+
+```dart
+@override
+ContainerDto toDto(Container container) {
+  return ContainerDto(
+    items: container.items.map(toItemTarget).toList(),
+  );
+}
+```
+
+## Map Fields
+
+Map fields with object value types also resolve element mapping automatically:
+
+```dart
+class ItemMap {
+  final Map<String, ItemSource> catalog;
+  const ItemMap({required this.catalog});
+}
+
+class ItemMapDto {
+  final Map<String, ItemTarget> catalog;
+  const ItemMapDto({required this.catalog});
+}
+
+@Mapper()
+abstract class CatalogMapper {
+  ItemMapDto toDto(ItemMap source);
+  ItemTarget toItemTarget(ItemSource source);
+}
+```
+
+Generated:
+
+```dart
+@override
+ItemMapDto toDto(ItemMap source) {
+  return ItemMapDto(
+    catalog: source.catalog.map((k, v) => MapEntry(k, toItemTarget(v))),
+  );
+}
+```
+
+## Built Collections (built_collection)
+
+`BuiltList<T>`, `BuiltSet<T>`, and `BuiltMap<K, V>` are treated like their standard Dart equivalents. The generator converts between standard and built collections as needed:
+
+```dart
+// Standard → BuiltList
+// source.members.toBuiltList()  (or via builder .members.addAll(...))
+
+// BuiltList → Standard List
+// source.members.toList()
+```
+
+See [Built Value support guide](/guides/built-value-support) for full setup instructions.
+
+## Collection Type Coercion
+
+The generator handles mismatched but compatible collection types:
+
+| Source type | Target type | Generated conversion |
+|-------------|-------------|---------------------|
+| `List<T>` | `Set<T>` | `.toSet()` |
+| `Set<T>` | `List<T>` | `.toList()` |
+| `Iterable<T>` | `List<T>` | `.toList()` |
+| `List<T>` | `Iterable<T>` | direct assignment |
+| `List<T>` | `BuiltList<T>` | `.toBuiltList()` |
+| `BuiltList<T>` | `List<T>` | `.toList()` |
+
+## See Also
+
+- [Built Value support guide](/guides/built-value-support) — `BuiltList`, `BuiltSet`, `BuiltMap` in depth

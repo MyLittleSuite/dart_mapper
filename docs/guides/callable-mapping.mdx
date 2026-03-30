@@ -1,0 +1,161 @@
+---
+title: "Callable Mapping"
+description: Delegate target field computation to a function using callable:.
+---
+
+# Callable Mapping
+
+The `callable:` parameter on `@Mapping` lets you delegate computing a target field's value to a top-level function. The generator calls the function and assigns its return value to the target field.
+
+## Basic Callable
+
+Define a top-level function and reference it as the callable:
+
+```dart
+class SourceObject {
+  final String name;
+  final int price;
+  const SourceObject(this.name, this.price);
+}
+
+class TargetObject {
+  final String name;
+  final int price;
+  const TargetObject(this.name, this.price);
+}
+
+int _doublePrice(dynamic price) => price * 2;
+
+@Mapper()
+abstract class PriceMapper {
+  @Mapping(target: 'price', callable: _doublePrice)
+  TargetObject toTarget(SourceObject source);
+}
+```
+
+Generated:
+
+```dart
+@override
+TargetObject toTarget(SourceObject source) {
+  return TargetObject(
+    name: source.name,
+    price: _doublePrice(source.price),
+  );
+}
+```
+
+## Callable with BuiltValue
+
+`callable:` works with BuiltValue targets too:
+
+```dart
+@Mapping(target: 'price', callable: _doublePrice)
+BuiltObject toBuiltObject(SourceObject source);
+```
+
+Generated uses the builder pattern:
+
+```dart
+@override
+BuiltObject toBuiltObject(SourceObject source) {
+  return BuiltObject((b) => b
+    ..name = source.name
+    ..price = _doublePrice(source.price));
+}
+```
+
+## Combining with Other Mappings
+
+Other `@Mapping` annotations on the same method are unaffected — each one independently controls its target field:
+
+```dart
+@Mapper()
+abstract class OrderMapper {
+  @Mapping(target: 'total', callable: _calculateTotal)
+  @Mapping(target: 'currency', constant: "'USD'")
+  @Mapping(target: 'internalRef', ignore: true)
+  OrderSummary toSummary(OrderInput order);
+}
+```
+
+## Mutual Exclusion Rules
+
+`callable:` cannot be combined with:
+
+| Forbidden Combination | Reason |
+|-----------------------|--------|
+| `callable` + `constant` | Both provide the value |
+| `callable` + `defaultValue` | Both provide the value |
+| `callable` + `expression` | Both compute the value |
+| `callable` + `conditionExpression` | Both control the output flow |
+
+## Callable with Dot Notation Source
+
+Use dot notation in `source:` to pass a nested field to the callable:
+
+```dart
+class Order {
+  final Address address;
+  const Order(this.address);
+}
+
+class Address {
+  final String city;
+  final String zip;
+  const Address(this.city, this.zip);
+}
+
+class OrderSummary {
+  final String location;
+  const OrderSummary(this.location);
+}
+
+String _formatLocation(dynamic city) => city.toUpperCase();
+
+@Mapper()
+abstract class OrderMapper {
+  @Mapping(target: 'location', source: 'address.city', callable: _formatLocation)
+  OrderSummary toSummary(Order order);
+}
+```
+
+Generated: `_formatLocation(order.address.city)`.
+
+## Callable with Multiple Parameters
+
+Use comma-separated field names in `source:` to pass multiple arguments:
+
+```dart
+class PersonSource {
+  final String firstName;
+  final String lastName;
+  const PersonSource(this.firstName, this.lastName);
+}
+
+class PersonTarget {
+  final String fullName;
+  const PersonTarget(this.fullName);
+}
+
+String _merge(dynamic first, dynamic last) => '$first $last';
+
+@Mapper()
+abstract class PersonMapper {
+  @Mapping(target: 'fullName', source: 'firstName,lastName', callable: _merge)
+  PersonTarget toTarget(PersonSource source);
+}
+```
+
+Generated: `_merge(source.firstName, source.lastName)`.
+
+Each comma-separated part is resolved as a field on the source parameter. You can also combine dot notation with comma separation (e.g., `source: 'address.city,address.zip'`).
+
+## Function Signature Requirements
+
+The callable must be a top-level function (not a method). The generator passes the relevant source field value(s) as arguments — a single field for basic callables, or multiple fields when using comma-separated sources. The return type must be assignable to the target field's type.
+
+## See Also
+
+- [@Mapping annotation reference](/annotations/mapping)
+- [Expressions guide](/guides/expressions) — inline expression alternative

@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2024 MyLittleSuite
+ *  * Copyright (c) 2026 MyLittleSuite
  *  *
  *  * Permission is hereby granted, free of charge, to any person
  *  * obtaining a copy of this software and associated documentation
@@ -36,11 +36,11 @@ class UnknownReturnTypeError extends InvalidGenerationSourceError {
     required MappingMethod method,
     Element? element,
   }) : super(
-          'Unknown return type for method '
-          '\'${mapperClass.name}.${method.name}\'.',
+          'Cannot resolve return type of \'${mapperClass.name}.${method.name}\'. '
+          'The target class is not visible from the mapper file.',
           element: element,
-          todo: 'Please, check the import directives. '
+          todo: 'Check the import for the return type class. '
               'If you are importing a barrel file, '
-              'switch to importing the actual file.',
+              'switch to importing the file that directly defines the class.',
         );
 }

@@ -1,0 +1,124 @@
+---
+title: "Freezed Support"
+description: Map to and from freezed immutable classes.
+---
+
+# Freezed Support
+
+`dart_mapper` generates correct mapping code for [freezed](https://pub.dev/packages/freezed) classes. No special annotations are needed on the mapper — just declare your methods as usual.
+
+## Setup
+
+### 1. Add Dependencies
+
+```yaml
+# pubspec.yaml
+dependencies:
+  freezed_annotation: ^3.0.0
+  dart_mapper: ^1.0.0
+
+dev_dependencies:
+  freezed: ^3.0.0
+  dart_mapper_generator: ^1.0.0
+  build_runner: ^2.4.0
+```
+
+### 2. Configure Build Order
+
+Add a `build.yaml` at the root of your package so `freezed` generates its code before `dart_mapper_generator` analyzes it:
+
+```yaml
+# build.yaml
+global_options:
+  freezed:
+    runs_before:
+      - dart_mapper_generator
+```
+
+Without this, `dart_mapper_generator` may see incomplete freezed types and fail.
+
+### 3. Define Your Models
+
+```dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'user.freezed.dart';
+
+@freezed
+abstract class User with _$User {
+  const User._();
+
+  const factory User({
+    required String id,
+    String? username,
+  }) = _User;
+}
+```
+
+### 4. Define the Mapper
+
+```dart
+import 'package:dart_mapper/dart_mapper.dart';
+import 'user.dart';
+import 'user_dto.dart';
+
+part 'user_mapper.g.dart';
+
+@Mapper()
+abstract class UserMapper {
+  UserDto toDto(User user);
+  User fromDto(UserDto dto);
+}
+```
+
+The generator detects that `User` is a freezed class and uses its factory constructor in the generated output.
+
+## Generated Code
+
+```dart
+@override
+UserDto toDto(User user) {
+  return UserDto(
+    id: user.id,
+    username: user.username,
+  );
+}
+
+@override
+User fromDto(UserDto dto) {
+  return User(
+    id: dto.id,
+    username: dto.username,
+  );
+}
+```
+
+## Field Renaming and Ignores
+
+All `@Mapping` annotations work normally with freezed targets:
+
+```dart
+@Mapper()
+abstract class UserMapper {
+  @Mapping(target: 'displayName', source: 'username')
+  @Mapping(target: 'internalToken', ignore: true)
+  UserView toView(User user);
+}
+```
+
+## Enum Fields in Freezed Classes
+
+Freezed classes may contain enum fields defined with the `@freezed` annotation. These resolve automatically. Use `@ValueMapping` on the mapper method if the source and target enums have different constant names.
+
+## Run the Generator
+
+```sh
+dart run build_runner build
+# or keep it running during development:
+dart run build_runner watch
+```
+
+## See Also
+
+- [Built Value support guide](/guides/built-value-support)
+- [Getting Started](/getting-started)
