@@ -105,7 +105,7 @@ See [Callable Mapping guide](/guides/callable-mapping) for multi-argument callab
 Emit a raw Dart expression directly:
 
 ```dart
-@Mapping(target: 'fullName', expression: 'source.firstName + " " + source.lastName')
+@Mapping(target: 'fullName', expression: 'dto.firstName + " " + dto.lastName')
 User toUser(UserDto dto);
 ```
 
@@ -124,7 +124,7 @@ Map conditionally — falls back to `defaultValue` when the condition is false:
 @Mapping(
   target: 'name',
   source: 'name',
-  conditionExpression: 'source.name.isNotEmpty',
+  conditionExpression: 'dto.name.isNotEmpty',
   defaultValue: "'Anonymous'",
 )
 User toUser(UserDto dto);

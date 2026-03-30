@@ -40,7 +40,7 @@ The resulting `fromDto` reads `dto.fullName` → `person.name` and `dto.yearsOld
 ## Requirements
 
 - The annotated method's parameter type must be assignment-compatible with the return type of the method it inherits from — the generator needs to align source and target roles.
-- `ignore: true` annotations are silently dropped during inversion (an ignored target field in the forward direction does not become a mapped field in the reverse direction).
+- During inversion, only `@Mapping` annotations that declare both an explicit `source` and `target` are loaded. Mappings that specify `ignore: true` alongside both `source` and `target` are preserved in the inverse. Mappings that lack either `source` or `target` (e.g., `@Mapping(target: 'field', ignore: true)`) are excluded from inverse loading because there is no value to swap.
 
 ## Combining with Additional @Mapping
 

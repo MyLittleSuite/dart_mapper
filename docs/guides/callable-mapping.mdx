@@ -90,9 +90,70 @@ abstract class OrderMapper {
 | `callable` + `expression` | Both compute the value |
 | `callable` + `conditionExpression` | Both control the output flow |
 
+## Callable with Dot Notation Source
+
+Use dot notation in `source:` to pass a nested field to the callable:
+
+```dart
+class Order {
+  final Address address;
+  const Order(this.address);
+}
+
+class Address {
+  final String city;
+  final String zip;
+  const Address(this.city, this.zip);
+}
+
+class OrderSummary {
+  final String location;
+  const OrderSummary(this.location);
+}
+
+String _formatLocation(dynamic city) => city.toUpperCase();
+
+@Mapper()
+abstract class OrderMapper {
+  @Mapping(target: 'location', source: 'address.city', callable: _formatLocation)
+  OrderSummary toSummary(Order order);
+}
+```
+
+Generated: `_formatLocation(order.address.city)`.
+
+## Callable with Multiple Parameters
+
+Use comma-separated field names in `source:` to pass multiple arguments:
+
+```dart
+class PersonSource {
+  final String firstName;
+  final String lastName;
+  const PersonSource(this.firstName, this.lastName);
+}
+
+class PersonTarget {
+  final String fullName;
+  const PersonTarget(this.fullName);
+}
+
+String _merge(dynamic first, dynamic last) => '$first $last';
+
+@Mapper()
+abstract class PersonMapper {
+  @Mapping(target: 'fullName', source: 'firstName,lastName', callable: _merge)
+  PersonTarget toTarget(PersonSource source);
+}
+```
+
+Generated: `_merge(source.firstName, source.lastName)`.
+
+Each comma-separated part is resolved as a field on the source parameter. You can also combine dot notation with comma separation (e.g., `source: 'address.city,address.zip'`).
+
 ## Function Signature Requirements
 
-The callable must be a top-level function (not a method). The generator passes the relevant source field value as the single argument. The return type must be assignable to the target field's type.
+The callable must be a top-level function (not a method). The generator passes the relevant source field value(s) as arguments — a single field for basic callables, or multiple fields when using comma-separated sources. The return type must be assignable to the target field's type.
 
 ## See Also
 

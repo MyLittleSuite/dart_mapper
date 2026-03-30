@@ -53,8 +53,8 @@ The generated code uses a Dart 3 switch expression to dispatch:
 @override
 ShapeDto toDto(Shape shape) {
   return switch (shape) {
-    Circle() => _circlesToCircleDto(shape),
-    Rectangle() => _rectangleToRectangleDto(shape),
+    Circle c => _circleToCircleDto(c),
+    Rectangle r => _rectangleToRectangleDto(r),
   };
 }
 ```

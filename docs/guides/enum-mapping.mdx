@@ -55,7 +55,7 @@ abstract class StatusMapper {
 }
 ```
 
-## Default Fallback with `<ANY_REMAINING>`
+## Default Fallback with `ValueMapping.anyRemaining`
 
 Map all unmatched source constants to a single target constant:
 
@@ -65,24 +65,38 @@ enum PrimaryColor { red, green, blue }
 
 @Mapper()
 abstract class ColorMapper {
-  @ValueMapping(source: '<ANY_REMAINING>', target: 'blue')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'blue')
   PrimaryColor toPrimary(ExtendedColor source);
 }
 ```
 
 All `ExtendedColor` values that don't share a name with a `PrimaryColor` constant (i.e., `yellow`) map to `PrimaryColor.blue`.
 
-## Null Fallback with `<ANY_UNMAPPED>`
+## Null Fallback with `ValueMapping.anyUnmapped`
 
 Map unmatched source constants to `null` (only for nullable return types):
 
 ```dart
 @Mapper()
 abstract class ColorMapper {
-  @ValueMapping(source: '<ANY_REMAINING>', target: '<ANY_UNMAPPED>')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: ValueMapping.anyUnmapped)
   PrimaryColor? toPrimaryOrNull(ExtendedColor source);
 }
 ```
+
+## Null Source Handling with `ValueMapping.nullValue`
+
+Use `ValueMapping.nullValue` to handle `null` input values when the source is nullable:
+
+```dart
+@Mapper()
+abstract class ColorMapper {
+  @ValueMapping(source: ValueMapping.nullValue, target: 'blue')
+  PrimaryColor toPrimaryFromNullable(ExtendedColor? source);
+}
+```
+
+When `source` is `null`, the mapper returns `PrimaryColor.blue`.
 
 ## Enum to String
 
@@ -108,7 +122,7 @@ abstract class OrderMapper {
 }
 ```
 
-Generated: uses `EnumStatus.values.byName(source)`.
+Generated: uses a switch expression matching each string literal to the corresponding `OrderStatus` constant.
 
 ## Enum to Int / Int to Enum
 

@@ -52,10 +52,12 @@ abstract class UserMapper {
 The `<CLASS_NAME>` token is replaced with the annotated class name at generation time:
 
 ```dart
-// Generates: class UserTypeMapper extends UserMapper
+// Generates: class UserMapperTypeMapper extends UserMapper
 @Mapper(implementationName: '<CLASS_NAME>TypeMapper')
 abstract class UserMapper { ... }
 ```
+
+`<CLASS_NAME>` resolves to the annotated class name (`UserMapper`), so the generated class is `UserMapperTypeMapper`.
 
 ## External Mapper Injection
 

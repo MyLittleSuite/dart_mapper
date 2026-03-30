@@ -35,8 +35,10 @@ class TooManyEnumMappingMethodParametersError
     required MethodElement method,
   }) : super(
           'Enum mapping method \'${method.name}\' in \'${mapperClass.name}\' '
-          'must have exactly one enum parameter, but has multiple.\n'
-          'Fix: Remove extra parameters — enum mapping methods accept only the single source enum.',
+          'must have exactly one enum parameter, but has '
+          '${method.formalParameters.isEmpty ? 'none' : 'multiple'}.\n'
+          'Fix: ${method.formalParameters.isEmpty ? 'Add the source enum parameter' : 'Remove extra parameters'} '
+          '— enum mapping methods accept only the single source enum.',
           element: method,
         );
 }
