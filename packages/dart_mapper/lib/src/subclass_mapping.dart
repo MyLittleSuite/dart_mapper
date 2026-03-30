@@ -23,8 +23,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/// Instructs the generator to produce a runtime-type dispatch method for the
-/// annotated mapper class. Stacked on the mapper class (not a method).
+/// Instructs the generator to produce a runtime-type dispatch body for the
+/// annotated dispatch method. Stacked on the method (not the mapper class).
 ///
 /// For each [SubclassMapping] annotation, the generator locates the existing
 /// mapping method on the mapper whose signature is `target method(source)` and
@@ -32,10 +32,10 @@
 ///
 /// Example:
 /// ```dart
-/// @SubclassMapping(source: Dog, target: DogDto)
-/// @SubclassMapping(source: Cat, target: CatDto)
 /// @Mapper()
 /// abstract class AnimalMapper {
+///   @SubclassMapping(source: Dog, target: DogDto)
+///   @SubclassMapping(source: Cat, target: CatDto)
 ///   AnimalDto toAnimalDto(Animal source);
 ///   DogDto toDogDto(Dog source);
 ///   CatDto toCatDto(Cat source);

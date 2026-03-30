@@ -43,9 +43,9 @@ class DogDto {}
   'No mapping method found for @SubclassMapping(source: Dog, target: DogDto). '
   'Add a method with signature: DogDto method(Dog source).',
 )
-@SubclassMapping(source: Dog, target: DogDto)
 @Mapper()
 abstract class MissingDelegateMapper {
+  @SubclassMapping(source: Dog, target: DogDto)
   PetDto toPetDto(Pet source);
   // DogDto toDogDto(Dog source);  ← intentionally absent
 }

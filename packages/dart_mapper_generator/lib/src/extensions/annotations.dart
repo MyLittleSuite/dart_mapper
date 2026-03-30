@@ -106,13 +106,13 @@ extension InheritInverseConfigurationAnnotation on InheritInverseConfiguration {
 }
 
 extension SubclassMappingAnnotation on SubclassMapping {
-  /// Returns all @SubclassMapping annotations on [mapperClass] as
-  /// (sourceType, targetType) pairs. Returns empty list if none present.
+  /// Returns all @SubclassMapping annotations on [method] as
+  /// (sourceType, targetType) pairs. Returns empty iterable if none present.
   static Iterable<({DartType sourceType, DartType targetType})> loadAll(
-    ClassElement mapperClass,
+    MethodElement method,
   ) =>
       TypeChecker.typeNamed(SubclassMapping)
-          .annotationsOf(mapperClass)
+          .annotationsOf(method)
           .map((annotation) => (
                 sourceType: annotation.getField('source')!.toTypeValue()!,
                 targetType: annotation.getField('target')!.toTypeValue()!,

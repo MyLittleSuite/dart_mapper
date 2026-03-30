@@ -71,10 +71,10 @@ class CatDto extends AnimalDto {
   }""",
   contains: true,
 )
-@SubclassMapping(source: Dog, target: DogDto)
-@SubclassMapping(source: Cat, target: CatDto)
 @Mapper()
 abstract class NonSealedAnimalMapper {
+  @SubclassMapping(source: Dog, target: DogDto)
+  @SubclassMapping(source: Cat, target: CatDto)
   AnimalDto toAnimalDto(Animal source);
   DogDto toDogDto(Dog source);
   CatDto toCatDto(Cat source);
@@ -120,10 +120,10 @@ class TruckDto extends VehicleDto {
   }""",
   contains: true,
 )
-@SubclassMapping(source: Car, target: CarDto)
-@SubclassMapping(source: Truck, target: TruckDto)
 @Mapper()
 abstract class SealedVehicleMapper {
+  @SubclassMapping(source: Car, target: CarDto)
+  @SubclassMapping(source: Truck, target: TruckDto)
   VehicleDto toVehicleDto(Vehicle source);
   CarDto toCarDto(Car source);
   TruckDto toTruckDto(Truck source);
@@ -150,9 +150,9 @@ class PartialCarDto extends PartialVehicleDto {
   }""",
   contains: true,
 )
-@SubclassMapping(source: Car, target: PartialCarDto)
 @Mapper()
 abstract class SealedPartialMapper {
+  @SubclassMapping(source: Car, target: PartialCarDto)
   PartialVehicleDto toDto(Vehicle source);
   PartialCarDto toPartialCarDto(Car source);
 }
@@ -202,12 +202,12 @@ class ProductTemplateDtoOutput extends CreateTodoOutput {
   r"throw ArgumentError('Unexpected subtype: ${source.runtimeType}')",
   contains: true,
 )
-@SubclassMapping(
-  source: Mutation$CreateTodo$createTodoOfMine$data$$ProductTemplateDto,
-  target: ProductTemplateDtoOutput,
-)
 @Mapper()
 abstract class GqlStyleMapper {
+  @SubclassMapping(
+    source: Mutation$CreateTodo$createTodoOfMine$data$$ProductTemplateDto,
+    target: ProductTemplateDtoOutput,
+  )
   CreateTodoOutput toOutput(CreateTodoBase source);
   ProductTemplateDtoOutput toProductTemplateDtoOutput(
     // ignore: non_constant_identifier_names

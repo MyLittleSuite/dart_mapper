@@ -34,35 +34,22 @@ import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_paramete
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/subclass_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
-/// Reads all @SubclassMapping annotations from a mapper ClassElement and
-/// produces SubclassMappingMethod instances — one per abstract method whose
-/// source parameter type is a base type referenced by the annotations.
+/// Reads @SubclassMapping annotations from each abstract MethodElement and
+/// produces SubclassMappingMethod instances — one per annotated dispatch method.
 class SubclassMappingAnalyzer {
   const SubclassMappingAnalyzer();
 
   /// Returns a list of [SubclassMappingMethod]s to inject into the method list.
-  /// Returns empty list when no @SubclassMapping annotations are on the class.
+  /// Returns empty list when no abstract method has @SubclassMapping annotations.
   List<SubclassMappingMethod> analyze(AnalyzerContext context) {
-    final pairs = SubclassMappingAnnotation.loadAll(context.mapperClass).toList();
-    if (pairs.isEmpty) return [];
-
-    // Bucket by abstract method, not by base type set.
-    // Each abstract method with exactly one parameter gets its own
-    // SubclassMappingMethod — avoids collision when two abstract methods
-    // share the same parameter type but have different return types.
     final result = <SubclassMappingMethod>[];
-    for (final method in context.mapperClass.methods.where(
-      (m) => m.isAbstract && m.formalParameters.length == 1,
-    )) {
-      final paramType = method.formalParameters.first.type;
-      // Collect only the pairs applicable to THIS abstract method.
-      final matchingPairs = pairs
-          .where((p) => _isSubtypeOf(p.sourceType, paramType))
-          .toList();
-      if (matchingPairs.isEmpty) continue;
+
+    for (final method in context.mappingMethods) {
+      final pairs = SubclassMappingAnnotation.loadAll(method).toList();
+      if (pairs.isEmpty) continue;
 
       final dispatchPairs = <SubclassDispatchPair>[];
-      for (final pair in matchingPairs) {
+      for (final pair in pairs) {
         final delegateName = _resolveDelegateMethod(
           context: context,
           sourceType: pair.sourceType,
@@ -75,6 +62,7 @@ class SubclassMappingAnalyzer {
         ));
       }
 
+      final paramType = method.formalParameters.first.type;
       final needsWildcard = _computeNeedsWildcard(
         baseType: paramType,
         dispatchPairs: dispatchPairs,
@@ -103,15 +91,6 @@ class SubclassMappingAnalyzer {
     }
 
     return result;
-  }
-
-  /// Returns true when [subtype] is a direct or indirect subtype of [base].
-  bool _isSubtypeOf(DartType subtype, DartType base) {
-    final subtypeElement = subtype.element?.classElementOrNull;
-    if (subtypeElement == null) return false;
-    return subtypeElement.allSupertypes.any(
-      (supertype) => supertype.same(base, useNullability: false),
-    );
   }
 
   /// Resolves the delegate method name for a given @SubclassMapping pair.
