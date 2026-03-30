@@ -24,8 +24,6 @@
  */
 
 // Golden test source for D-06 error: missing delegate method.
-// IMPORTANT: @ShouldThrow string is a placeholder — update after Plan 02
-// runs the generator and the exact error message is confirmed.
 
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:source_gen_test/annotations.dart';
