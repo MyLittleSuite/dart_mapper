@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.9.0
 milestone_name: milestone
 status: Milestone complete
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-30T18:49:30.101Z"
-last_activity: 2026-03-30
+stopped_at: "Completed quick task 260331-ghe: Implement nullValue as source in enum mapping"
+last_updated: "2026-03-31T10:00:16.633Z"
+last_activity: "2026-03-31 - Completed quick task 260331-fxc: Fix @InheritConfiguration ignore propagation and enum auto-mapping bindings"
 progress:
   total_phases: 8
   completed_phases: 8
@@ -128,6 +128,7 @@ None yet.
 | 260331-eaj | Add wait_for_dart_mapper polling job to publish workflow | 2026-03-31 | 9cc24f6 | [260331-eaj-add-wait-for-dart-mapper-polling-job-to-](./quick/260331-eaj-add-wait-for-dart-mapper-polling-job-to-/) |
 | 260331-fc5 | Fix pub.dev score issues: rename root pubspec, add example stubs, add dartdoc | 2026-03-31 | 3cddebc | [260331-fc5-fix-pub-dev-score-issues-rename-root-pub](./quick/260331-fc5-fix-pub-dev-score-issues-rename-root-pub/) |
 | 260331-fxc | Fix @InheritConfiguration ignore propagation and enum auto-mapping bindings | 2026-03-31 | 43250f3 | [260331-fxc-fix-inheritconfiguration-ignore-bug-enum](./quick/260331-fxc-fix-inheritconfiguration-ignore-bug-enum/) |
+| 260331-ghe | Implement nullValue as source in enum mapping | 2026-03-31 | 1d5ba22 | [260331-ghe-implement-nullvalue-as-source-in-enum-ma](./quick/260331-ghe-implement-nullvalue-as-source-in-enum-ma/) |
 
 ### Blockers/Concerns
 
@@ -137,5 +138,5 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-03-31 - Completed quick task 260331-fxc: Fix @InheritConfiguration ignore propagation and enum auto-mapping bindings
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-test-completion-documentation/06-CONTEXT.md
+Stopped at: Completed quick task 260331-ghe: Implement nullValue as source in enum mapping
+Resume file: None
