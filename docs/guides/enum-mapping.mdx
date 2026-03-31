@@ -79,7 +79,7 @@ Map unmatched source constants to `null` (only for nullable return types):
 ```dart
 @Mapper()
 abstract class ColorMapper {
-  @ValueMapping(source: ValueMapping.anyRemaining, target: ValueMapping.anyUnmapped)
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   PrimaryColor? toPrimaryOrNull(ExtendedColor source);
 }
 ```
@@ -124,9 +124,9 @@ abstract class OrderMapper {
 
 Generated: uses a switch expression matching each string literal to the corresponding `OrderStatus` constant.
 
-## Enum to Int / Int to Enum
+## Enum to Int
 
-Use `@ValueMapping` to specify numeric values:
+Use `@ValueMapping` to specify numeric values for enum-to-int mapping:
 
 ```dart
 @Mapper()
@@ -135,7 +135,16 @@ abstract class PriorityMapper {
   @ValueMapping(source: 'medium', target: '2')
   @ValueMapping(source: 'high', target: '3')
   int priorityToInt(Priority source);
+}
+```
 
+## Int to Enum
+
+Use `@ValueMapping` to map integer values back to enum constants:
+
+```dart
+@Mapper()
+abstract class PriorityMapper {
   @ValueMapping(target: 'low', source: '1')
   @ValueMapping(target: 'medium', source: '2')
   @ValueMapping(target: 'high', source: '3')

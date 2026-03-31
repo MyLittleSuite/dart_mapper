@@ -52,10 +52,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
     }
 
     final method = context.currentMethod;
-    final methodBindings = switch (method) {
-      DefinedMappingMethod() => method.bindings,
-      _ => [],
-    };
+    final methodBindings = method.bindings;
 
     final targetEnum = method.returnType?.element?.interfaceElementOrNull;
     if (targetEnum == null) {
@@ -79,9 +76,11 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
               if (sourceField.nullable)
                 (
                   literal(null),
-                  method.optionalReturn
-                      ? literal(null)
-                      : throwArgumentErrorNotNull(sourceField.name),
+                  method is DefinedMappingMethod && method.nullSourceTarget != null
+                      ? refer(safeEnumDisplayName).property(method.nullSourceTarget!)
+                      : method.optionalReturn
+                          ? literal(null)
+                          : throwArgumentErrorNotNull(sourceField.name),
                 ),
               ...methodBindings.map((binding) {
                 final sourceValue = expressionFactory.create(

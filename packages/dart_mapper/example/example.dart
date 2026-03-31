@@ -23,38 +23,33 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
+import 'package:dart_mapper/dart_mapper.dart';
 
-final class DefinedMappingMethod extends BindableMappingMethod {
-  final String? anyRemainingTarget;
-  final bool hasAnyUnmapped;
-  final String? nullSourceTarget;
+class UserDto {
+  final String name;
+  final String email;
+  const UserDto({required this.name, required this.email});
+}
 
-  const DefinedMappingMethod({
-    required super.name,
-    super.isOverride = false,
-    super.returnType,
-    super.optionalReturn = false,
-    super.behavior = MappingBehavior.standard,
-    super.parameters = const [],
-    super.bindings = const [],
-    this.anyRemainingTarget,
-    this.hasAnyUnmapped = false,
-    this.nullSourceTarget,
-  });
+class UserEntity {
+  final String fullName;
+  final String emailAddress;
+  const UserEntity({required this.fullName, required this.emailAddress});
+}
 
-  @override
-  String toString() => 'DefinedMappingMethod{'
-      'name: $name, '
-      'isOverride: $isOverride, '
-      'returnType: $returnType, '
-      'optionalReturn: $optionalReturn, '
-      'behavior: $behavior, '
-      'parameters: $parameters, '
-      'bindings: $bindings, '
-      'anyRemainingTarget: $anyRemainingTarget, '
-      'hasAnyUnmapped: $hasAnyUnmapped, '
-      'nullSourceTarget: $nullSourceTarget'
-      '}';
+// Mapper definition — run `dart run build_runner build` to generate the
+// concrete implementation (_$UserMapperImpl).
+@Mapper()
+abstract class UserMapper {
+  @Mapping(target: 'fullName', source: 'name')
+  @Mapping(target: 'emailAddress', source: 'email')
+  UserEntity toEntity(UserDto dto);
+}
+
+void main() {
+  // dart_mapper generates implementations at compile time via build_runner.
+  // After running `dart run build_runner build`, use:
+  //   final mapper = UserMapper();
+  //   final entity = mapper.toEntity(UserDto(name: 'Alice', email: 'alice@example.com'));
+  print('dart_mapper example — see README for full usage.');
 }

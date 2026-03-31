@@ -150,6 +150,7 @@ class BindingsAnalyzer extends Analyzer<Bindings> {
               behavior: mappingBehavior,
               anyRemainingTarget: bindingsContext.anyRemainingTarget,
               hasAnyUnmapped: bindingsContext.hasAnyUnmapped,
+              nullSourceTarget: bindingsContext.nullSourceTarget,
             ),
           );
         }

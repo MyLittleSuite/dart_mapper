@@ -48,6 +48,23 @@ import 'package:dart_mapper_generator/src/processors/mapping_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 import 'package:source_gen/source_gen.dart';
 
+/// Creates the [Builder] used by `build_runner` to generate dart_mapper implementations.
+///
+/// Returns a [SharedPartBuilder] that processes `@Mapper`-annotated abstract classes
+/// and emits `.dart_mapper.g.part` files, combined into `.g.dart` by
+/// `source_gen`'s combining builder.
+///
+/// Registered automatically via `build.yaml`:
+/// ```yaml
+/// targets:
+///   $default:
+///     builders:
+///       dart_mapper_generator:dart_mapper_builder:
+///         enabled: true
+/// ```
+///
+/// The [options] parameter is passed through to the underlying builder but is
+/// unused by default.
 Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
   final expressionStrategyDispatcher = StrategyDispatcher({
     MappingBehavior.built: BuiltExpressionFactory(

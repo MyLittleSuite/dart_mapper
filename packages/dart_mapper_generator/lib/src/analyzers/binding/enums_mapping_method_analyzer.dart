@@ -141,6 +141,16 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
       );
     }
 
+    // Validate nullValue source requires nullable source type.
+    if (enumValuesMap.containsKey(ValueMapping.nullValue) &&
+        !sourceType.isNullable) {
+      throw InvalidGenerationSourceError(
+        '<NULL> source requires a nullable source type. '
+        'Change the parameter type to nullable (e.g., ExtendedColor?).',
+        element: context.method,
+      );
+    }
+
     final mappedSourceNames = bindings.map((b) => b.source.name).toSet();
     final allSourceNames = sourceElement.enumValues
         .map((v) => v.name)

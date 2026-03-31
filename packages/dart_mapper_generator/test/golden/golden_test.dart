@@ -276,4 +276,25 @@ void main() async {
     'implementation_name_test_src.dart',
   );
   testAnnotatedElements<Mapper>(implementationNameReader, generator);
+
+  // Group: @InheritConfiguration inheriting ignore flag
+  final inheritIgnoreReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'inherit_configuration_ignore_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(inheritIgnoreReader, generator);
+
+  // Group: Auto-generated enum helper switch cases (enum-in-class mapping)
+  final enumAutoMappingReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'enum_auto_mapping_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(enumAutoMappingReader, generator);
+
+  // Group: nullValue as source in enum mapping
+  final nullValueSourceReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'null_value_source_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(nullValueSourceReader, generator);
 }

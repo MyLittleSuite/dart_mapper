@@ -75,3 +75,10 @@ abstract class AnyUnmappedEnumMapper {
   @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   PrimaryTargetColor? convert(ExtendedSourceColor source);
 }
+
+@Mapper()
+abstract class NullValueSourceEnumMapper {
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'blue')
+  @ValueMapping(source: ValueMapping.nullValue, target: 'red')
+  PrimaryTargetColor convertNullable(ExtendedSourceColor? source);
+}

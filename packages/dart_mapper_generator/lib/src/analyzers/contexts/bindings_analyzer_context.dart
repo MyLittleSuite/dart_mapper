@@ -202,12 +202,12 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
     }
   }
 
-  Set<String> get ignoredTargets => MappingAnnotation.load(method)
+  Set<String> get ignoredTargets => _renamingMappings
       .where((annotation) => annotation.ignore)
       .map((annotation) => annotation.target)
       .toSet();
 
-  Set<String> get forceNonNullTargets => MappingAnnotation.load(method)
+  Set<String> get forceNonNullTargets => _renamingMappings
       .where((annotation) => annotation.forceNonNull)
       .map((annotation) => annotation.target)
       .toSet();
@@ -232,6 +232,8 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
   String? get anyRemainingTarget => enumValues[ValueMapping.anyRemaining];
 
   bool get hasAnyUnmapped => enumValues.containsKey(ValueMapping.anyUnmapped);
+
+  String? get nullSourceTarget => enumValues[ValueMapping.nullValue];
 
   Map<String, CallableMappingMethod> get callableMap => Map.fromEntries(
         _renamingMappings

@@ -23,38 +23,42 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
+// Golden test source for nullValue-as-source in enum mapping.
+//
+// Tests: null input maps to a specific target enum value when
+// @ValueMapping(source: ValueMapping.nullValue, target: '...') is declared.
 
-final class DefinedMappingMethod extends BindableMappingMethod {
-  final String? anyRemainingTarget;
-  final bool hasAnyUnmapped;
-  final String? nullSourceTarget;
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:source_gen_test/annotations.dart';
 
-  const DefinedMappingMethod({
-    required super.name,
-    super.isOverride = false,
-    super.returnType,
-    super.optionalReturn = false,
-    super.behavior = MappingBehavior.standard,
-    super.parameters = const [],
-    super.bindings = const [],
-    this.anyRemainingTarget,
-    this.hasAnyUnmapped = false,
-    this.nullSourceTarget,
-  });
+enum ExtendedSourceColor {
+  red,
+  green,
+  blue,
+  yellow,
+}
 
-  @override
-  String toString() => 'DefinedMappingMethod{'
-      'name: $name, '
-      'isOverride: $isOverride, '
-      'returnType: $returnType, '
-      'optionalReturn: $optionalReturn, '
-      'behavior: $behavior, '
-      'parameters: $parameters, '
-      'bindings: $bindings, '
-      'anyRemainingTarget: $anyRemainingTarget, '
-      'hasAnyUnmapped: $hasAnyUnmapped, '
-      'nullSourceTarget: $nullSourceTarget'
-      '}';
+enum PrimaryTargetColor {
+  red,
+  green,
+  blue,
+}
+
+@ShouldGenerate(
+  r'''null => PrimaryTargetColor.red,''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''ExtendedSourceColor.red => PrimaryTargetColor.red,''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''_ => PrimaryTargetColor.blue,''',
+  contains: true,
+)
+@Mapper()
+abstract class NullValueSourceEnumMapper {
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'blue')
+  @ValueMapping(source: ValueMapping.nullValue, target: 'red')
+  PrimaryTargetColor convertNullable(ExtendedSourceColor? source);
 }
