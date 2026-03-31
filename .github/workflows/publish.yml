@@ -26,7 +26,7 @@ jobs:
           MAX_ATTEMPTS=20
           ATTEMPT=0
           until [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pub.dev/api/packages/dart_mapper/versions/$VERSION")
+            STATUS=$(curl -s --connect-timeout 5 --max-time 15 -o /dev/null -w "%{http_code}" "https://pub.dev/api/packages/dart_mapper/versions/$VERSION" || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "dart_mapper $VERSION is available on pub.dev."
               exit 0
