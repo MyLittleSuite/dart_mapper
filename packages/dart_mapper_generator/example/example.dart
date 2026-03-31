@@ -23,38 +23,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
+// dart_mapper_generator is a build-time code generator — it has no runtime API.
+// Add it to your dev_dependencies and configure build.yaml as shown below.
+//
+// pubspec.yaml (dev_dependencies):
+//   dart_mapper_generator: ^1.0.0
+//   build_runner: ^2.4.8
+//
+// build.yaml:
+//   targets:
+//     $default:
+//       builders:
+//         dart_mapper_generator:dart_mapper_builder:
+//           enabled: true
+//
+// Then run:
+//   dart run build_runner build
 
-final class DefinedMappingMethod extends BindableMappingMethod {
-  final String? anyRemainingTarget;
-  final bool hasAnyUnmapped;
-  final String? nullSourceTarget;
-
-  const DefinedMappingMethod({
-    required super.name,
-    super.isOverride = false,
-    super.returnType,
-    super.optionalReturn = false,
-    super.behavior = MappingBehavior.standard,
-    super.parameters = const [],
-    super.bindings = const [],
-    this.anyRemainingTarget,
-    this.hasAnyUnmapped = false,
-    this.nullSourceTarget,
-  });
-
-  @override
-  String toString() => 'DefinedMappingMethod{'
-      'name: $name, '
-      'isOverride: $isOverride, '
-      'returnType: $returnType, '
-      'optionalReturn: $optionalReturn, '
-      'behavior: $behavior, '
-      'parameters: $parameters, '
-      'bindings: $bindings, '
-      'anyRemainingTarget: $anyRemainingTarget, '
-      'hasAnyUnmapped: $hasAnyUnmapped, '
-      'nullSourceTarget: $nullSourceTarget'
-      '}';
+void main() {
+  print('dart_mapper_generator is a build-time tool.');
+  print('See https://pub.dev/packages/dart_mapper for usage.');
 }

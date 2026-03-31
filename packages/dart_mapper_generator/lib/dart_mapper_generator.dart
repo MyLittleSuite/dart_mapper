@@ -23,6 +23,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/// Build-time code generator for [dart_mapper](https://pub.dev/packages/dart_mapper).
+///
+/// Provides [dartMapperBuilder], a `SharedPartBuilder` that reads `@Mapper`-annotated
+/// abstract classes and generates concrete mapping implementations at compile time
+/// via `build_runner`.
 library;
 
 export 'src/builders/dart_mapper_builder.dart';
