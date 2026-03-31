@@ -1,3 +1,8 @@
+## 1.0.1
+
+- Add support for nullValue-as-source in enum mapping
+- Fix inherit-config ignore behavior
+
 ## 1.0.0
 
 - Implement @SubclassMapping support for runtime-type dispatch in mappers (#76)
