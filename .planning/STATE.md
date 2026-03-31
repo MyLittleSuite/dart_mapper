@@ -126,6 +126,7 @@ None yet.
 | 260329-wr0 | Apply code review findings from pair review of @SubclassMapping | 2026-03-29 | 3fa0439 | [260329-wr0-apply-code-review-findings-from-pair-rev](./quick/260329-wr0-apply-code-review-findings-from-pair-rev/) |
 | 260330-ihe | Move @SubclassMapping from class level to method level | 2026-03-30 | ca744d0 | [260330-ihe-move-subclassmapping-from-class-level-to](./quick/260330-ihe-move-subclassmapping-from-class-level-to/) |
 | 260331-eaj | Add wait_for_dart_mapper polling job to publish workflow | 2026-03-31 | 9cc24f6 | [260331-eaj-add-wait-for-dart-mapper-polling-job-to-](./quick/260331-eaj-add-wait-for-dart-mapper-polling-job-to-/) |
+| 260331-fc5 | Fix pub.dev score issues: rename root pubspec, add example stubs, add dartdoc | 2026-03-31 | 3cddebc | [260331-fc5-fix-pub-dev-score-issues-rename-root-pub](./quick/260331-fc5-fix-pub-dev-score-issues-rename-root-pub/) |
 
 ### Blockers/Concerns
 
@@ -134,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-31 - Completed quick task 260331-eaj: Add wait_for_dart_mapper polling job to publish.yml for sequential pub.dev availability
+Last activity: 2026-03-31 - Completed quick task 260331-fc5: Fix pub.dev score issues (rename root pubspec, example stubs, dartdoc)
 Stopped at: Phase 6 context gathered
 Resume file: .planning/phases/06-test-completion-documentation/06-CONTEXT.md
