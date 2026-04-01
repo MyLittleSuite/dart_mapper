@@ -216,8 +216,10 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
     }
 
     // --- Step 3: Auto-resolve fields from target getters ---
+    final targetSubstituted = method.returnType.substitutedGetterTypes;
     for (final sourceMethodParam in method.formalParameters) {
       final sourceClass = sourceMethodParam.type.element?.classElementOrNull;
+      final sourceSubstituted = sourceMethodParam.type.substitutedGetterTypes;
 
       for (final targetGetter in targetClass.getterElements) {
         if (targetGetter.name != null) {
@@ -239,16 +241,16 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
           if (sourceClassParam != null && sourceMethodParam.name != null) {
             final sourceField = Field.from(
               name: sourceFieldName,
-              type: sourceClassParam.type,
+              type: sourceSubstituted?[sourceFieldName] ?? sourceClassParam.type,
               required: sourceClassParam.isRequired,
-              nullable: sourceClassParam.type.isNullable,
+              nullable: (sourceSubstituted?[sourceFieldName] ?? sourceClassParam.type).isNullable,
               instance: Instance(name: sourceMethodParam.name!),
             );
             final targetField = Field.from(
               name: targetName,
-              type: targetGetter.type,
+              type: targetSubstituted?[targetName] ?? targetGetter.type,
               required: targetGetter.isRequired,
-              nullable: targetGetter.type.isNullable,
+              nullable: (targetSubstituted?[targetName] ?? targetGetter.type).isNullable,
             );
 
             final callableMappingMethod = callableMap[targetName];

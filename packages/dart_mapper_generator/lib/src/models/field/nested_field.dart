@@ -24,6 +24,7 @@
  */
 
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
@@ -42,10 +43,10 @@ class NestedField extends Field {
           .where((field) => field.name != null)
           .map((field) => Field.from(
                 name: field.name!,
-                type: field.type,
+                type: type.substitutedGetterTypes?[field.name!] ?? field.type,
                 instance: Instance(name: name),
                 required: field.isRequired,
-                nullable: field.isNullable,
+                nullable: (type.substitutedGetterTypes?[field.name!] ?? field.type).isNullable,
               ))
           .toList(growable: false) ??
       [];

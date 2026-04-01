@@ -76,6 +76,29 @@ extension DartTypeExtension on DartType {
   String get parameterName =>
       displayString.toSnakeCase().toCamelCase(lower: true);
 
+  /// Returns a map of getter name to substituted [DartType] for this type,
+  /// using [InterfaceType.getters] which performs type-parameter substitution
+  /// (e.g. T to Todo when the instantiated type is Pagination of Todo).
+  ///
+  /// Returns null for non-[InterfaceType] values so all existing call-sites
+  /// that use [ClassElement.getterElements] fall back to unsubstituted types
+  /// unchanged.
+  Map<String, DartType>? get substitutedGetterTypes {
+    if (this is! InterfaceType) return null;
+    final iface = this as InterfaceType;
+    final result = <String, DartType>{};
+    final allTypes = [iface, ...iface.allSupertypes.where((t) => !t.isDartCoreObject)];
+    for (final t in allTypes) {
+      for (final getter in t.getters) {
+        if (getter.isStatic) continue;
+        final rawName = getter.name;
+        if (rawName == null || rawName.isEmpty) continue;
+        result.putIfAbsent(rawName, () => getter.returnType);
+      }
+    }
+    return result.isEmpty ? null : result;
+  }
+
   bool same(
     DartType other, {
     Map<Uri, String>? aliases,

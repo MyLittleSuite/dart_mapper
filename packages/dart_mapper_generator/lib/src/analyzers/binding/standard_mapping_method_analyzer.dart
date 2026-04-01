@@ -419,9 +419,11 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     }
 
     // --- Step 3: Auto-resolve fields from source parameters ---
+    final targetSubstituted = method.returnType.substitutedGetterTypes;
     for (final sourceMethodParam in method.formalParameters) {
       final sourceClass = sourceMethodParam.type.element?.classElementOrNull;
       final sourceGetters = sourceClass?.getterElements ?? <VariableElement>[];
+      final sourceSubstituted = sourceMethodParam.type.substitutedGetterTypes;
 
       for (final sourceClassParam in sourceGetters) {
         if (sourceClassParam.name != null) {
@@ -462,16 +464,16 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
 
             final sourceField = Field.from(
               name: sourceClassParam.name!,
-              type: sourceClassParam.type,
+              type: sourceSubstituted?[sourceClassParam.name!] ?? sourceClassParam.type,
               required: sourceClassParam.isRequired,
-              nullable: sourceClassParam.type.isNullable,
+              nullable: (sourceSubstituted?[sourceClassParam.name!] ?? sourceClassParam.type).isNullable,
               instance: Instance(name: sourceMethodParam.name!),
             );
             final targetField = Field.from(
               name: targetClassParamName,
-              type: resolvedTargetParam.type,
+              type: targetSubstituted?[targetClassParamName] ?? resolvedTargetParam.type,
               required: resolvedTargetParam.isRequired,
-              nullable: resolvedTargetParam.type.isNullable,
+              nullable: (targetSubstituted?[targetClassParamName] ?? resolvedTargetParam.type).isNullable,
             );
 
             final callableMappingMethod = callableMap[targetClassParamName];
