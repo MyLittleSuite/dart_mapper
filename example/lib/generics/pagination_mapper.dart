@@ -68,6 +68,4 @@ class Pagination<T> {
 @Mapper()
 abstract class PaginationMapper {
   Pagination<Todo> toPagination(PaginationDto<TodoDto> source);
-
-  Todo toTodo(TodoDto source);
 }

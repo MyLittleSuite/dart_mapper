@@ -65,7 +65,6 @@ class Pagination<T> {
 @Mapper()
 abstract class PaginationMapper {
   Pagination<Todo> convert(PaginationDTO<TodoDTO> source);
-  Todo _mapTodoDTOToTodo(TodoDTO source);
 }
 
 // --- Generic single-T field mapping ---
@@ -84,11 +83,10 @@ class Box {
 
 // T resolves to TodoDTO at call site; content must pass through a converter.
 @ShouldGenerate(
-  '_mapTodoDTOToTodo2(source.content)',
+  '_mapTodoDTOToTodo(source.content)',
   contains: true,
 )
 @Mapper()
 abstract class BoxMapper {
   Box convert(BoxDTO<TodoDTO> source);
-  Todo _mapTodoDTOToTodo2(TodoDTO source);
 }
