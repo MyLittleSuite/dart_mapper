@@ -19,6 +19,17 @@ int _doublePrice(dynamic price) {
   return price * 2;
 }
 
+class NullableCallSource {
+  final String name;
+  final int? price;
+
+  const NullableCallSource(this.name, this.price);
+}
+
+int _priceOrZero(dynamic price) {
+  return price ?? 0;
+}
+
 @ShouldGenerate(
   r'''class CallMapperImpl extends CallMapper {
   const CallMapperImpl();
@@ -36,4 +47,16 @@ abstract class CallMapper {
 
   @Mapping(target: 'price', callable: _doublePrice)
   CallTarget toTarget(CallSource source);
+}
+
+@ShouldGenerate(
+  r'''_priceOrZero(source.price)''',
+  contains: true,
+)
+@Mapper()
+abstract class NullableCallMapper {
+  const NullableCallMapper();
+
+  @Mapping(target: 'price', callable: _priceOrZero)
+  CallTarget toTarget(NullableCallSource source);
 }

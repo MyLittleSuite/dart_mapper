@@ -64,6 +64,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
 
     final safeEnumDisplayName =
         targetEnum.displayName.replaceAll('\\', '\\\\').replaceAll(r'$', r'\$');
+    final qualifiedEnumName = context.resolveType(method.returnType!);
     final sourceField = method.parameters.first.field;
     final expressionFactory = expressionStrategyDispatcher.get(method.behavior);
 
@@ -77,7 +78,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
                 (
                   literal(null),
                   method is DefinedMappingMethod && method.nullSourceTarget != null
-                      ? refer(safeEnumDisplayName).property(method.nullSourceTarget!)
+                      ? refer(qualifiedEnumName).property(method.nullSourceTarget!)
                       : method.optionalReturn
                           ? literal(null)
                           : throwArgumentErrorNotNull(sourceField.name),
@@ -109,6 +110,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
             otherwise: _buildOtherwiseExpression(
               method: method,
               safeEnumDisplayName: safeEnumDisplayName,
+              qualifiedEnumName: qualifiedEnumName,
               sourceFieldName: sourceField.name,
             ),
           ).returned,
@@ -119,11 +121,11 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
   Expression _buildOtherwiseExpression({
     required BindableMappingMethod method,
     required String safeEnumDisplayName,
+    required String qualifiedEnumName,
     required String sourceFieldName,
   }) {
     if (method is DefinedMappingMethod && method.anyRemainingTarget != null) {
-      final targetEnumRef = refer(safeEnumDisplayName);
-      return targetEnumRef.property(method.anyRemainingTarget!);
+      return refer(qualifiedEnumName).property(method.anyRemainingTarget!);
     }
 
     if (method is DefinedMappingMethod && method.hasAnyUnmapped) {

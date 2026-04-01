@@ -62,6 +62,14 @@ class AliasObject {
   r'''models.AliasEnum reverseMapEnum(AliasEnum target)''',
   contains: true,
 )
+@ShouldGenerate(
+  r'''models.AliasEnum.element => AliasEnum.element''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''AliasEnum.element => models.AliasEnum.element''',
+  contains: true,
+)
 @Mapper()
 abstract class AliasMapper {
   @Mapping(target: 'name', source: 'description')
