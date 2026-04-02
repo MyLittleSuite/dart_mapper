@@ -1,3 +1,9 @@
+## 1.0.2
+
+- Fix: preserve import alias in null-source and ANY_REMAINING enum mapping (#80)
+- Fix: skip nullability guard when callable handles the conversion (#44)
+- Fix: resolve generic field types using InterfaceType substitution for generic classes like `Pagination<T>` (#81)
+
 ## 1.0.1
 
 - Add support for nullValue-as-source in enum mapping
