@@ -1,6 +1,6 @@
 name: dart_mapper
 description: "MapStruct-style object mapping for Dart. Define type-safe mappings declaratively with annotations and get generated implementations at compile time via build_runner."
-version: 1.0.2
+version: 1.0.3
 homepage: https://docs.page/MyLittleSuite/dart_mapper
 repository: https://github.com/MyLittleSuite/dart_mapper
 issue_tracker: https://github.com/MyLittleSuite/dart_mapper/issues
