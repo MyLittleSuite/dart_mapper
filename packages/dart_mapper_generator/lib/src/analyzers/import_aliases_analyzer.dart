@@ -28,23 +28,44 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 
 class ImportAliasesAnalyzer extends Analyzer<Map<Uri, String>> {
   const ImportAliasesAnalyzer();
 
   @override
-  Map<Uri, String> analyze(AnalyzerContext context) {
-    final imports = context.mapperClass.library.firstFragment.libraryImports;
+  Map<Uri, String> analyze(AnalyzerContext context) =>
+      context.mapperClass.library.firstFragment.libraryImports
+          .where((import) =>
+              import.prefix?.element.name != null &&
+              import.uri is DirectiveUriWithSource)
+          .fold(<Uri, String>{}, (acc, import) {
+            final alias = import.prefix!.element.name!;
+            final directUri =
+                (import.uri as DirectiveUriWithSource).source.uri;
+            return _allUris(import.importedLibrary, {directUri})
+                .fold(acc, (innerAcc, uri) {
+              final existing = innerAcc[uri];
+              if (existing != null && existing != alias) {
+                throw InvalidGenerationSourceError(
+                  'Library "$uri" is reachable via two different import '
+                  'aliases: "$existing" and "$alias". '
+                  'Each library must be imported under a single alias.',
+                );
+              }
+              return innerAcc..[uri] = alias;
+            });
+          });
 
-    return imports
-        .where((import) =>
-            import.prefix?.element.name != null &&
-            import.uri is DirectiveUriWithSource)
-        .fold({}, (acc, import) {
-      final uri = (import.uri as DirectiveUriWithSource).source.uri;
-
-      acc[uri] = import.prefix!.element.name!;
-      return acc;
-    });
-  }
+  /// Returns all URIs reachable from [library] via re-exports, seeded with
+  /// [visited] (which already contains the direct import URI).
+  Set<Uri> _allUris(LibraryElement? library, Set<Uri> visited) =>
+      library == null
+          ? visited
+          : library.exportedLibraries.fold(visited, (acc, exported) {
+              final uri = exported.firstFragment.source.uri;
+              return acc.contains(uri)
+                  ? acc
+                  : _allUris(exported, {...acc, uri});
+            });
 }

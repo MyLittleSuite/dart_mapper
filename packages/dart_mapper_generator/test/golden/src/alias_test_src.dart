@@ -32,6 +32,7 @@
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:source_gen_test/annotations.dart';
 
+import 'alias_barrel.dart' as barrel;
 import 'alias_models.dart' as models;
 
 // Local types (non-aliased counterparts)
@@ -82,4 +83,21 @@ abstract class AliasMapper {
 
   @InheritInverseConfiguration()
   models.AliasEnum reverseMapEnum(AliasEnum target);
+}
+
+// Verifies that import aliases are preserved when the mapped type is accessed
+// via a barrel file (i.e. defined in a re-exported file, not the barrel itself).
+@ShouldGenerate(
+  r'''AliasEnum barrelMapEnum(barrel.InnerEnum source)''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''barrel.InnerEnum.alpha => AliasEnum.element''',
+  contains: true,
+)
+@Mapper()
+abstract class BarrelAliasMapper {
+  @ValueMapping(source: 'alpha', target: 'element')
+  @ValueMapping(source: 'beta', target: 'element')
+  AliasEnum barrelMapEnum(barrel.InnerEnum source);
 }

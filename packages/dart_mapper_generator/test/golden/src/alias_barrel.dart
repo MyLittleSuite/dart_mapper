@@ -23,18 +23,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// Models used by alias_test_src.dart via aliased import.
-// Mirrors the example/lib/alias pattern where types are imported
-// with a prefix (e.g., `import '...' as models;`).
-// Also re-exported by alias_barrel.dart to test transitive alias resolution.
+// Barrel file that re-exports alias_inner.dart.
+// Used by alias_test_src.dart to verify that import aliases are resolved
+// correctly for types defined in a re-exported file (not the barrel itself).
 
-enum AliasEnum {
-  element,
-}
-
-class AliasObject {
-  final String description;
-  final AliasEnum alias;
-
-  const AliasObject(this.description, this.alias);
-}
+export 'alias_inner.dart';
