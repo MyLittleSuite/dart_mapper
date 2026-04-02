@@ -1,3 +1,7 @@
+## 1.0.3
+
+- Fix: resolve import alias for types re-exported via barrel files (#67)
+
 ## 1.0.2
 
 - Fix: preserve import alias in null-source and ANY_REMAINING enum mapping (#80)
