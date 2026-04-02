@@ -1,3 +1,7 @@
+## 1.0.2
+
+- Bump version to keep in sync with dart_mapper_generator 1.0.2
+
 ## 1.0.1
 
 - Add support for nullValue-as-source in enum mapping
