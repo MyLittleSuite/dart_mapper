@@ -42,7 +42,8 @@
         { "title": "Callable Mapping", "href": "/guides/callable-mapping" },
         { "title": "Freezed Support", "href": "/guides/freezed-support" },
         { "title": "Built Value Support", "href": "/guides/built-value-support" },
-        { "title": "Collections", "href": "/guides/collections" }
+        { "title": "Collections", "href": "/guides/collections" },
+        { "title": "Generic Mapping", "href": "/guides/generics" }
       ]
     }
   ]

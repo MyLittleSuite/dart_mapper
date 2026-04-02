@@ -1,0 +1,109 @@
+---
+title: "Generic Mapping"
+description: Map generic classes like Pagination<T> by declaring concrete type arguments in the mapper method.
+---
+
+# Generic Mapping
+
+`dart_mapper` supports mapping generic classes. Declare the mapper method with concrete type arguments and the generator resolves each field accordingly — including collection fields like `List<T>`.
+
+## Pagination Example
+
+Define your generic DTO and domain classes:
+
+```dart
+class TodoDto {
+  final String title;
+  final bool completed;
+  TodoDto({required this.title, required this.completed});
+}
+
+class Todo {
+  final String title;
+  final bool completed;
+  Todo({required this.title, required this.completed});
+}
+
+class PaginationDto<T> {
+  final List<T> items;
+  final int page;
+  final int totalPages;
+  PaginationDto({required this.items, required this.page, required this.totalPages});
+}
+
+class Pagination<T> {
+  final List<T> items;
+  final int page;
+  final int totalPages;
+  Pagination({required this.items, required this.page, required this.totalPages});
+}
+```
+
+Declare the mapper with concrete type arguments. The generator picks up the element-level converter automatically:
+
+```dart
+@Mapper()
+abstract class PaginationMapper {
+  Pagination<Todo> toPagination(PaginationDto<TodoDto> source);
+  Todo toTodo(TodoDto source);
+}
+```
+
+Generated:
+
+```dart
+@override
+Pagination<Todo> toPagination(PaginationDto<TodoDto> source) {
+  return Pagination(
+    items: source.items.map(toTodo).toList(),
+    page: source.page,
+    totalPages: source.totalPages,
+  );
+}
+```
+
+## Generic Wrapper Types
+
+Single-field generic wrappers work the same way. Use concrete type arguments in the method signature:
+
+```dart
+class BoxDto<T> {
+  final T content;
+  final String tag;
+  BoxDto(this.content, this.tag);
+}
+
+class Box {
+  final Todo content;
+  final String tag;
+  Box(this.content, this.tag);
+}
+
+@Mapper()
+abstract class BoxMapper {
+  Box convert(BoxDto<TodoDto> source);
+  Todo toTodo(TodoDto source);
+}
+```
+
+Generated:
+
+```dart
+@override
+Box convert(BoxDto<TodoDto> source) {
+  return Box(
+    toTodo(source.content),
+    source.tag,
+  );
+}
+```
+
+## Limitations
+
+- **Concrete type arguments required**: The mapper method must use fully resolved types (e.g. `PaginationDto<TodoDto>`). A signature like `Pagination<T> convert(PaginationDto<T> source)` where `T` is still an open type parameter is not supported.
+- **Element converter required**: When `T` maps to a custom class, a converter method for that type must be present in the same mapper (or via `uses`).
+
+## See Also
+
+- [Collections guide](/guides/collections) — `List`, `Set`, `Map` field mapping
+- [External Mappers (`uses`)](/guides/built-value-support#external-mapper-with-uses) — reusing converters across mappers
