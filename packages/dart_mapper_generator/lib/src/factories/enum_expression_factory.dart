@@ -24,6 +24,7 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
@@ -39,6 +40,10 @@ class EnumExpressionFactory extends ExpressionFactory {
   Expression create(ExpressionContext context) {
     if (context.field.type.isPrimitive) {
       if (context.origin == FieldOrigin.target) {
+        if (context.field.name == ValueMapping.nullValue) {
+          return literalNull;
+        }
+
         if (context.field.type.isDartCoreInt) {
           return literal(context.field.name).stringToInt(
             nullable: context.currentMethod.optionalReturn,

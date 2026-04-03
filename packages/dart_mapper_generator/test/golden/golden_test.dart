@@ -297,4 +297,11 @@ void main() async {
     'null_value_source_test_src.dart',
   );
   testAnnotatedElements<Mapper>(nullValueSourceReader, generator);
+
+  // Group: nullValue as target in enum-to-raw mapping (VALUE-MAPPING-NULL-SENTINEL)
+  final enumNullTargetReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'enum_null_target_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(enumNullTargetReader, generator);
 }
