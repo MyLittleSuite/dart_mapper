@@ -1,3 +1,7 @@
+## 1.0.4
+
+- Fix: handle null value mapping in enum-to-raw conversion (#85)
+
 ## 1.0.3
 
 - Fix: resolve import alias for types re-exported via barrel files (#67)
