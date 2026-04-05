@@ -231,7 +231,8 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
 
   String? get anyRemainingTarget => enumValues[ValueMapping.anyRemaining];
 
-  bool get hasAnyUnmapped => enumValues.containsKey(ValueMapping.anyUnmapped);
+  String? get anyUnmappedTarget => enumValues[ValueMapping.anyUnmapped];
+  bool get hasAnyUnmapped => anyUnmappedTarget != null;
 
   String? get nullSourceTarget => enumValues[ValueMapping.nullValue];
 

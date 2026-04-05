@@ -210,6 +210,9 @@ class EnumsMappingMethodAnalyzer extends Analyzer<List<Binding>> {
               : <String>[]);
 
       for (final sourceClassValue in effectiveSourceValues) {
+        // Skip sentinel values — they drive the otherwise/wildcard case, not explicit bindings.
+        if (sourceClassValue == ValueMapping.anyUnmapped ||
+            sourceClassValue == ValueMapping.anyRemaining) continue;
         if (sourceElement.name != null &&
             targetEnum.name != null &&
             targetValue.name != null) {

@@ -24,6 +24,7 @@
  */
 
 import 'package:code_builder/code_builder.dart';
+import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
@@ -128,8 +129,11 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
       return refer(qualifiedEnumName).property(method.anyRemainingTarget!);
     }
 
-    if (method is DefinedMappingMethod && method.hasAnyUnmapped) {
-      return literal(null);
+    if (method is DefinedMappingMethod && method.anyUnmappedTarget != null) {
+      if (method.anyUnmappedTarget == ValueMapping.nullValue) {
+        return literal(null);
+      }
+      return refer(qualifiedEnumName).property(method.anyUnmappedTarget!);
     }
 
     if (method.optionalReturn) {
