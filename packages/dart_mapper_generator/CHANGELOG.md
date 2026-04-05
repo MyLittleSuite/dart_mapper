@@ -1,3 +1,8 @@
+## 1.0.5
+
+- Fix: `@ValueMapping` now correctly applies `anyRemaining` and `anyUnmapped` strategies (#86)
+- Fix: `forceNonNull` is no longer incorrectly applied during nested object mapping (#86)
+
 ## 1.0.4
 
 - Fix: handle null value mapping in enum-to-raw conversion (#85)
