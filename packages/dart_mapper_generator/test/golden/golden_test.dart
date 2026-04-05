@@ -304,4 +304,11 @@ void main() async {
     'enum_null_target_test_src.dart',
   );
   testAnnotatedElements<Mapper>(enumNullTargetReader, generator);
+
+  // Group: Sentinel handling in String→Enum and $ escaping (SENTINEL-01..04)
+  final stringToEnumSentinelReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'string_to_enum_sentinel_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(stringToEnumSentinelReader, generator);
 }

@@ -60,7 +60,7 @@ class EnumExpressionFactory extends ExpressionFactory {
       }
 
       final name = context.field.name;
-      return literal(num.tryParse(name) ?? name);
+      return literal(num.tryParse(name) ?? name.replaceAll(r'$', r'\$'));
     }
 
     if (context.field.type.isEnum) {
