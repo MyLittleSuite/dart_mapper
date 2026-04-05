@@ -103,7 +103,7 @@ class DefaultExpressionFactory extends ExpressionFactory {
     final basicExpression = super.basic(context);
 
     if (context.extraMappingMethod?.returnType?.isIterable == true) {
-      return field.nullable
+      return field.nullable && !context.forceNonNull
           ? basicExpression.conditionalNull(
               refer(context.extraMappingMethod!.name).call(
                 [basicExpression.nullChecked],
@@ -150,7 +150,7 @@ class DefaultExpressionFactory extends ExpressionFactory {
   ) {
     final basicExpression = super.basic(context);
 
-    if (context.field.nullable) {
+    if (context.field.nullable && !context.forceNonNull) {
       // source != null ? {extraMappingMethod.name}(source) : null
       return basicExpression.conditionalNull(
         refer(extraMethod.name).call([basicExpression.nullChecked]),

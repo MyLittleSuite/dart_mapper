@@ -105,7 +105,7 @@ class BuiltExpressionFactory extends ExpressionFactory {
         ])
             .parenthesized;
 
-        return (context.field.nullable)
+        return (context.field.nullable && !context.forceNonNull)
             ? basicExpression.isNotNull.conditional(
           replaceExpression,
           literalNull,
