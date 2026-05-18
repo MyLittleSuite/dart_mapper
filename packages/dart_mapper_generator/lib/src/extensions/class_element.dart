@@ -34,7 +34,7 @@ extension ClassElementExtension on ClassElement {
     'runtimeType',
   };
 
-  ConstructorElement get primaryConstructor {
+  ConstructorElement get mainConstructor {
     final constructor = (constructors
           ..sort(
             (a, b) => a.formalParameters.length.compareTo(b.formalParameters.length) * -1,
@@ -48,7 +48,7 @@ extension ClassElementExtension on ClassElement {
   }
 
   List<FormalParameterElement> get constructorParameters =>
-      primaryConstructor.formalParameters;
+      mainConstructor.formalParameters;
 
   List<VariableElement> get getterElements {
     final allSuperclasses = allSupertypes

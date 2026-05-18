@@ -76,7 +76,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
       );
     }
 
-    final targetConstructor = targetClass.primaryConstructor;
+    final targetConstructor = targetClass.mainConstructor;
     if (targetConstructor.formalParameters.length > 1) {
       throw TooManyConstructorParametersError(targetClass);
     }

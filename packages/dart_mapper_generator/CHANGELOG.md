@@ -1,3 +1,8 @@
+## 1.0.6
+
+- chore: update dependency analyzer to v12
+- chore: update dependency dart_style to v3.1.0
+
 ## 1.0.5
 
 - Fix: `@ValueMapping` now correctly applies `anyRemaining` and `anyUnmapped` strategies (#86)
