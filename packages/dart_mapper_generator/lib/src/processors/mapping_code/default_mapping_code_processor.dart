@@ -61,7 +61,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
       );
     }
 
-    final targetConstructor = targetClass.primaryConstructor;
+    final targetConstructor = targetClass.mainConstructor;
 
     final positionalArguments = <Expression>[];
     final namedArguments = <String, Expression>{};

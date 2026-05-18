@@ -92,7 +92,7 @@ class BuiltExpressionFactory extends ExpressionFactory {
         }
 
         final targetClass = returnType!.element!.classElement;
-        final targetConstructor = targetClass.primaryConstructor;
+        final targetConstructor = targetClass.mainConstructor;
 
         final replaceExpression = refer([
           context.resolveConstructor(targetConstructor),

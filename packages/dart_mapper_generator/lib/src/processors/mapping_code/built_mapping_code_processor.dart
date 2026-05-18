@@ -54,7 +54,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
 
     final method = context.currentMethod;
     final targetClass = method.returnType!.element!.classElement;
-    final targetConstructor = targetClass.primaryConstructor;
+    final targetConstructor = targetClass.mainConstructor;
 
     return Block(
       (builder) {
