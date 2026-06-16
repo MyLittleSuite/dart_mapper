@@ -105,3 +105,28 @@ class Target {
 abstract class ListMapper {
   Target toTarget(Source source);
 }
+
+class CollectionCoercionSource {
+  final List<int> numbers;
+  final Set<String> tags;
+
+  CollectionCoercionSource({
+    required this.numbers,
+    required this.tags,
+  });
+}
+
+class CollectionCoercionTarget {
+  final Set<int> numbers;
+  final List<String> tags;
+
+  CollectionCoercionTarget({
+    required this.numbers,
+    required this.tags,
+  });
+}
+
+@Mapper()
+abstract class CollectionCoercionMapper {
+  CollectionCoercionTarget toTarget(CollectionCoercionSource source);
+}
