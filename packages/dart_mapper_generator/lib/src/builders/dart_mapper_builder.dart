@@ -66,6 +66,8 @@ import 'package:source_gen/source_gen.dart';
 /// The [options] parameter is passed through to the underlying builder but is
 /// unused by default.
 Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
+  final globalTimestampDoc = options.config['timestamp_doc'] as bool? ?? false;
+
   final expressionStrategyDispatcher = StrategyDispatcher({
     MappingBehavior.built: BuiltExpressionFactory(
       defaultFactory: DefaultExpressionFactory(),
@@ -110,6 +112,7 @@ Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
           methodProcessor: MappingProcessor(
             methodCodeDispatcher: methodCodeDispatcher,
           ),
+          globalTimestampDoc: globalTimestampDoc,
         ),
         analyzer: BindingsAnalyzer(
           mapperUsageAnalyzer: UsesAnalyzer(),
