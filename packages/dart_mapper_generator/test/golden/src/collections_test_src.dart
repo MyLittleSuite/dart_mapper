@@ -33,3 +33,42 @@ class CollTarget {
 abstract class CollMapper {
   CollTarget toTarget(CollSource source);
 }
+
+class CollectionCoercionSource {
+  final List<int> numbers;
+  final Set<String> tags;
+
+  CollectionCoercionSource({
+    required this.numbers,
+    required this.tags,
+  });
+}
+
+class CollectionCoercionTarget {
+  final Set<int> numbers;
+  final List<String> tags;
+
+  CollectionCoercionTarget({
+    required this.numbers,
+    required this.tags,
+  });
+}
+
+@ShouldGenerate(
+  r'''class CollectionCoercionMapperImpl extends CollectionCoercionMapper {
+  CollectionCoercionMapperImpl();
+
+  @override
+  CollectionCoercionTarget toTarget(CollectionCoercionSource source) {
+    return CollectionCoercionTarget(
+      numbers: source.numbers.map((item) => item).toSet(),
+      tags: source.tags.map((item) => item).toList(growable: true),
+    );
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class CollectionCoercionMapper {
+  CollectionCoercionTarget toTarget(CollectionCoercionSource source);
+}

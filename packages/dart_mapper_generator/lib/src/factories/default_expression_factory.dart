@@ -49,10 +49,10 @@ class DefaultExpressionFactory extends ExpressionFactory {
       if (context.field is MapField) {
         return _createMap(context, context.field as MapField);
       } else if (context.field is IterableField) {
-        return _createIterable(context, context.field as IterableField);
+        return _createIterable(context);
       } else if ((context.field is NestedField ||
-          context.field is EnumField ||
-          context.field is PrimitiveField) &&
+              context.field is EnumField ||
+              context.field is PrimitiveField) &&
           context.extraMappingMethod != null) {
         return _mapFieldWithMethod(context, context.extraMappingMethod!);
       }
@@ -99,11 +99,13 @@ class DefaultExpressionFactory extends ExpressionFactory {
     ]);
   }
 
-  Expression _createIterable(ExpressionContext context, IterableField field) {
+  Expression _createIterable(ExpressionContext context) {
+    final sourceField = context.field as IterableField;
+    final targetField = context.counterpartField as IterableField;
     final basicExpression = super.basic(context);
 
     if (context.extraMappingMethod?.returnType?.isIterable == true) {
-      return field.nullable && !context.forceNonNull
+      return sourceField.nullable && !context.forceNonNull
           ? basicExpression.conditionalNull(
               refer(context.extraMappingMethod!.name).call(
                 [basicExpression.nullChecked],
@@ -112,7 +114,7 @@ class DefaultExpressionFactory extends ExpressionFactory {
           : refer(context.extraMappingMethod!.name).call([basicExpression]);
     }
 
-    final mapProperty = field.nullable
+    final mapProperty = sourceField.nullable
         ? basicExpression.nullSafeProperty('map')
         : basicExpression.property('map');
     final cloneExpression = mapProperty.call([
@@ -133,11 +135,11 @@ class DefaultExpressionFactory extends ExpressionFactory {
       ).closure,
     ]);
 
-    if (field.type.isList) {
+    if (targetField.type.isList) {
       return cloneExpression.propertyToList();
-    } else if (field.type.isSet) {
+    } else if (targetField.type.isSet) {
       return cloneExpression.propertyToSet();
-    } else if (field.type.isDartCoreIterable) {
+    } else if (targetField.type.isDartCoreIterable) {
       return cloneExpression;
     }
 
