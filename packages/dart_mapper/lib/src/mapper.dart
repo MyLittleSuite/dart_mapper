@@ -29,14 +29,9 @@ class Mapper {
   final String implementationName;
   final Set<Object>? uses;
 
-  /// Whether to include the generation timestamp in the doc comment of the
-  /// generated class.
-  final bool? timestampDoc;
-
   const Mapper({
     this.implementationName = '${classNameKey}Impl',
     this.uses,
-    this.timestampDoc,
   });
 
   String getImplementationName(String className) =>

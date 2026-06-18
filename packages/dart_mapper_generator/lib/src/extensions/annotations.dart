@@ -40,7 +40,6 @@ extension MapperAnnotation on Mapper {
             .where((type) => type != null)
             .whereType<Object>()
             .toSet(),
-        timestampDoc: annotation.peek('timestampDoc')?.boolValue,
       );
 }
 

@@ -298,7 +298,7 @@ void main() async {
   );
   testAnnotatedElements<Mapper>(nullValueSourceReader, generator);
 
-  // Group: Timestamp doc comment (@Mapper(timestampDoc: ...))
+  // Group: Timestamp doc comment default
   final timestampDocReader = await initializeLibraryReaderForDirectory(
     'test/golden/src',
     'timestamp_doc_test_src.dart',
