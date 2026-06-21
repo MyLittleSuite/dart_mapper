@@ -46,7 +46,7 @@ import 'package:dart_mapper_generator/src/processors/mapping_code/enum_mapping_c
 import 'package:dart_mapper_generator/src/processors/mapping_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 
-DartMapperGenerator createTestGenerator() {
+DartMapperGenerator createTestGenerator({bool timestampDoc = false}) {
   final expressionStrategyDispatcher = StrategyDispatcher({
     MappingBehavior.built: BuiltExpressionFactory(
       defaultFactory: DefaultExpressionFactory(),
@@ -86,6 +86,7 @@ DartMapperGenerator createTestGenerator() {
   return DartMapperGenerator(
     importAliasesAnalyzer: ImportAliasesAnalyzer(),
     mapperProcessor: MapperProcessor(
+      timestampDoc: timestampDoc,
       methodProcessor: MappingProcessor(
         methodCodeDispatcher: methodCodeDispatcher,
       ),

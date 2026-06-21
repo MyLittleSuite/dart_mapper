@@ -298,12 +298,15 @@ void main() async {
   );
   testAnnotatedElements<Mapper>(nullValueSourceReader, generator);
 
-  // Group: Timestamp doc comment default
+  // Group: Timestamp doc comment enabled by builder config
   final timestampDocReader = await initializeLibraryReaderForDirectory(
     'test/golden/src',
     'timestamp_doc_test_src.dart',
   );
-  testAnnotatedElements<Mapper>(timestampDocReader, generator);
+  testAnnotatedElements<Mapper>(
+    timestampDocReader,
+    createTestGenerator(timestampDoc: true),
+  );
 
   // Group: nullValue as target in enum-to-raw mapping (VALUE-MAPPING-NULL-SENTINEL)
   final enumNullTargetReader = await initializeLibraryReaderForDirectory(
