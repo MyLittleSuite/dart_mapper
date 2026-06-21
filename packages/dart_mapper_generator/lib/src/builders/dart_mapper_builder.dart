@@ -63,9 +63,11 @@ import 'package:source_gen/source_gen.dart';
 ///         enabled: true
 /// ```
 ///
-/// The [options] parameter is passed through to the underlying builder but is
-/// unused by default.
+/// Set `timestamp_doc: true` in builder options to include generation
+/// timestamps in generated class doc comments.
 Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
+  final timestampDoc = options.config['timestamp_doc'] as bool? ?? false;
+
   final expressionStrategyDispatcher = StrategyDispatcher({
     MappingBehavior.built: BuiltExpressionFactory(
       defaultFactory: DefaultExpressionFactory(),
@@ -110,6 +112,7 @@ Builder dartMapperBuilder([BuilderOptions options = BuilderOptions.empty]) {
           methodProcessor: MappingProcessor(
             methodCodeDispatcher: methodCodeDispatcher,
           ),
+          timestampDoc: timestampDoc,
         ),
         analyzer: BindingsAnalyzer(
           mapperUsageAnalyzer: UsesAnalyzer(),
