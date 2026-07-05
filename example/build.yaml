@@ -5,3 +5,6 @@ global_options:
   built_value_generator:built_value:
     runs_before:
       - dart_mapper_generator
+  dart_mapper_generator:dart_mapper_generator:
+    options:
+      timestamp_doc: true
