@@ -331,7 +331,7 @@ String resolveExpression(String expression) {
 /// anything other than a plain string.
 String resolveConditionExpression(String expression) {
   final hasInterpolation = expression.contains(r'${') ||
-      RegExp(r'\$[A-Za-z_]').hasMatch(expression);
+      RegExp(r'(?<![a-zA-Z0-9_$.])\$[A-Za-z_]').hasMatch(expression);
   if (!hasInterpolation) return expression;
 
   return expression.replaceAllMapped(

@@ -112,3 +112,29 @@ abstract class ConditionExpressionInterpolationMapper {
   )
   TagOutput toOutput(TagInput source);
 }
+
+class GraphqlInput {
+  final String? label;
+  // ignore: non_constant_identifier_names
+  final String? $__typename;
+  // ignore: non_constant_identifier_names
+  const GraphqlInput({this.label, this.$__typename});
+}
+
+class GraphqlOutput {
+  final String? label;
+  const GraphqlOutput({this.label});
+}
+
+@ShouldGenerate(
+  r"label: from.$__typename != null ? from.label : null",
+  contains: true,
+)
+@Mapper()
+abstract class ConditionExpressionDollarIdentifierMapper {
+  @Mapping(
+    target: 'label',
+    conditionExpression: r'from.$__typename != null',
+  )
+  GraphqlOutput fromQuery(GraphqlInput from);
+}
