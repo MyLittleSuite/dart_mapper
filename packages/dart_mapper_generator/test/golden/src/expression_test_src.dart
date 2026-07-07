@@ -23,14 +23,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// Golden test source for EXPR-01 and EXPR-02:
-// EXPR-01: expression: emits verbatim Dart code as field value
-// EXPR-02: expressions have access to source param names
-
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:source_gen_test/annotations.dart';
-
-// ----- EXPR-01: Single-source expression -----
 
 class PersonInput {
   final String first;
@@ -55,8 +49,6 @@ abstract class ExpressionMapper {
   PersonOutput toOutput(PersonInput source);
 }
 
-// ----- EXPR-01: expression: on String target -----
-
 class ScoreInput {
   final int score;
   const ScoreInput({required this.score});
@@ -78,8 +70,6 @@ abstract class ExpressionStringTargetMapper {
   @Mapping(target: 'label', expression: 'source.score.toString()')
   LabelOutput toOutput(ScoreInput source);
 }
-
-// ----- EXPR-02: Multi-source expression -----
 
 class UserInfo {
   final String name;
@@ -108,10 +98,6 @@ abstract class MultiSourceExpressionMapper {
   CombinedOutput toOutput(UserInfo user, CompanyInfo company);
 }
 
-// ----- EXPR-01: String interpolation auto-wrap -----
-// expression: with ${...} syntax is auto-wrapped in a string literal so the
-// user does not need to manually add surrounding quotes.
-
 @ShouldGenerate(
   r"""PersonOutput toOutput(PersonInput source) {
     return PersonOutput(fullName: '${source.first} ${source.last}');
@@ -122,4 +108,53 @@ abstract class MultiSourceExpressionMapper {
 abstract class ExpressionInterpolationMapper {
   @Mapping(target: 'fullName', expression: r'${source.first} ${source.last}')
   PersonOutput toOutput(PersonInput source);
+}
+
+class Query$typename {
+  // ignore: non_constant_identifier_names
+  final String $__typename;
+  // ignore: non_constant_identifier_names
+  const Query$typename({required this.$__typename});
+}
+
+class TypedOutput {
+  final String typeName;
+  const TypedOutput({required this.typeName});
+}
+
+@ShouldGenerate(
+  r"""TypedOutput fromQuery(Query$typename from) {
+    return TypedOutput(typeName: from.$__typename);
+  }""",
+  contains: true,
+)
+@Mapper()
+abstract class DollarInPropertyExpressionMapper {
+  @Mapping(target: 'typeName', expression: r'from.$__typename')
+  TypedOutput fromQuery(Query$typename from);
+}
+
+class SwitchOutput {
+  final String kind;
+  const SwitchOutput({required this.kind});
+}
+
+@ShouldGenerate(
+  """SwitchOutput fromQuery(Query\$typename from) {
+    return SwitchOutput(
+      kind: switch (from.\$__typename) {
+        'TypeA' => 'a',
+        _ => 'unknown',
+      },
+    );
+  }""",
+  contains: true,
+)
+@Mapper()
+abstract class DollarInSwitchExpressionMapper {
+  @Mapping(
+    target: 'kind',
+    expression: r"switch (from.$__typename) { 'TypeA' => 'a', _ => 'unknown' }",
+  )
+  SwitchOutput fromQuery(Query$typename from);
 }
