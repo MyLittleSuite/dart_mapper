@@ -1,3 +1,7 @@
+## 1.0.8
+
+- chore: bump analyzer version to >=12.0.0 <14.0.0 and refactor default expression method (#106)
+
 ## 1.0.7
 
 - Fix: update source expression handling and default value logic in mapping (#105)

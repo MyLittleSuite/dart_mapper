@@ -1,3 +1,7 @@
+## 1.0.8
+
+- Bump version to keep in sync with dart_mapper_generator 1.0.8
+
 ## 1.0.7
 
 - Bump version to keep in sync with dart_mapper_generator 1.0.7
