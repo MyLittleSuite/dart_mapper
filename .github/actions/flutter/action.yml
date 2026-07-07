@@ -8,25 +8,17 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # TODO: https://github.com/kuhnroyal/flutter-fvm-config-action/issues/36
-    - name: Setup Dart
-      uses: dart-lang/setup-dart@v1
-
-    - name: Install fvm
-      shell: bash
-      run: dart pub global activate fvm
-
-    - name: Install Flutter
-      shell: bash
-      run: fvm install
-      working-directory: ${{ inputs.working-directory }}
+    - name: Setup Flutter
+      uses: kuhnroyal/flutter-fvm-config-action/setup@v3
+      with:
+        path: ${{ inputs.working-directory }}/.fvmrc
 
     - name: Get flutter dependencies
       shell: bash
-      run: fvm flutter pub get
+      run: flutter pub get
       working-directory: ${{ inputs.working-directory }}
 
     - name: Generate code
       shell: bash
-      run: fvm flutter pub run build_runner build --delete-conflicting-outputs
+      run: flutter pub run build_runner build --delete-conflicting-outputs
       working-directory: ${{ inputs.working-directory }}
