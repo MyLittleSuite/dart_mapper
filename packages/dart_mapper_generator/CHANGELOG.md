@@ -1,3 +1,11 @@
+## 1.0.7
+
+- Fix: update source expression handling and default value logic in mapping (#105)
+- Fix: improve regex for interpolation detection and add support for dollar signs in property expressions (#104)
+- Add coercions between list-to-set and set-to-list (#95)
+- chore: update dependency flutter to v3.44.5 (#100)
+- chore: update dependency melos to v8 (#101)
+
 ## 1.0.6
 
 - chore: update dependency analyzer to v12

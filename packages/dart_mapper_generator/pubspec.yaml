@@ -1,6 +1,6 @@
 name: dart_mapper_generator
 description: "Code generator for dart_mapper. Produces mapping implementations at compile time via build_runner."
-version: 1.0.6
+version: 1.0.7
 homepage: https://docs.page/MyLittleSuite/dart_mapper
 repository: https://github.com/MyLittleSuite/dart_mapper
 issue_tracker: https://github.com/MyLittleSuite/dart_mapper/issues
