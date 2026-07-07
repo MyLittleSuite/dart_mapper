@@ -1,3 +1,8 @@
+## 1.0.9
+
+- chore: widen analyzer constraint to >=10.0.0 <14.0.0
+- chore: widen build constraint to >=3.1.0 <5.0.0
+
 ## 1.0.8
 
 - chore: bump analyzer version to >=12.0.0 <14.0.0 and refactor default expression method (#106)
