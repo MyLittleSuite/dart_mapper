@@ -94,3 +94,60 @@ abstract class UsesInnerMapper {
 abstract class UsesOuterMapper {
   UsesOuterTarget convert(UsesOuterSource source);
 }
+
+enum TaskStatus { active, inactive, unknown }
+
+class TaskStatusMapper {
+  const TaskStatusMapper();
+
+  TaskStatus? fromInt(int? value) => switch (value) {
+        1 => TaskStatus.active,
+        2 => TaskStatus.inactive,
+        _ => null,
+      };
+}
+
+class TaskDTO {
+  final int status;
+
+  const TaskDTO({required this.status});
+}
+
+class Task {
+  final TaskStatus status;
+
+  const Task({required this.status});
+}
+
+@ShouldGenerate(
+  // defaultValue must wrap the submapper call, NOT the source field.
+  r'''taskStatusMapper.fromInt(dto.status) ?? TaskStatus.unknown''',
+  contains: true,
+)
+@Mapper(uses: {TaskStatusMapper})
+abstract class TaskMapper {
+  @Mapping(target: 'status', defaultValue: 'TaskStatus.unknown')
+  Task fromDTO(TaskDTO dto);
+}
+
+// Nullable source variant: source is int?, submapper returns TaskStatus?,
+// defaultValue still applies to submapper result.
+class TaskDTONullable {
+  final int? status;
+
+  const TaskDTONullable({this.status});
+}
+
+@ShouldGenerate(
+  // Both branches carry the default: source!=null applies it to submapper
+  // result; source==null falls through to the default directly.
+  r'''dto.status != null
+          ? taskStatusMapper.fromInt(dto.status!) ?? TaskStatus.unknown
+          : TaskStatus.unknown''',
+  contains: true,
+)
+@Mapper(uses: {TaskStatusMapper})
+abstract class TaskNullableSourceMapper {
+  @Mapping(target: 'status', defaultValue: 'TaskStatus.unknown')
+  Task? fromDTO(TaskDTONullable dto);
+}

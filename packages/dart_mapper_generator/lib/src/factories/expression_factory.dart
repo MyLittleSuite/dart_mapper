@@ -167,6 +167,26 @@ abstract class ExpressionFactory {
     return finalExpr;
   }
 
+  Expression sourceOnly(ExpressionContext context) {
+    Expression result;
+    if (context.accessChain != null && context.accessChain!.isNotEmpty) {
+      result = refer(context.field.instance!.name);
+      for (final (segment, parentIsNullable) in context.accessChain!) {
+        result = parentIsNullable
+            ? result.nullSafeProperty(segment)
+            : result.property(segment);
+      }
+    } else {
+      result = context.field.instance != null
+          ? refer(context.field.instance!.name).property(context.field.name)
+          : refer(context.field.name);
+    }
+    if (context.forceNonNull == true) {
+      result = result.nullChecked;
+    }
+    return result;
+  }
+
   Expression _transformation(
     ExpressionContext context, {
     required Expression basic,
