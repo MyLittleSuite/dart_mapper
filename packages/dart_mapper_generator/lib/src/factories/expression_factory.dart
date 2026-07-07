@@ -286,7 +286,7 @@ String resolveExpression(String expression) {
   }
 
   final hasInterpolation = expression.contains(r'${') ||
-      RegExp(r'\$[a-zA-Z_]').hasMatch(expression);
+      RegExp(r'(?<![a-zA-Z0-9_$.])\$[a-zA-Z_]').hasMatch(expression);
 
   if (!hasInterpolation) return expression;
 
