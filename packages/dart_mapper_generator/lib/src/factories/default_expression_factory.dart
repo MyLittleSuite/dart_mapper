@@ -152,7 +152,7 @@ class DefaultExpressionFactory extends ExpressionFactory {
   ) {
     final sourceExpression = super.sourceOnly(context);
 
-    Expression _buildDefaultExpr() => context.counterpartField.type.isDartCoreString
+    Expression buildDefaultExpr() => context.counterpartField.type.isDartCoreString
         ? literalString(context.defaultValue!)
         : CodeExpression(Code(context.defaultValue!));
 
@@ -160,7 +160,7 @@ class DefaultExpressionFactory extends ExpressionFactory {
       final submapperCall =
           refer(extraMethod.name).call([sourceExpression.nullChecked]);
       if (context.defaultValue != null) {
-        final defaultExpr = _buildDefaultExpr();
+        final defaultExpr = buildDefaultExpr();
         return sourceExpression.isNotNull.conditional(
           submapperCall.ifNullThen(defaultExpr),
           defaultExpr,
@@ -171,7 +171,7 @@ class DefaultExpressionFactory extends ExpressionFactory {
 
     final submapperCall = refer(extraMethod.name).call([sourceExpression]);
     if (context.defaultValue != null) {
-      return submapperCall.ifNullThen(_buildDefaultExpr());
+      return submapperCall.ifNullThen(buildDefaultExpr());
     }
 
     return submapperCall;
