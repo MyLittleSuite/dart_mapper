@@ -150,16 +150,30 @@ class DefaultExpressionFactory extends ExpressionFactory {
     ExpressionContext context,
     MappingMethod extraMethod,
   ) {
-    final basicExpression = super.basic(context);
+    final sourceExpression = super.sourceOnly(context);
+
+    Expression _buildDefaultExpr() => context.counterpartField.type.isDartCoreString
+        ? literalString(context.defaultValue!)
+        : CodeExpression(Code(context.defaultValue!));
 
     if (context.field.nullable && !context.forceNonNull) {
-      // source != null ? {extraMappingMethod.name}(source) : null
-      return basicExpression.conditionalNull(
-        refer(extraMethod.name).call([basicExpression.nullChecked]),
-      );
+      final submapperCall =
+          refer(extraMethod.name).call([sourceExpression.nullChecked]);
+      if (context.defaultValue != null) {
+        final defaultExpr = _buildDefaultExpr();
+        return sourceExpression.isNotNull.conditional(
+          submapperCall.ifNullThen(defaultExpr),
+          defaultExpr,
+        );
+      }
+      return sourceExpression.conditionalNull(submapperCall);
     }
 
-    // {extraMappingMethod.name}(source)
-    return refer(extraMethod.name).call([basicExpression]);
+    final submapperCall = refer(extraMethod.name).call([sourceExpression]);
+    if (context.defaultValue != null) {
+      return submapperCall.ifNullThen(_buildDefaultExpr());
+    }
+
+    return submapperCall;
   }
 }

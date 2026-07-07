@@ -83,7 +83,7 @@ class BuiltExpressionFactory extends ExpressionFactory {
         }
       } else if (context.field is NestedField &&
           context.extraMappingMethod is ExternalMappingMethod) {
-        final basicExpression = super.basic(context);
+        final sourceExpression = super.sourceOnly(context);
 
         final method = context.extraMappingMethod!;
         final returnType = method.returnType;
@@ -101,16 +101,25 @@ class BuiltExpressionFactory extends ExpressionFactory {
             .newInstance([])
             .cascade('replace')
             .call([
-          refer(method.name).call([basicExpression.nullChecked])
+          refer(method.name).call([sourceExpression.nullChecked])
         ])
             .parenthesized;
 
-        return (context.field.nullable && !context.forceNonNull)
-            ? basicExpression.isNotNull.conditional(
+        Expression finalExpr = (context.field.nullable && !context.forceNonNull)
+            ? sourceExpression.isNotNull.conditional(
           replaceExpression,
           literalNull,
         )
             : replaceExpression;
+
+        if (context.defaultValue != null) {
+          final defaultExpr = context.counterpartField.type.isDartCoreString
+              ? literalString(context.defaultValue!)
+              : CodeExpression(Code(context.defaultValue!));
+          finalExpr = finalExpr.ifNullThen(defaultExpr);
+        }
+
+        return finalExpr;
       }
     }
 
