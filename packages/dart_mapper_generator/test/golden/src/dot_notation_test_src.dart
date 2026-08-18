@@ -168,3 +168,53 @@ abstract class CallableNullableDotNotationMapper {
   @Mapping(target: 'streetName', source: 'address.street.name', callable: _upperCase)
   FlatCallableTarget flattenCallable(NullableStreetPerson source);
 }
+
+// Regression: `ignore: true` combined with a dot-notation source must suppress
+// synthesis of the nested converter. The explicit-mapping branch used to
+// analyze the extra mapping method regardless of ignoredTargets, throwing
+// NoRelationFoundError for a converter that is never emitted.
+
+class IgnoredDotInnerSource {
+  final String code;
+
+  const IgnoredDotInnerSource(this.code);
+}
+
+class IgnoredDotInnerTarget {
+  final String code;
+  final String direction;
+
+  const IgnoredDotInnerTarget({required this.code, required this.direction});
+}
+
+class IgnoredDotWrapper {
+  final IgnoredDotInnerSource? inner;
+
+  const IgnoredDotWrapper(this.inner);
+}
+
+class IgnoredDotSource {
+  final String id;
+  final IgnoredDotWrapper wrapper;
+
+  const IgnoredDotSource(this.id, this.wrapper);
+}
+
+class IgnoredDotTarget {
+  final String id;
+  final IgnoredDotInnerTarget? inner;
+
+  const IgnoredDotTarget({required this.id, this.inner});
+}
+
+@ShouldGenerate(
+  r'''IgnoredDotTarget map(IgnoredDotSource source) {
+    return IgnoredDotTarget(id: source.id, inner: null);
+  }''',
+  contains: true,
+)
+@Mapper()
+abstract class IgnoredDotNotationMapper {
+  @Mapping(target: 'inner', source: 'wrapper.inner', ignore: true)
+  IgnoredDotTarget map(IgnoredDotSource source);
+}
