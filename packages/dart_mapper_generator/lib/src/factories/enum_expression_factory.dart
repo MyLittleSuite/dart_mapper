@@ -38,12 +38,15 @@ class EnumExpressionFactory extends ExpressionFactory {
 
   @override
   Expression create(ExpressionContext context) {
+    // The <NULL> sentinel is a target value, not an identifier: it must resolve
+    // to `null` regardless of the target type (String, num, enum, ...).
+    if (context.origin == FieldOrigin.target &&
+        context.field.name == ValueMapping.nullValue) {
+      return literalNull;
+    }
+
     if (context.field.type.isPrimitive) {
       if (context.origin == FieldOrigin.target) {
-        if (context.field.name == ValueMapping.nullValue) {
-          return literalNull;
-        }
-
         if (context.field.type.isDartCoreInt) {
           return literal(context.field.name).stringToInt(
             nullable: context.currentMethod.optionalReturn,
