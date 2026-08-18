@@ -1,3 +1,10 @@
+## 1.0.10
+
+- Fix: skip nested converter synthesis for ignored targets — `@Mapping(target: '...', ignore: true)` no longer triggers `NoRelationFoundError` for code that is never emitted (#110)
+- Fix: resolve `<NULL>` sentinel and non-enum return types in enum value mapping (#110)
+- Fix: render `<ANY_REMAINING>` / `<ANY_UNMAPPED>` fallbacks through the expression factory instead of assuming an enum return type (#110)
+- chore: update dependency flutter to v3.44.8 (#108)
+
 ## 1.0.9
 
 - chore: widen analyzer constraint to >=10.0.0 <14.0.0
