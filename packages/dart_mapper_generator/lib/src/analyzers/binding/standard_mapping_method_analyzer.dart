@@ -476,8 +476,11 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
               nullable: (targetSubstituted?[targetClassParamName] ?? resolvedTargetParam.type).isNullable,
             );
 
+            final isIgnored = ignoredTargets.contains(targetClassParamName);
             final callableMappingMethod = callableMap[targetClassParamName];
-            final extraMappingMethod = callableMappingMethod == null
+            // Ignored targets must not synthesize a nested converter: analyzing
+            // it would surface binding errors for a mapping that is never emitted.
+            final extraMappingMethod = callableMappingMethod == null && !isIgnored
                 ? extraMappingMethodAnalyzer.analyze(
                     FieldsAnalyzerContext(
                       mapperAnnotation: context.mapperAnnotation,
@@ -495,7 +498,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
               Binding(
                 source: sourceField,
                 target: targetField,
-                ignored: ignoredTargets.contains(targetClassParamName),
+                ignored: isIgnored,
                 forceNonNull:
                     forceNonNullTargets.contains(targetClassParamName),
                 callableMappingMethod: callableMappingMethod,
