@@ -92,3 +92,41 @@ abstract class MutualExclusionEnumMapper {
   @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   TargetColor convert(SourceColor source);
 }
+
+// Regression: the fallback target must be rendered by the expression factory,
+// not as `refer(returnType).property(target)`. With a non-enum return type the
+// latter emitted `String.UNKNOWN` (parsable but wrong) and `int.-1` (a build
+// failure).
+
+@ShouldGenerate(
+  r"""_ => 'UNKNOWN',""",
+  contains: true,
+)
+@Mapper()
+abstract class AnyRemainingToStringMapper {
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'UNKNOWN')
+  @ValueMapping(source: 'red', target: 'RED')
+  String convert(SourceColor source);
+}
+
+@ShouldGenerate(
+  r'''_ => int.parse('-1'),''',
+  contains: true,
+)
+@Mapper()
+abstract class AnyRemainingToIntMapper {
+  @ValueMapping(source: ValueMapping.anyRemaining, target: '-1')
+  @ValueMapping(source: 'red', target: '0')
+  int convert(SourceColor source);
+}
+
+@ShouldGenerate(
+  r'''_ => null,''',
+  contains: true,
+)
+@Mapper()
+abstract class AnyUnmappedToStringMapper {
+  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
+  @ValueMapping(source: 'red', target: 'RED')
+  String? convert(SourceColor source);
+}

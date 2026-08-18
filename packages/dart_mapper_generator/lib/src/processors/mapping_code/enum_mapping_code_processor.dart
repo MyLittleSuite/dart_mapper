@@ -24,7 +24,6 @@
  */
 
 import 'package:code_builder/code_builder.dart' hide Field;
-import 'package:dart_mapper/dart_mapper.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_return_type_error.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
@@ -66,9 +65,25 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
 
     final safeEnumDisplayName =
         targetEnum.displayName.replaceAll('\\', '\\\\').replaceAll(r'$', r'\$');
-    final qualifiedEnumName = context.resolveType(method.returnType!);
     final sourceField = method.parameters.first.field;
     final expressionFactory = expressionStrategyDispatcher.get(method.behavior);
+
+    // Sentinel-driven cases (<NULL> source, <ANY_REMAINING>, <ANY_UNMAPPED>)
+    // carry a target *name* rather than a Binding. Route them through the
+    // expression factory like every other case, so the target type — enum,
+    // String, num — decides how the value is rendered.
+    Expression targetExpression(String targetName) => expressionFactory.create(
+          ExpressionContext(
+            field: Field.from(
+              name: targetName,
+              type: method.returnType!,
+            ),
+            origin: FieldOrigin.target,
+            counterpartField: sourceField,
+            currentMethod: method,
+            importAliases: context.importAliases,
+          ),
+        );
 
     return Block(
       (b) => b
@@ -80,18 +95,7 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
                 (
                   literal(null),
                   method is DefinedMappingMethod && method.nullSourceTarget != null
-                      ? expressionFactory.create(
-                          ExpressionContext(
-                            field: Field.from(
-                              name: method.nullSourceTarget!,
-                              type: method.returnType!,
-                            ),
-                            origin: FieldOrigin.target,
-                            counterpartField: sourceField,
-                            currentMethod: method,
-                            importAliases: context.importAliases,
-                          ),
-                        )
+                      ? targetExpression(method.nullSourceTarget!)
                       : method.optionalReturn
                           ? literal(null)
                           : throwArgumentErrorNotNull(sourceField.name),
@@ -123,8 +127,8 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
             otherwise: _buildOtherwiseExpression(
               method: method,
               safeEnumDisplayName: safeEnumDisplayName,
-              qualifiedEnumName: qualifiedEnumName,
               sourceFieldName: sourceField.name,
+              targetExpression: targetExpression,
             ),
           ).returned,
         ),
@@ -134,18 +138,15 @@ class EnumMappingCodeProcessor extends ComponentProcessor<Code> {
   Expression _buildOtherwiseExpression({
     required BindableMappingMethod method,
     required String safeEnumDisplayName,
-    required String qualifiedEnumName,
     required String sourceFieldName,
+    required Expression Function(String targetName) targetExpression,
   }) {
     if (method is DefinedMappingMethod && method.anyRemainingTarget != null) {
-      return refer(qualifiedEnumName).property(method.anyRemainingTarget!);
+      return targetExpression(method.anyRemainingTarget!);
     }
 
     if (method is DefinedMappingMethod && method.anyUnmappedTarget != null) {
-      if (method.anyUnmappedTarget == ValueMapping.nullValue) {
-        return literal(null);
-      }
-      return refer(qualifiedEnumName).property(method.anyUnmappedTarget!);
+      return targetExpression(method.anyUnmappedTarget!);
     }
 
     if (method.optionalReturn) {
