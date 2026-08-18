@@ -62,3 +62,57 @@ abstract class NullValueSourceEnumMapper {
   @ValueMapping(source: ValueMapping.nullValue, target: 'red')
   PrimaryTargetColor convertNullable(ExtendedSourceColor? source);
 }
+
+// Regression: <NULL> as target must resolve to `null` regardless of the
+// return type. It used to be emitted as an identifier (e.g. `String.<NULL>`,
+// `PrimaryTargetColor.<NULL>`), producing unparsable code.
+
+@ShouldGenerate(
+  r'''null => null,''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''ExtendedSourceColor.red => PrimaryTargetColor.red,''',
+  contains: true,
+)
+@Mapper()
+abstract class NullValueToNullEnumMapper {
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'blue')
+  @ValueMapping(source: ValueMapping.nullValue, target: ValueMapping.nullValue)
+  PrimaryTargetColor? convertNullable(ExtendedSourceColor? source);
+}
+
+// Regression: a non-enum (String) return type must go through the expression
+// factory instead of `refer(returnType).property(target)`.
+
+@ShouldGenerate(
+  r'''null => null,''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''ExtendedSourceColor.red => 'RED',''',
+  contains: true,
+)
+@Mapper()
+abstract class NullValueToNullStringMapper {
+  @ValueMapping(source: ValueMapping.nullValue, target: ValueMapping.nullValue)
+  @ValueMapping(source: 'red', target: 'RED')
+  @ValueMapping(source: 'green', target: 'GREEN')
+  @ValueMapping(source: 'blue', target: 'BLUE')
+  @ValueMapping(source: 'yellow', target: 'YELLOW')
+  String? convertToCode(ExtendedSourceColor? source);
+}
+
+@ShouldGenerate(
+  r'''null => 'UNKNOWN',''',
+  contains: true,
+)
+@Mapper()
+abstract class NullValueToStringMapper {
+  @ValueMapping(source: ValueMapping.nullValue, target: 'UNKNOWN')
+  @ValueMapping(source: 'red', target: 'RED')
+  @ValueMapping(source: 'green', target: 'GREEN')
+  @ValueMapping(source: 'blue', target: 'BLUE')
+  @ValueMapping(source: 'yellow', target: 'YELLOW')
+  String convertToCode(ExtendedSourceColor? source);
+}

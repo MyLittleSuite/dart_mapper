@@ -60,3 +60,51 @@ abstract class InnerMapper {
 abstract class OuterMapper {
   OuterTarget toTarget(OuterSource source);
 }
+
+// Regression: `ignore: true` on a nested field must suppress synthesis of the
+// nested converter. The extra mapping method used to be analyzed anyway,
+// throwing NoRelationFoundError for a mapping that is never emitted.
+
+class IgnoredInnerSource {
+  final String code;
+
+  IgnoredInnerSource(this.code);
+}
+
+class IgnoredInnerTarget {
+  final String code;
+  final String direction;
+
+  IgnoredInnerTarget({required this.code, required this.direction});
+}
+
+class IgnoredNestedSource {
+  final String id;
+  final IgnoredInnerSource? inner;
+
+  IgnoredNestedSource(this.id, this.inner);
+}
+
+class IgnoredNestedTarget {
+  final String id;
+  final IgnoredInnerTarget? inner;
+
+  IgnoredNestedTarget({required this.id, this.inner});
+}
+
+@ShouldGenerate(
+  r'''class IgnoredNestedMapperImpl extends IgnoredNestedMapper {
+  IgnoredNestedMapperImpl();
+
+  @override
+  IgnoredNestedTarget toTarget(IgnoredNestedSource source) {
+    return IgnoredNestedTarget(id: source.id, inner: null);
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class IgnoredNestedMapper {
+  @Mapping(target: 'inner', ignore: true)
+  IgnoredNestedTarget toTarget(IgnoredNestedSource source);
+}

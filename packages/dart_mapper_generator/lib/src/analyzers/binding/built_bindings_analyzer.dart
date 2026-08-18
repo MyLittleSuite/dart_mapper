@@ -150,8 +150,11 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
         );
       }
 
+      final isIgnored = ignoredTargets.contains(targetName);
       final callableMappingMethod = callableMap[targetName];
-      final extraMappingMethod = callableMappingMethod == null
+      // Ignored targets must not synthesize a nested converter: analyzing
+      // it would surface binding errors for a mapping that is never emitted.
+      final extraMappingMethod = callableMappingMethod == null && !isIgnored
           ? extraMappingMethodAnalyzer.analyze(
               FieldsAnalyzerContext(
                 mapperAnnotation: context.mapperAnnotation,
@@ -169,7 +172,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
         Binding(
           source: resolvedField,
           target: targetField,
-          ignored: ignoredTargets.contains(targetName),
+          ignored: isIgnored,
           forceNonNull: forceNonNullTargets.contains(targetName),
           callableMappingMethod: callableMappingMethod,
           extraMappingMethod: extraMappingMethod,
@@ -253,8 +256,11 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
               nullable: (targetSubstituted?[targetName] ?? targetGetter.type).isNullable,
             );
 
+            final isIgnored = ignoredTargets.contains(targetName);
             final callableMappingMethod = callableMap[targetName];
-            final extraMappingMethod = callableMappingMethod == null
+            // Ignored targets must not synthesize a nested converter: analyzing
+            // it would surface binding errors for a mapping that is never emitted.
+            final extraMappingMethod = callableMappingMethod == null && !isIgnored
                 ? extraMappingMethodAnalyzer.analyze(
                     FieldsAnalyzerContext(
                       mapperAnnotation: context.mapperAnnotation,
@@ -272,7 +278,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
               Binding(
                 source: sourceField,
                 target: targetField,
-                ignored: ignoredTargets.contains(targetName),
+                ignored: isIgnored,
                 forceNonNull: forceNonNullTargets.contains(targetName),
                 callableMappingMethod: callableMappingMethod,
                 extraMappingMethod: extraMappingMethod,
