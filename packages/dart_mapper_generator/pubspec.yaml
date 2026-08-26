@@ -15,7 +15,7 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
-  analyzer: ">=10.0.0 <14.0.0"
+  analyzer: "<15.0.0"
   build: ">=3.1.0 <5.0.0"
   code_builder: ^4.10.1
   dart_style: ^3.1.0
