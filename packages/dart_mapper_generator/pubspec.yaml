@@ -19,7 +19,7 @@ dependencies:
   build: ">=3.1.0 <5.0.0"
   code_builder: ^4.10.1
   dart_style: ^3.1.0
-  dart_mapper: ^1.0.0
+  dart_mapper: ^1.0.10
   source_gen: ^4.0.0
   strings: ^4.0.0
 
