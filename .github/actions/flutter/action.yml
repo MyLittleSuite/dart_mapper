@@ -10,7 +10,7 @@ runs:
   steps:
     # TODO: https://github.com/kuhnroyal/flutter-fvm-config-action/issues/36
     - name: Setup Dart
-      uses: dart-lang/setup-dart@v1.7.2
+      uses: dart-lang/setup-dart@v1.8.1
 
     - name: Install fvm
       shell: bash

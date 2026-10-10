@@ -9,7 +9,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Dart
-      uses: dart-lang/setup-dart@v1.7.2
+      uses: dart-lang/setup-dart@v1.8.1
 
     - name: Get dart dependencies
       shell: bash
