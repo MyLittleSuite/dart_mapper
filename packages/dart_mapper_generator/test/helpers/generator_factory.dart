@@ -26,6 +26,7 @@
 import 'package:dart_mapper_generator/src/analyzers/binding/built_bindings_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/binding/enums_mapping_method_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/binding/standard_mapping_method_analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/binding/to_map_bindings_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/bindings_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/import_aliases_analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/inherit_configuration_analyzer.dart';
@@ -38,11 +39,13 @@ import 'package:dart_mapper_generator/src/dart_mapper_generator.dart';
 import 'package:dart_mapper_generator/src/factories/built_expression_factory.dart';
 import 'package:dart_mapper_generator/src/factories/default_expression_factory.dart';
 import 'package:dart_mapper_generator/src/factories/enum_expression_factory.dart';
+import 'package:dart_mapper_generator/src/factories/to_map_expression_factory.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/mapper_processor.dart';
 import 'package:dart_mapper_generator/src/processors/mapping_code/built_mapping_code_processor.dart';
 import 'package:dart_mapper_generator/src/processors/mapping_code/default_mapping_code_processor.dart';
 import 'package:dart_mapper_generator/src/processors/mapping_code/enum_mapping_code_processor.dart';
+import 'package:dart_mapper_generator/src/processors/mapping_code/to_map_mapping_code_processor.dart';
 import 'package:dart_mapper_generator/src/processors/mapping_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
 
@@ -55,6 +58,7 @@ DartMapperGenerator createTestGenerator({bool timestampDoc = false}) {
       defaultFactory: DefaultExpressionFactory(),
     ),
     MappingBehavior.standard: DefaultExpressionFactory(),
+    MappingBehavior.toMap: ToMapExpressionFactory(),
   });
 
   final methodCodeDispatcher = StrategyDispatcher({
@@ -67,6 +71,9 @@ DartMapperGenerator createTestGenerator({bool timestampDoc = false}) {
     MappingBehavior.standard: DefaultMappingCodeProcessor(
       expressionStrategyDispatcher: expressionStrategyDispatcher,
     ),
+    MappingBehavior.toMap: ToMapMappingCodeProcessor(
+      expressionStrategyDispatcher: expressionStrategyDispatcher,
+    ),
   });
 
   final mappingMethodDispatcher = StrategyDispatcher({
@@ -76,6 +83,7 @@ DartMapperGenerator createTestGenerator({bool timestampDoc = false}) {
       ),
     ),
     MappingBehavior.enums: EnumsMappingMethodAnalyzer(),
+    MappingBehavior.toMap: ToMapBindingsAnalyzer(),
     MappingBehavior.standard: StandardBindingsAnalyzer(
       extraMappingMethodAnalyzer: ExtraMappingMethodAnalyzer(
         mappingBehaviorAnalyzer: MappingBehaviorAnalyzer(),
