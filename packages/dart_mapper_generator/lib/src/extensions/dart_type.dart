@@ -99,8 +99,30 @@ extension DartTypeExtension on DartType {
 
   bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
 
-  String get parameterName =>
-      displayString.toSnakeCase().toCamelCase(lower: true);
+  String get parameterName => displayString
+      .replaceAll(RegExp(r'[^A-Za-z0-9_$]+'), '_')
+      .toSnakeCase()
+      .toCamelCase(lower: true);
+
+  /// A readable identifier fragment unique per type, nullability of the
+  /// generic arguments included: `Box<String?>` is `BoxOfNullableString`
+  /// whereas `Box<String>` is `BoxOfString`. The nullability of the type
+  /// itself is left to the caller.
+  String get uniqueName {
+    final type = this;
+    if (type is! InterfaceType || type.typeArguments.isEmpty) {
+      return humanReadable;
+    }
+
+    final arguments = type.typeArguments
+        .map((argument) => [
+              if (argument.isNullable) 'Nullable',
+              argument.uniqueName,
+            ].join())
+        .join('And');
+
+    return '${type.className}Of$arguments';
+  }
 
   /// Returns a map of getter name to substituted [DartType] for this type,
   /// using [InterfaceType.getters] which performs type-parameter substitution
@@ -175,8 +197,9 @@ extension DartTypeBuilt on DartType {
 
   /// Whether this type is a class implementing `Built<V, B>`.
   bool get isBuiltValue =>
-      (element?.interfaceElementOrNull?.allSupertypes ?? const [])
-          .any((type) => type.isLibraryBuilt);
+      (element?.interfaceElementOrNull?.allSupertypes ?? const []).any(
+        (type) => type.isLibraryBuilt && type.element.name == 'Built',
+      );
 
   bool get isBuiltEnum {
     final superType = element?.classElementOrNull?.supertype;

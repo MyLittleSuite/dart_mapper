@@ -97,6 +97,6 @@ final class GeneratedPrivateMappingMethod extends BindableMappingMethod {
       if (untyped) return 'Map';
     }
 
-    return type.humanReadable.toCapitalised();
+    return type.uniqueName.toCapitalised();
   }
 }

@@ -35,6 +35,8 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_con
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/incompatible_map_value_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_map_source_parameter_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/invalid_mapping_combination_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unreadable_map_source_property_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
@@ -61,6 +63,66 @@ import 'package:source_gen/source_gen.dart';
 class ToMapBindingsAnalyzer extends Analyzer<List<Binding>> {
   const ToMapBindingsAnalyzer();
 
+  /// Validates the configuration of every key once the separate `@Mapping`
+  /// annotations targeting it are merged: the per annotation validation of
+  /// the context cannot see a callable and a default value (or a condition,
+  /// a constant, an expression) declared by two annotations.
+  void _validateCombinedMappings(BindingsAnalyzerContext context) {
+    final callables = context.callableMap;
+    final defaults = context.defaultValueMap;
+    final constants = context.constantMap;
+    final expressions = context.expressionMap;
+    final conditions = context.conditionExpressionMap;
+    final sources = context.renamingMapReversed;
+
+    void conflict(String key, String description) {
+      throw InvalidMappingCombinationError(
+        target: key,
+        conflictDescription: description,
+        element: context.method,
+      );
+    }
+
+    for (final key in callables.keys) {
+      if (defaults.containsKey(key)) {
+        conflict(key, 'defaultValue cannot be combined with callable');
+      }
+      if (conditions.containsKey(key)) {
+        conflict(key, 'conditionExpression cannot be combined with callable');
+      }
+      if (constants.containsKey(key)) {
+        conflict(key, 'constant cannot be combined with callable');
+      }
+      if (expressions.containsKey(key)) {
+        conflict(key, 'expression cannot be combined with callable');
+      }
+    }
+
+    for (final key in constants.keys) {
+      if (sources.containsKey(key)) {
+        conflict(key, 'constant cannot be combined with source');
+      }
+      if (defaults.containsKey(key)) {
+        conflict(key, 'constant cannot be combined with defaultValue');
+      }
+      if (conditions.containsKey(key)) {
+        conflict(key, 'conditionExpression cannot be combined with constant');
+      }
+      if (expressions.containsKey(key)) {
+        conflict(key, 'expression cannot be combined with constant');
+      }
+    }
+
+    for (final key in expressions.keys) {
+      if (sources.containsKey(key)) {
+        conflict(key, 'expression cannot be combined with source');
+      }
+      if (defaults.containsKey(key)) {
+        conflict(key, 'expression cannot be combined with defaultValue');
+      }
+    }
+  }
+
   @override
   List<Binding> analyze(AnalyzerContext context) {
     if (context is! BindingsAnalyzerContext) {
@@ -69,6 +131,7 @@ class ToMapBindingsAnalyzer extends Analyzer<List<Binding>> {
 
     context.validateMappingCombinations();
     context.validateCommaSeparatedSource();
+    _validateCombinedMappings(context);
 
     final method = context.method;
     final sources = <_Source>[];
@@ -116,7 +179,10 @@ class _Property {
   final String name;
   final DartType type;
 
-  const _Property(this.name, this.type);
+  /// Whether an instance getter with this name can be read from the mapper.
+  final bool readable;
+
+  const _Property(this.name, this.type, {this.readable = true});
 }
 
 class _Config {
@@ -340,6 +406,14 @@ class _ToMapBuilder {
             );
           }
 
+          if (!property.readable) {
+            throw UnreadableMapSourcePropertyError(
+              property: property.name,
+              type: source.type.getDisplayString(),
+              element: session.element,
+            );
+          }
+
           add(
             s * 1000 + p,
             _bind(
@@ -363,10 +437,24 @@ class _ToMapBuilder {
     });
 
     // Fails early when nested keys conflict.
-    buildMapKeyTree(
+    final tree = buildMapKeyTree(
       pending.map((p) => (p.binding.target.name, p.binding)),
       element: session.element,
     );
+
+    // Target dot notation stores a nested map, which the value type of the
+    // returned map has to accept.
+    if (!_isFree) {
+      for (final entry in tree.children.entries) {
+        if (entry.value is MapKeyBranch &&
+            !_typeSystem.isAssignableTo(
+              session.stringKeyedDynamicMapType,
+              valueType,
+            )) {
+          throw _incompatible(entry.key, session.stringKeyedDynamicMapType);
+        }
+      }
+    }
 
     return pending.map((p) => p.binding).toList(growable: false);
   }
@@ -380,7 +468,7 @@ class _ToMapBuilder {
     if (element == null) return const [];
 
     final substituted = type.substitutedGetterTypes;
-    final isBuilt = element.allSupertypes.any((t) => t.isLibraryBuilt);
+    final isBuilt = type.isBuiltValue;
 
     if (isBuilt) {
       return element.fields
@@ -405,9 +493,27 @@ class _ToMapBuilder {
           (parameter) => _Property(
             parameter.name!,
             substituted?[parameter.name!] ?? parameter.type,
+            readable: _isReadable(element, parameter.name!),
           ),
         )
         .toList(growable: false);
+  }
+
+  /// Whether [element] (or one of its supertypes) has a public instance
+  /// getter named [name], or a private one of the mapper's own library.
+  bool _isReadable(ClassElement element, String name) {
+    if (name.startsWith('_') &&
+        element.library != session.context.mapperClass.library) {
+      return false;
+    }
+
+    return [element, ...element.allSupertypes.map((type) => type.element)]
+        .any(
+      (candidate) => candidate.fields.any(
+        (field) =>
+            !field.isStatic && field.name == name && field.getter != null,
+      ),
+    );
   }
 
   _Resolved _resolve(String expression) {

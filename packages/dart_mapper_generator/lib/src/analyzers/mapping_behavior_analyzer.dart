@@ -53,7 +53,7 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
       final parameters = context.method.formalParameters;
 
       // A Map is never converted to a Map, whatever its key type.
-      if (parameters.any((param) => param.type.isMapLikeSource) ||
+      if (parameters.any((param) => param.type.isDartCoreMap) ||
           (targetType.isStringKeyedMap &&
               parameters.any((param) => param.type.isMap))) {
         throw MapToMapMappingNotSupportedError(method: context.method);

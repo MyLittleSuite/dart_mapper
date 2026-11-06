@@ -398,4 +398,17 @@ void main() async {
     'from_map_coderabbit_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(fromMapCodeRabbitErrorReader, generator);
+  // Group: findings of the CodeRabbit review of the class -> Map mapping
+  final toMapCodeRabbitReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_coderabbit_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapCodeRabbitReader, generator);
+
+  // Group: findings of the CodeRabbit review reported as errors
+  final toMapCodeRabbitErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_coderabbit_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapCodeRabbitErrorReader, generator);
 }
