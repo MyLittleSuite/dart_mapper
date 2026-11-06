@@ -115,6 +115,7 @@ Dot notation also works when one side is a `Map`. With a Map source, each segmen
 
 ```dart
 @Mapping(source: 'address.street', target: 'street')
+@Mapping(source: 'address.city', target: 'city')
 Contact fromMap(Map<String, dynamic> map);
 ```
 

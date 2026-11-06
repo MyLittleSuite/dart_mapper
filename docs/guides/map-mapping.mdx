@@ -359,7 +359,7 @@ Enum keys of nested `Map<MyEnum, X>` fields use `.name` on write (`MapEntry(key.
 
 ## DateTime, Duration, and Converters
 
-`DateTime` and `Duration` pass through unchanged, with no implicit format (`'createdAt': session.createdAt` on write, `map['createdAt'] as DateTime` on read). This suits Firestore, whose SDK stores `DateTime` natively. When your store needs another representation, such as epoch milliseconds, declare a converter and pass it via `uses`. This is what `RealtimeMapper` in the example project does:
+`DateTime` and `Duration` pass through unchanged, with no implicit format (`'createdAt': session.createdAt` on write, `map['createdAt'] as DateTime` on read). Pass-through only round-trips when the store gives back the same type it received. Cloud Firestore accepts a `DateTime` on write but returns a `Timestamp` from `DocumentSnapshot.data()`, so a plain `map['createdAt'] as DateTime` read throws there: declare a converter (for example `DateTime fromTimestamp(Timestamp value) => value.toDate()`) and pass it via `uses`. The same applies whenever your store needs another representation, such as epoch milliseconds. This is what `RealtimeMapper` in the example project does:
 
 ```dart
 class DateTimeMillisConverter {
@@ -421,6 +421,7 @@ Dots walk nested maps. Every intermediate level is nullable:
 
 ```dart
 @Mapping(source: 'address.street', target: 'street')
+@Mapping(source: 'address.city', target: 'city')
 Contact fromMap(Map<String, dynamic> map);
 ```
 
@@ -558,7 +559,7 @@ Profile fromMap(Map<String, dynamic> map) {
 
 Computed getters of a Built Value class are not keys unless mapped explicitly. Reading a nullable typed map value (`Map<String, String?>`) into a non-null built field needs `forceNonNull` (`b..id = map['id']!`) or `defaultValue`; otherwise the build fails with `TargetFieldRequiresNonOptionalSourceFieldError`, as for any other target.
 
-A sealed or abstract class as the target of a Map → class method is a compile-time error. See [issue #119](https://github.com/MyLittleSuite/dart_mapper/issues/119).
+Abstract targets are supported when they can be instantiated through a factory constructor, which is how Freezed classes (`UserDTO`) and Built Value classes (`Profile`) work. A sealed class, or an abstract class without a usable factory constructor, as the target of a Map → class method is a compile-time error. See [issue #119](https://github.com/MyLittleSuite/dart_mapper/issues/119).
 
 ## Limitations
 
@@ -583,7 +584,7 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 | Non-null target field read from a `Map<String, T?>` without `forceNonNull` or `defaultValue` | `TargetFieldRequiresNonOptionalSourceFieldError` | `Target field 'id' of 'FmHolderNullableSource' in 'FmTypedNullableMapper.fromNullable' requires a non-nullable source, but the source field is nullable.` |
 | Same, for a Built Value target | `TargetFieldRequiresNonOptionalSourceFieldError` | `Target field 'id' of 'FmBuiltDeckAbstract' in 'FmBuiltNullableMapper.fromMap' requires a non-nullable source, but the source field is nullable.` |
 | A `dart:core` `Map` is both source and return type, whatever the key type (`Map<int, X> convert(Map<String, dynamic> map)`) | `MapToMapMappingNotSupportedError` | `Method 'convert' maps a Map to a Map, which is not supported.` |
-| The target of a Map → class method is sealed or abstract ([#119](https://github.com/MyLittleSuite/dart_mapper/issues/119)) | `FromMapTargetNotInstantiableError` | `Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.` |
+| The target of a Map → class method is sealed, or abstract without a usable factory constructor ([#119](https://github.com/MyLittleSuite/dart_mapper/issues/119)) | `FromMapTargetNotInstantiableError` | `Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.` |
 | Target dot notation in a Map → class method ([#118](https://github.com/MyLittleSuite/dart_mapper/issues/118)) | `MapTargetDotNotationUnsupportedError` | `Target dot notation 'address.street' is not supported when mapping a Map to a class (tracked in issue #118).` |
 | A whole key and one of its sub-keys are both mapped, or a dotted target has an empty segment | `MapKeyPathConflictError` | `Invalid @Mapping target 'address.nickname': 'address' is already mapped as a whole value.` / `Invalid @Mapping target 'address..id': it contains an empty segment.` |
 | More than one converter matches the same type and direction | `AmbiguousMapConverterError` | `Ambiguous mapping for type 'DateTime': multiple methods are candidates (this.toMillis, this.toIso).` |
