@@ -199,7 +199,7 @@ abstract class RtRoundTripMapper {
       shipping: _mapMapToRtAddress(
         Map<String, dynamic>.from(map['shipping'] as Map),
       ),
-      history: (map['history'] as List)
+      history: (map['history'] as Iterable)
           .map<RtAddress>(
             (e) => _mapMapToRtAddress(Map<String, dynamic>.from(e as Map)),
           )

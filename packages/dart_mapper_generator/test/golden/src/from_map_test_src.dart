@@ -841,23 +841,23 @@ abstract class FmTypedStringsMapper {
               Map<String, dynamic>.from(map['optionalCard'] as Map),
             )
           : null,
-      cards: (map['cards'] as List)
+      cards: (map['cards'] as Iterable)
           .map<FmCard>(
             (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
           )
           .toList(),
-      uniqueCards: (map['uniqueCards'] as List)
+      uniqueCards: (map['uniqueCards'] as Iterable)
           .map<FmCard>(
             (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
           )
           .toSet(),
-      iterableCards: (map['iterableCards'] as List)
+      iterableCards: (map['iterableCards'] as Iterable)
           .map<FmCard>(
             (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
           )
           .toList(),
       maybeCards: map['maybeCards'] != null
-          ? (map['maybeCards'] as List)
+          ? (map['maybeCards'] as Iterable)
                 .map<FmCard>(
                   (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
                 )
@@ -893,25 +893,25 @@ abstract class FmNestedMapper {
   @override
   FmCollections fromMap(Map<String, dynamic> map) {
     return FmCollections(
-      tags: List<String>.from(map['tags'] as List),
+      tags: List<String>.from(map['tags'] as Iterable),
       maybeTags: map['maybeTags'] != null
-          ? List<String>.from(map['maybeTags'] as List)
+          ? List<String>.from(map['maybeTags'] as Iterable)
           : null,
-      ids: Set<int>.from(map['ids'] as List),
-      weights: (map['weights'] as List)
+      ids: Set<int>.from(map['ids'] as Iterable),
+      weights: (map['weights'] as Iterable)
           .map<double>((e) => (e as num).toDouble())
           .toList(),
-      maybeWeights: (map['maybeWeights'] as List)
+      maybeWeights: (map['maybeWeights'] as Iterable)
           .map<double?>((e) => (e as num?)?.toDouble())
           .toList(),
       counters: Map<String, int>.from(map['counters'] as Map),
       scores: (map['scores'] as Map).map<String, double>(
         (key, value) => MapEntry(key as String, (value as num).toDouble()),
       ),
-      matrix: (map['matrix'] as List)
-          .map<List<String>>((e) => List<String>.from(e as List))
+      matrix: (map['matrix'] as Iterable)
+          .map<List<String>>((e) => List<String>.from(e as Iterable))
           .toList(),
-      statuses: (map['statuses'] as List)
+      statuses: (map['statuses'] as Iterable)
           .map<FmStatus>((e) => FmStatus.values.byName(e as String))
           .toList(),
       cardsByStatus: (map['cardsByStatus'] as Map).map<FmStatus, FmCard>(
@@ -923,14 +923,14 @@ abstract class FmNestedMapper {
       groups: (map['groups'] as Map).map<String, List<FmCard>>(
         (key, value) => MapEntry(
           key as String,
-          (value as List)
+          (value as Iterable)
               .map<FmCard>(
                 (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
               )
               .toList(),
         ),
       ),
-      raw: List<dynamic>.from(map['raw'] as List),
+      raw: List<dynamic>.from(map['raw'] as Iterable),
     );
   }
 
@@ -955,25 +955,25 @@ abstract class FmCollectionsMapper {
   @override
   FmCollections fromMap(Map<String, dynamic> map) {
     return FmCollections(
-      tags: List<String>.from(map['tags'] as List? ?? const []),
+      tags: List<String>.from(map['tags'] as Iterable? ?? const []),
       maybeTags: map['maybeTags'] != null
-          ? List<String>.from(map['maybeTags'] as List)
+          ? List<String>.from(map['maybeTags'] as Iterable)
           : null,
-      ids: Set<int>.from(map['ids'] as List),
-      weights: (map['weights'] as List)
+      ids: Set<int>.from(map['ids'] as Iterable),
+      weights: (map['weights'] as Iterable)
           .map<double>((e) => (e as num).toDouble())
           .toList(),
-      maybeWeights: (map['maybeWeights'] as List)
+      maybeWeights: (map['maybeWeights'] as Iterable)
           .map<double?>((e) => (e as num?)?.toDouble())
           .toList(),
       counters: Map<String, int>.from(map['counters'] as Map? ?? const {}),
       scores: (map['scores'] as Map).map<String, double>(
         (key, value) => MapEntry(key as String, (value as num).toDouble()),
       ),
-      matrix: (map['matrix'] as List)
-          .map<List<String>>((e) => List<String>.from(e as List))
+      matrix: (map['matrix'] as Iterable)
+          .map<List<String>>((e) => List<String>.from(e as Iterable))
           .toList(),
-      statuses: (map['statuses'] as List)
+      statuses: (map['statuses'] as Iterable)
           .map<FmStatus>((e) => FmStatus.values.byName(e as String))
           .toList(),
       cardsByStatus: (map['cardsByStatus'] as Map).map<FmStatus, FmCard>(
@@ -985,14 +985,14 @@ abstract class FmCollectionsMapper {
       groups: (map['groups'] as Map).map<String, List<FmCard>>(
         (key, value) => MapEntry(
           key as String,
-          (value as List)
+          (value as Iterable)
               .map<FmCard>(
                 (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
               )
               .toList(),
         ),
       ),
-      raw: List<dynamic>.from(map['raw'] as List),
+      raw: List<dynamic>.from(map['raw'] as Iterable),
     );
   }
 
@@ -1048,17 +1048,17 @@ abstract class FmEnumsMapper {
       optionalCard: map['optionalCard'] != null
           ? fromCard(Map<String, dynamic>.from(map['optionalCard'] as Map))
           : null,
-      cards: (map['cards'] as List)
+      cards: (map['cards'] as Iterable)
           .map<FmCard>((e) => fromCard(Map<String, dynamic>.from(e as Map)))
           .toList(),
-      uniqueCards: (map['uniqueCards'] as List)
+      uniqueCards: (map['uniqueCards'] as Iterable)
           .map<FmCard>((e) => fromCard(Map<String, dynamic>.from(e as Map)))
           .toSet(),
-      iterableCards: (map['iterableCards'] as List)
+      iterableCards: (map['iterableCards'] as Iterable)
           .map<FmCard>((e) => fromCard(Map<String, dynamic>.from(e as Map)))
           .toList(),
       maybeCards: map['maybeCards'] != null
-          ? (map['maybeCards'] as List)
+          ? (map['maybeCards'] as Iterable)
                 .map<FmCard>(
                   (e) => fromCard(Map<String, dynamic>.from(e as Map)),
                 )
@@ -1101,17 +1101,17 @@ abstract class FmDeclaredNestedMapper {
       optionalCard: map['optionalCard'] != null
           ? fromCard(map['optionalCard'] as Map)
           : null,
-      cards: (map['cards'] as List)
+      cards: (map['cards'] as Iterable)
           .map<FmCard>((e) => fromCard(e as Map))
           .toList(),
-      uniqueCards: (map['uniqueCards'] as List)
+      uniqueCards: (map['uniqueCards'] as Iterable)
           .map<FmCard>((e) => fromCard(e as Map))
           .toSet(),
-      iterableCards: (map['iterableCards'] as List)
+      iterableCards: (map['iterableCards'] as Iterable)
           .map<FmCard>((e) => fromCard(e as Map))
           .toList(),
       maybeCards: map['maybeCards'] != null
-          ? (map['maybeCards'] as List)
+          ? (map['maybeCards'] as Iterable)
                 .map<FmCard>((e) => fromCard(e as Map))
                 .toList()
           : null,
@@ -1146,17 +1146,17 @@ abstract class FmDeclaredRawNestedMapper {
       optionalCard: map['optionalCard'] != null
           ? fmNestedMappers.fromRawMap(map['optionalCard'] as Map)
           : null,
-      cards: (map['cards'] as List)
+      cards: (map['cards'] as Iterable)
           .map<FmCard>((e) => fmNestedMappers.fromRawMap(e as Map))
           .toList(),
-      uniqueCards: (map['uniqueCards'] as List)
+      uniqueCards: (map['uniqueCards'] as Iterable)
           .map<FmCard>((e) => fmNestedMappers.fromRawMap(e as Map))
           .toSet(),
-      iterableCards: (map['iterableCards'] as List)
+      iterableCards: (map['iterableCards'] as Iterable)
           .map<FmCard>((e) => fmNestedMappers.fromRawMap(e as Map))
           .toList(),
       maybeCards: map['maybeCards'] != null
-          ? (map['maybeCards'] as List)
+          ? (map['maybeCards'] as Iterable)
                 .map<FmCard>((e) => fmNestedMappers.fromRawMap(e as Map))
                 .toList()
           : null,
@@ -1188,7 +1188,7 @@ abstract class FmUsesNestedMapper {
       maybeAt: map['maybeAt'] != null
           ? fmDateConverters.fromMillis(map['maybeAt'] as int)
           : null,
-      history: (map['history'] as List)
+      history: (map['history'] as Iterable)
           .map<DateTime>((e) => fmDateConverters.fromMillis(e as int))
           .toList(),
     );
@@ -1213,7 +1213,7 @@ abstract class FmUsesConverterMapper {
       maybeAt: map['maybeAt'] != null
           ? fromMillis(map['maybeAt'] as int)
           : null,
-      history: (map['history'] as List)
+      history: (map['history'] as Iterable)
           .map<DateTime>((e) => fromMillis(e as int))
           .toList(),
     );
@@ -1267,7 +1267,7 @@ abstract class FmDotNotationMapper {
   FmTree _mapMapToFmTree(Map<String, dynamic> map) {
     return FmTree(
       name: map['name'] as String,
-      children: (map['children'] as List)
+      children: (map['children'] as Iterable)
           .map<FmTree>(
             (e) => _mapMapToFmTree(Map<String, dynamic>.from(e as Map)),
           )
@@ -1290,7 +1290,7 @@ abstract class FmRecursivePrivateMapper {
   FmTree fromMap(Map<String, dynamic> map) {
     return FmTree(
       name: map['name'] as String,
-      children: (map['children'] as List)
+      children: (map['children'] as Iterable)
           .map<FmTree>((e) => fromMap(Map<String, dynamic>.from(e as Map)))
           .toList(),
     );
@@ -1491,9 +1491,9 @@ abstract class FmIgnoreRequiredMapper {
         ..label = (map['label'] as String?)
         ..main = (FmBuiltCardBuilder()
           ..replace(fromMap(Map<String, dynamic>.from(map['main'] as Map))))
-        ..tags = ListBuilder(List<String>.from(map['tags'] as List))
+        ..tags = ListBuilder(List<String>.from(map['tags'] as Iterable))
         ..cards = ListBuilder(
-          (map['cards'] as List)
+          (map['cards'] as Iterable)
               .map<FmBuiltCard>(
                 (e) => fromMap(Map<String, dynamic>.from(e as Map)),
               )
@@ -1542,9 +1542,9 @@ abstract class FmBuiltForceMapper {
         ..main = _mapMapToFmBuiltCard(
           Map<String, dynamic>.from(map['main'] as Map),
         )
-        ..tags = ListBuilder(List<String>.from(map['tags'] as List))
+        ..tags = ListBuilder(List<String>.from(map['tags'] as Iterable))
         ..cards = ListBuilder(
-          (map['cards'] as List)
+          (map['cards'] as Iterable)
               .map<FmBuiltCard>(
                 (e) =>
                     _mapMapToFmBuiltCard(Map<String, dynamic>.from(e as Map))

@@ -83,9 +83,8 @@ class FromMapExpressionFactory extends ExpressionFactory {
 
   Expression _callable(ExpressionContext context) {
     final sources = context.sources;
-    final fields = sources != null && sources.isNotEmpty
-        ? sources
-        : [context.field];
+    final fields =
+        sources != null && sources.isNotEmpty ? sources : [context.field];
     final chains = sources != null && sources.isNotEmpty
         ? context.sourceAccessChains
         : [context.accessChain];
@@ -95,13 +94,32 @@ class FromMapExpressionFactory extends ExpressionFactory {
         _castArgument(
           context,
           fields[i],
-          _sourceRead(fields[i], chains?[i]),
+          _forceNonNull(
+            context,
+            fields.length == 1,
+            fields[i],
+            _sourceRead(fields[i], chains?[i]),
+          ),
           _parameterType(context.expressionMappingMethod!, i),
         ),
     ];
 
     return refer(context.expressionMappingMethod!.name).call(arguments);
   }
+
+  /// `forceNonNull` unwraps a nullable typed map value before it is used.
+  Expression _forceNonNull(
+    ExpressionContext context,
+    bool single,
+    Field source,
+    Expression read,
+  ) =>
+      single &&
+              context.forceNonNull &&
+              source is MapEntryField &&
+              source.nullable
+          ? read.nullChecked
+          : read;
 
   DartType? _parameterType(MappingMethod method, int index) =>
       method is CallableMappingMethod
@@ -178,9 +196,10 @@ class FromMapExpressionFactory extends ExpressionFactory {
     final target = context.counterpartField;
     var raw = mapRead(source.instance!.name, source.keys);
 
-    // A typed `Map<String, T?>` read into a non-null field: forceNonNull.
+    // A typed `Map<String, T?>` value with forceNonNull is unwrapped, whether
+    // or not the target is nullable (as the class -> class mapping does).
     var bang = false;
-    if (context.forceNonNull && source.nullable && !target.nullable) {
+    if (context.forceNonNull && source.nullable) {
       raw = raw.nullChecked;
       bang = true;
     }
@@ -196,7 +215,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
       context,
       raw,
       target.type,
-      nullable: target.nullable,
+      nullable: target.nullable && !bang,
       defaultExpression: defaultExpression,
       extra: context.extraMappingMethod,
       direct: true,
@@ -435,7 +454,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
           ..types.add(refer(elementName)),
       ).newInstanceNamed(
         'from',
-        [_container(raw, 'List', defaultExpression, parenthesized: false)],
+        [_container(raw, 'Iterable', defaultExpression, parenthesized: false)],
       );
     } else {
       final converted = _read(
@@ -446,7 +465,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
         extra: extra,
       );
       final mapped =
-          _container(raw, 'List', defaultExpression).property('map').call(
+          _container(raw, 'Iterable', defaultExpression).property('map').call(
         [
           Method(
             (b) => b
@@ -545,7 +564,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
         defaultFolded: true);
   }
 
-  /// `raw as List`, or `(raw as List? ?? default)` when a default is given.
+  /// `raw as Iterable`, or `(raw as Iterable? ?? default)` when a default is given.
   Expression _container(
     Expression raw,
     String name,
