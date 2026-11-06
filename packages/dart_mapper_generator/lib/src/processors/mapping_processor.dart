@@ -103,7 +103,7 @@ class MappingProcessor extends ComponentProcessor<Method> {
       );
     }
 
-    final display = type.getDisplayString();
+    final display = context.resolveTypeDeep(type);
 
     return parameter.field.nullable && !display.endsWith('?')
         ? '$display?'

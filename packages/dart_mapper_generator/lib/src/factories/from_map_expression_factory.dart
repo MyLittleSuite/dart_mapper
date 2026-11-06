@@ -34,7 +34,9 @@ import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/map_expressions.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_entry_field.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/generated_private_mapping_method.dart';
 
 /// Builds the expressions reading a value out of a map (Map -> class).
@@ -81,14 +83,75 @@ class FromMapExpressionFactory extends ExpressionFactory {
 
   Expression _callable(ExpressionContext context) {
     final sources = context.sources;
-    final arguments = sources != null && sources.isNotEmpty
-        ? [
-            for (var i = 0; i < sources.length; i++)
-              _sourceRead(sources[i], context.sourceAccessChains?[i]),
-          ]
-        : [_sourceRead(context.field, context.accessChain)];
+    final fields = sources != null && sources.isNotEmpty
+        ? sources
+        : [context.field];
+    final chains = sources != null && sources.isNotEmpty
+        ? context.sourceAccessChains
+        : [context.accessChain];
+
+    final arguments = [
+      for (var i = 0; i < fields.length; i++)
+        _castArgument(
+          context,
+          fields[i],
+          _sourceRead(fields[i], chains?[i]),
+          _parameterType(context.expressionMappingMethod!, i),
+        ),
+    ];
 
     return refer(context.expressionMappingMethod!.name).call(arguments);
+  }
+
+  DartType? _parameterType(MappingMethod method, int index) =>
+      method is CallableMappingMethod
+          ? method.parameters.elementAtOrNull(index)?.field.type
+          : null;
+
+  /// Typed map values (`Map<String, Object?>`) do not flow into the typed
+  /// parameter of a callable: they are cast to it. `dynamic` values do.
+  Expression _castArgument(
+    ExpressionContext context,
+    Field source,
+    Expression read,
+    DartType? parameterType,
+  ) {
+    if (source is! MapEntryField ||
+        parameterType == null ||
+        parameterType is DynamicType ||
+        (parameterType.isDartCoreObject && parameterType.isNullable)) {
+      return read;
+    }
+
+    final valueType = _mapValueType(context, source);
+    if (valueType == null || valueType is DynamicType) {
+      return read;
+    }
+
+    if (_sameBase(valueType, parameterType) &&
+        (!valueType.isNullable || parameterType.isNullable)) {
+      return read;
+    }
+
+    return read.castTo(context.resolveTypeDeep(parameterType));
+  }
+
+  /// The value type of the map [source] is read from, `null` for the nested
+  /// paths of dot notation (always `dynamic`).
+  DartType? _mapValueType(ExpressionContext context, MapEntryField source) {
+    if (source.keys.length != 1) {
+      return null;
+    }
+
+    final method = context.currentMethod;
+    final parameter = method is BindableMappingMethod
+        ? method.parameters
+            .where((p) => p.field.name == source.instance!.name)
+            .firstOrNull
+        : null;
+    final generics = parameter?.field.type.asGenerics;
+
+    return generics != null && generics.length > 1 ? generics[1] : null;
   }
 
   Expression _sourceRead(Field source, List<(String, bool)>? chain) {
@@ -269,9 +332,9 @@ class FromMapExpressionFactory extends ExpressionFactory {
     if (parameterType == null) {
       argument = raw;
     } else if (isNested) {
-      argument = _mapArgument(raw, parameterType);
+      argument = _mapArgument(context, raw, parameterType);
     } else {
-      argument = raw.castTo(parameterType.getDisplayString());
+      argument = raw.castTo(context.resolveTypeDeep(parameterType));
     }
 
     final call = _wrapBuilt(
@@ -292,7 +355,11 @@ class FromMapExpressionFactory extends ExpressionFactory {
 
   /// Typed `Map<String, ...>` parameters get a normalized copy; raw and
   /// `Object?`-keyed maps are only cast.
-  Expression _mapArgument(Expression raw, DartType parameterType) {
+  Expression _mapArgument(
+    ExpressionContext context,
+    Expression raw,
+    DartType parameterType,
+  ) {
     final generics = parameterType.asGenerics;
     final cast = raw.castTo('Map');
     if (generics == null ||
@@ -306,7 +373,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
         ..symbol = 'Map'
         ..types.addAll([
           refer('String'),
-          refer(generics[1].getDisplayString()),
+          refer(context.resolveTypeDeep(generics[1])),
         ]),
     ).newInstanceNamed('from', [cast]);
   }
