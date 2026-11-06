@@ -223,6 +223,7 @@ Freezed `@Default(...)` values are **not** read automatically. Use `defaultValue
 @Mapping(target: 'nickname', defaultValue: 'anonymous')
 @Mapping(target: 'secret', conditionExpression: 'dto.secret.length > 3')
 @Mapping(target: 'version', constant: '2')
+@Mapping(target: 'kind', constant: "'profile'")
 @Mapping(target: 'upper', expression: 'dto.id.toUpperCase()')
 @Mapping(source: 'id, nickname', target: 'joined', callable: join)
 Map<String, dynamic> toMap(ProfileDTO dto);
@@ -238,11 +239,14 @@ return {
   'names': dto.names,
   'joined': join(dto.id, dto.nickname),
   'version': 2,
+  'kind': 'profile',
   'upper': dto.id.toUpperCase(),
 };
 ```
 
-On the read side the same attributes generate `code: 7` (`constant`), `upperCase(map['nickname'])` (`callable`), `joinNames(map['first'], map['last'])` (`callable` with `source: 'first,last'`), `slug: 'x-${map['name']}'` (`expression`), and `map.containsKey('nick') ? map['nick'] as String? : null` (`conditionExpression`). Ignoring a required nullable target passes `null`; ignoring an optional one omits the argument.
+A `constant` is a Dart expression emitted verbatim, as in every other mapping: write `"'profile'"` for a string, `'2'` for a number and `'DateTime(2020)'` for any other expression. The generator never guesses whether a value is a string.
+
+On the read side the same attributes generate `code: 7` (`constant`), `upperCase(map['nickname'])` (`callable`; with a typed or `Object?` source the argument is cast to the parameter type: `upperCase(map['nickname'] as String)`), `joinNames(map['first'], map['last'])` (`callable` with `source: 'first,last'`), `slug: 'x-${map['name']}'` (`expression`), and `map.containsKey('nick') ? map['nick'] as String? : null` (`conditionExpression`). Ignoring a required nullable target passes `null`; ignoring an optional one omits the argument.
 
 ## Nested Classes, Collections, and Maps
 
@@ -394,14 +398,16 @@ Converters are matched on the **class-side type** `T` of the field:
 | Direction | A matching method |
 |-----------|-------------------|
 | Class → Map | takes a single parameter of type `T` and returns a value assignable to the map value type (and not `T` itself) |
-| Map → class | returns `T` and takes a single parameter of type `P`; the map value is cast to `P` before the call |
+| Map → class | returns `T` and takes a single non-map parameter of type `P` other than `T`; the map value is cast to `P` before the call |
 
 Precedence:
 
 1. A converter declared in the mapper wins over one from `uses`.
 2. A converter takes precedence over pass-through and over enum-by-name (a declared `String roleLabel(Role role)` replaces `dto.role.name`).
-3. Plain primitive types (`int`, `String`, `bool`, `double`, `num`) never use a converter.
-4. Only concrete (hand-written) methods act as Map → class converters: abstract methods are generated mappings.
+3. Plain primitive types (`int`, `String`, `bool`, `double`, `num`) never use a converter, in either direction. A `List<DateTime>` or `Map<String, DateTime>` field uses the converter of its item or value type; the collection itself is never converted as a whole.
+4. Only concrete (hand-written) methods act as converters, in both directions: abstract methods are generated mappings. An abstract method can still serve as the mapping of a nested class (`Map<String, dynamic> toMap(Address a)` or `Address fromMap(Map<String, dynamic> map)`).
+
+The same rules apply to class → Map and Map → class: for instance, a mapper declaring both `int toMillis(DateTime d)` and `DateTime fromMillis(int ms)` writes `'at': toMillis(dto.at)` and reads `at: fromMillis(map['at'] as int)`, while an `int count` field is just `'count': dto.count` and `map['count'] as int`.
 
 If more than one candidate matches the same type and direction, the build fails with an ambiguity error; use [`callable`](/guides/callable-mapping) to choose explicitly.
 
@@ -474,7 +480,7 @@ Map<String, dynamic> toMap(Contact contact) {
 }
 ```
 
-Targets can be nested more than one level (`location.address.street`), and `constant` works with them: `@Mapping(target: 'location.address.zip', constant: 'n/a')` generates `'zip': 'n/a'` inside the nested map.
+Targets can be nested more than one level (`location.address.street`), and `constant` works with them: `@Mapping(target: 'location.address.zip', constant: "'n/a'")` generates `'zip': 'n/a'` inside the nested map.
 
 Mapping both a whole key (`address`) and one of its sub-keys (`address.street`) is a compile-time error, and so is an empty segment (`address..id`).
 
@@ -550,7 +556,7 @@ Profile fromMap(Map<String, dynamic> map) {
 }
 ```
 
-Computed getters of a Built Value class are not keys unless mapped explicitly. Reading a nullable typed map value (`Map<String, String?>`) into a non-null built field needs `forceNonNull` (`b..id = map['id']!`) or `defaultValue`.
+Computed getters of a Built Value class are not keys unless mapped explicitly. Reading a nullable typed map value (`Map<String, String?>`) into a non-null built field needs `forceNonNull` (`b..id = map['id']!`) or `defaultValue`; otherwise the build fails with `TargetFieldRequiresNonOptionalSourceFieldError`, as for any other target.
 
 A sealed or abstract class as the target of a Map → class method is a compile-time error. See [issue #119](https://github.com/MyLittleSuite/dart_mapper/issues/119).
 
@@ -575,7 +581,8 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 | Class → Map: a field is incompatible with the typed map value | `IncompatibleMapValueError` | `Field 'score' of type 'double' is not compatible with the value type 'String' of 'Map<String, String>'.` |
 | Map → class: a field is incompatible with the typed source map | `IncompatibleMapValueTypeError` | `Field 'count' of type 'int' is not compatible with the map value type 'String'.` |
 | Non-null target field read from a `Map<String, T?>` without `forceNonNull` or `defaultValue` | `TargetFieldRequiresNonOptionalSourceFieldError` | `Target field 'id' of 'FmHolderNullableSource' in 'FmTypedNullableMapper.fromNullable' requires a non-nullable source, but the source field is nullable.` |
-| Same, for a Built Value target | `InvalidGenerationSourceError` | `Target field 'id' is non-nullable but the map value for 'id' is nullable.` |
+| Same, for a Built Value target | `TargetFieldRequiresNonOptionalSourceFieldError` | `Target field 'id' of 'FmBuiltDeckAbstract' in 'FmBuiltNullableMapper.fromMap' requires a non-nullable source, but the source field is nullable.` |
+| A `dart:core` `Map` is both source and return type, whatever the key type (`Map<int, X> convert(Map<String, dynamic> map)`) | `MapToMapMappingNotSupportedError` | `Method 'convert' maps a Map to a Map, which is not supported.` |
 | The target of a Map → class method is sealed or abstract ([#119](https://github.com/MyLittleSuite/dart_mapper/issues/119)) | `FromMapTargetNotInstantiableError` | `Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.` |
 | Target dot notation in a Map → class method ([#118](https://github.com/MyLittleSuite/dart_mapper/issues/118)) | `MapTargetDotNotationUnsupportedError` | `Target dot notation 'address.street' is not supported when mapping a Map to a class (tracked in issue #118).` |
 | A whole key and one of its sub-keys are both mapped, or a dotted target has an empty segment | `MapKeyPathConflictError` | `Invalid @Mapping target 'address.nickname': 'address' is already mapped as a whole value.` / `Invalid @Mapping target 'address..id': it contains an empty segment.` |
