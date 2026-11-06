@@ -370,4 +370,18 @@ void main() async {
     'map_coverage_test_src.dart',
   );
   testAnnotatedElements<Mapper>(mapCoverageReader, generator);
+
+  // Group: fixes of the class <-> Map review
+  final mapReviewFixesReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_review_fixes_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapReviewFixesReader, generator);
+
+  // Group: Map -> Map detection errors of the class <-> Map review
+  final mapReviewFixesErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_review_fixes_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapReviewFixesErrorReader, generator);
 }

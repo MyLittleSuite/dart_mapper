@@ -213,8 +213,8 @@ abstract class FmAbstractTargetMapper {
 }
 
 @ShouldThrow(
-  "Target field 'id' is non-nullable but the map value for 'id' is nullable.\n"
-  "Fix: Add forceNonNull: true or provide a defaultValue to handle the null case.",
+  "Target field 'id' of 'FmBuiltDeckAbstract' in 'FmBuiltNullableMapper.fromMap' requires a non-nullable source, but the source field is nullable.\n"
+  "Fix: Add @Mapping(target: 'id', forceNonNull: true) to force-unwrap the nullable source field, or make the source field non-nullable.",
 )
 @Mapper()
 abstract class FmBuiltNullableMapper {

@@ -339,7 +339,7 @@ abstract class TargetDotNotationMapper {
 @Mapper()
 abstract class DeepTargetDotNotationMapper {
   @Mapping(source: 'street', target: 'location.address.street')
-  @Mapping(target: 'location.address.zip', constant: 'n/a')
+  @Mapping(target: 'location.address.zip', constant: "'n/a'")
   @Mapping(source: 'city', target: 'location.city')
   Map<String, dynamic> toMap(FlatAddressDTO dto);
 }
@@ -568,7 +568,7 @@ abstract class MappingFeaturesToMapMapper {
     conditionExpression: 'dto.secret.length > 3',
   )
   @Mapping(target: 'version', constant: '2')
-  @Mapping(target: 'kind', constant: 'profile')
+  @Mapping(target: 'kind', constant: "'profile'")
   @Mapping(target: 'upper', expression: 'dto.id.toUpperCase()')
   @Mapping(source: 'id, nickname', target: 'joined', callable: join)
   Map<String, dynamic> toMap(ProfileDTO dto);
