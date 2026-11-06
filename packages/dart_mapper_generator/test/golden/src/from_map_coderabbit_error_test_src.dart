@@ -58,7 +58,7 @@ class CrCity {
 @ShouldThrow(
   "Ambiguous source field 'address' found in multiple parameters: man, woman.\n"
   "When multiple source parameters share a field name, you must qualify the source explicitly.\n"
-  "Fix: Add @Mapping(target: 'address', source: 'man.address') to specify which parameter to use.",
+  "Fix: Add @Mapping(target: 'city', source: 'man.address.city') to specify which parameter to use.",
 )
 @Mapper()
 abstract class CrAmbiguousDottedMapper {

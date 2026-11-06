@@ -382,6 +382,8 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       if (owners.length > 1) {
         throw AmbiguousSourceFieldError(
           fieldName: segments.first,
+          targetName: targetName,
+          sourcePath: path,
           parameterNames: owners.map((p) => p.name).toList(growable: false),
           element: run.method,
         );
