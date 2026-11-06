@@ -276,3 +276,59 @@ abstract class CrTypedCallableMapper {
   @Mapping(target: 'count', callable: crTwice)
   CrTwice fromMap(Map<String, int> map);
 }
+
+// ----- 11. nested nullable type arguments into a callable parameter -----
+
+int crSum(List<int>? values) => values?.fold<int>(0, (a, b) => a + b) ?? 0;
+
+class CrTotal {
+  final int total;
+
+  const CrTotal({required this.total});
+}
+
+@ShouldGenerate(
+  r'''return CrTotal(total: crSum(map['total'] as List<int>?));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrNestedNullableCallableMapper {
+  @Mapping(target: 'total', callable: crSum)
+  CrTotal fromMap(Map<String, List<int?>> map);
+}
+
+@ShouldGenerate(
+  r'''return CrTotal(total: crSum(map['total']));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrNestedCallableMapper {
+  @Mapping(target: 'total', callable: crSum)
+  CrTotal fromMap(Map<String, List<int>> map);
+}
+
+// ----- 12. own @Mapping overrides the inherited one of the same target -----
+
+int crParseId(String value) => int.parse(value);
+
+class CrParsedId {
+  final int id;
+  final String name;
+
+  const CrParsedId({required this.id, required this.name});
+}
+
+@ShouldGenerate(
+  r'''return CrParsedId(id: map['id'] as int? ?? 0, name: map['label'] as String);''',
+  contains: true,
+)
+@Mapper()
+abstract class CrInheritOverrideMapper {
+  @Mapping(target: 'id', callable: crParseId)
+  @Mapping(source: 'label', target: 'name')
+  CrParsedId fromMap(Map<String, dynamic> map);
+
+  @InheritConfiguration()
+  @Mapping(target: 'id', defaultValue: '0')
+  CrParsedId fromMapWithDefault(Map<String, dynamic> map);
+}

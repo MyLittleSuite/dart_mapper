@@ -545,8 +545,48 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
         fieldType: target.type.getDisplayString(),
         valueType: valueType.getDisplayString(),
         element: run.method,
+        converter: _converterAdvice(run, valueType, target.type),
       );
     }
+  }
+
+  /// The types a converter method has to convert between to read [value] as
+  /// [target], `null` when no converter can help.
+  ///
+  /// Converters are looked up on the elements of collections, so for
+  /// collections of the same kind (and with compatible keys) the advice is
+  /// about their elements. A map is never read as an iterable (or the other
+  /// way around) and plain values (`bool`, `int`, `double`, `num`, `String`)
+  /// are never converted, so no converter is suggested for them.
+  ({String from, String to})? _converterAdvice(
+    _Run run,
+    DartType value,
+    DartType target,
+  ) {
+    final system = run.typeSystem;
+    final v = system.promoteToNonNull(value);
+    final t = system.promoteToNonNull(target);
+
+    final valueElement = _elementOf(v);
+    final targetElement = _elementOf(t);
+    if (valueElement != null && targetElement != null) {
+      if (v.isIterable != t.isIterable ||
+          (t.isMap && !_compatibleKey(run, v, t))) {
+        return null;
+      }
+
+      return _converterAdvice(run, valueElement, targetElement);
+    }
+
+    if (t is DynamicType ||
+        t.isDartCoreObject ||
+        isPlainMapPrimitive(t) ||
+        t.isMap ||
+        t.isIterable) {
+      return null;
+    }
+
+    return (from: value.getDisplayString(), to: target.getDisplayString());
   }
 
   /// The element of an iterable, or the value of a map, when typed.

@@ -621,9 +621,15 @@ class FromMapExpressionFactory extends ExpressionFactory {
         needsGeneratedMapping(type);
   }
 
-  bool _sameBase(DartType a, DartType b) =>
-      a.getDisplayString().replaceAll('?', '') ==
-      b.getDisplayString().replaceAll('?', '');
+  /// Whether [a] and [b] are the same type, ignoring only their top-level
+  /// nullability: the nullability of type arguments (`List<int?>` and
+  /// `List<int>`) still sets them apart.
+  bool _sameBase(DartType a, DartType b) {
+    String base(DartType type) =>
+        type.getDisplayString().replaceFirst(RegExp(r'\?$'), '');
+
+    return base(a) == base(b);
+  }
 }
 
 /// Whether [type] is a class that must be read through a (generated or

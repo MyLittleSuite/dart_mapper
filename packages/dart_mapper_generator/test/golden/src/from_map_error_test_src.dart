@@ -157,7 +157,7 @@ abstract class FmObjectParamMapper {
 
 @ShouldThrow(
   "Field 'count' of type 'int' is not compatible with the map value type 'String'.\n"
-  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'String' to 'int', or use callable.",
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>) or use callable.",
 )
 @Mapper()
 abstract class FmTypedIncompatibleMapper {

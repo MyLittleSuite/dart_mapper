@@ -56,6 +56,22 @@ abstract class PersonMapper {
 
 `toPublicDto` inherits the `fullName → name` rename and additionally ignores `internalId`.
 
+A `@Mapping` declared on the method replaces every inherited `@Mapping` of the same target: the settings are not merged. In the example below `toDefaultedDto` drops the inherited `callable` of `id` and uses its own `defaultValue` instead.
+
+```dart
+@Mapper()
+abstract class OrderMapper {
+  @Mapping(target: 'id', callable: parseId)
+  Order fromMap(Map<String, dynamic> map);
+
+  @InheritConfiguration()
+  @Mapping(target: 'id', defaultValue: '0')
+  Order fromMapWithDefault(Map<String, dynamic> map);
+}
+```
+
+Conflicting settings left on the same target after the override (for example `callable` and `defaultValue` in two `@Mapping` of the method) are rejected with `InvalidMappingCombinationError`.
+
 ## See Also
 
 - [@InheritInverseConfiguration](/annotations/inherit-inverse-configuration) — inherit mappings in reverse direction

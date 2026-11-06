@@ -60,6 +60,8 @@ abstract class PersonMapper {
 
 `fromDto` inherits the inverted name rename and additionally ignores `createdAt`.
 
+As with [@InheritConfiguration](/annotations/inherit-configuration#combining-with-additional-mapping), a `@Mapping` declared on the method replaces every inherited `@Mapping` of the same target.
+
 ## See Also
 
 - [@InheritConfiguration](/annotations/inherit-configuration) — inherit mappings in the same direction

@@ -76,7 +76,7 @@ class CrStrings {
 
 @ShouldThrow(
   "Field 'values' of type 'List<String>' is not compatible with the map value type 'List<int>'.\n"
-  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'List<int>' to 'List<String>', or use callable.",
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>) or use callable.",
 )
 @Mapper()
 abstract class CrElementMismatchMapper {
@@ -93,7 +93,7 @@ class CrInts {
 
 @ShouldThrow(
   "Field 'values' of type 'List<int>' is not compatible with the map value type 'Map<String, int>'.\n"
-  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'Map<String, int>' to 'List<int>', or use callable.",
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>) or use callable.",
 )
 @Mapper()
 abstract class CrMapToListMismatchMapper {
@@ -108,7 +108,7 @@ class CrIntMap {
 
 @ShouldThrow(
   "Field 'values' of type 'Map<String, int>' is not compatible with the map value type 'List<int>'.\n"
-  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'List<int>' to 'Map<String, int>', or use callable.",
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>) or use callable.",
 )
 @Mapper()
 abstract class CrListToMapMismatchMapper {
@@ -117,7 +117,7 @@ abstract class CrListToMapMismatchMapper {
 
 @ShouldThrow(
   "Field 'values' of type 'Map<String, int>' is not compatible with the map value type 'Map<int, int>'.\n"
-  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'Map<int, int>' to 'Map<String, int>', or use callable.",
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>) or use callable.",
 )
 @Mapper()
 abstract class CrMapKeyMismatchMapper {
@@ -140,7 +140,7 @@ class CrLeaves {
 
 @ShouldThrow(
   "Field 'leaves' of type 'List<CrLeaf>' is not compatible with the map value type 'Map<String, int>'.\n"
-  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'Map<String, int>' to 'List<CrLeaf>', or use callable.",
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>) or use callable.",
 )
 @Mapper()
 abstract class CrMapToLeafListMismatchMapper {
@@ -191,4 +191,36 @@ abstract class CrSplitSourceExpressionMapper {
   @Mapping(target: 'id', source: 'key')
   @Mapping(target: 'id', expression: '1')
   CrParsed fromMap(Map<String, dynamic> map);
+}
+
+// ----- 12. converter advice only where a converter can be used -----
+
+class CrStamp {
+  final DateTime at;
+
+  const CrStamp({required this.at});
+}
+
+@ShouldThrow(
+  "Field 'at' of type 'DateTime' is not compatible with the map value type 'int'.\n"
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'int' to 'DateTime', or use callable.",
+)
+@Mapper()
+abstract class CrStampAdviceMapper {
+  CrStamp fromMap(Map<String, int> map);
+}
+
+class CrStamps {
+  final List<DateTime> at;
+
+  const CrStamps({required this.at});
+}
+
+@ShouldThrow(
+  "Field 'at' of type 'List<DateTime>' is not compatible with the map value type 'List<int>'.\n"
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'int' to 'DateTime', or use callable.",
+)
+@Mapper()
+abstract class CrStampsAdviceMapper {
+  CrStamps fromMap(Map<String, List<int>> map);
 }
