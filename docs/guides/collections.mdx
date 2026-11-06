@@ -144,6 +144,11 @@ The generator handles mismatched but compatible collection types:
 | `List<T>` | `BuiltList<T>` | `.toBuiltList()` |
 | `BuiltList<T>` | `List<T>` | `.toList()` |
 
+## Mapping to and from Maps
+
+A `Map<String, dynamic>` as the whole target or source of a method (Firestore, Realtime Database, JSON-like payloads) is covered by the [Map Mapping guide](/guides/map-mapping).
+
 ## See Also
 
 - [Built Value support guide](/guides/built-value-support) — `BuiltList`, `BuiltSet`, `BuiltMap` in depth
+- [Map Mapping guide](/guides/map-mapping) — class to `Map` and `Map` to class
