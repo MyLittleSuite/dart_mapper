@@ -27,7 +27,6 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/misc/strings.dart';
 
 mixin AliasesMixin {
@@ -40,10 +39,20 @@ mixin AliasesMixin {
       chainDot([
         importAliases?[type.element?.library?.firstFragment.source.uri],
         chain([
-          type.displayString,
+          _withoutNullability(type),
           if (withNullability) '?',
         ]),
       ]);
+
+  /// The display string of [type] without the nullability suffix of the type
+  /// itself; nullability of type arguments (`Map<String, Object?>`) is kept.
+  String _withoutNullability(DartType type) {
+    final display = type.getDisplayString();
+
+    return display.endsWith('?')
+        ? display.substring(0, display.length - 1)
+        : display;
+  }
 
   String resolveConstructor(ConstructorElement constructor) => chainDot([
         importAliases?[constructor.library.firstFragment.source.uri],
