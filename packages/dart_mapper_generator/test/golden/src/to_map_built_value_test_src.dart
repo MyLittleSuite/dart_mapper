@@ -82,24 +82,19 @@ abstract class BuiltTaskBuilder
       'priority': task.priority.name,
       'tags': task.tags.toList(),
       'priorities': task.priorities.map((item) => item.name).toList(),
-      'steps': task.steps
-          .map((item) => _mapBuiltStepToMapOfStringAnddynamic(item))
-          .toList(),
+      'steps': task.steps.map((item) => _mapBuiltStepToMap(item)).toList(),
       'stepsByName': task.stepsByName.toMap().map(
-        (key, value) =>
-            MapEntry(key, _mapBuiltStepToMapOfStringAnddynamic(value)),
+        (key, value) => MapEntry(key, _mapBuiltStepToMap(value)),
       ),
       'firstStep': task.firstStep != null
-          ? _mapBuiltStepToMapOfStringAnddynamic(task.firstStep!)
+          ? _mapBuiltStepToMap(task.firstStep!)
           : null,
     };
   }''',
   contains: true,
 )
 @ShouldGenerate(
-  r'''Map<String, dynamic> _mapBuiltStepToMapOfStringAnddynamic(
-    BuiltStep builtStep,
-  ) {
+  r'''Map<String, dynamic> _mapBuiltStepToMap(BuiltStep builtStep) {
     return {'label': builtStep.label};
   }''',
   contains: true,

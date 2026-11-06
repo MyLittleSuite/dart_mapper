@@ -611,16 +611,14 @@ abstract class FmUserMapper {
       votes: (map['votes'] as Map? ?? const {}).map<String, FmCard>(
         (key, value) => MapEntry(
           key as String,
-          _mapMapOfStringAnddynamicToFmCard(
-            Map<String, dynamic>.from(value as Map),
-          ),
+          _mapMapToFmCard(Map<String, dynamic>.from(value as Map)),
         ),
       ),
       createdAt: map['created_at'] as int,
     );
   }
 
-  FmCard _mapMapOfStringAnddynamicToFmCard(Map<String, dynamic> map) {
+  FmCard _mapMapToFmCard(Map<String, dynamic> map) {
     return FmCard(
       name: map['name'] as String,
       value: (map['value'] as num).toDouble(),
@@ -648,16 +646,14 @@ abstract class FmSessionMapper {
       votes: (map['votes'] as Map).map<String, FmCard>(
         (key, value) => MapEntry(
           key as String,
-          _mapMapOfStringAnddynamicToFmCard(
-            Map<String, dynamic>.from(value as Map),
-          ),
+          _mapMapToFmCard(Map<String, dynamic>.from(value as Map)),
         ),
       ),
       createdAt: map['created_at'] as int,
     );
   }
 
-  FmCard _mapMapOfStringAnddynamicToFmCard(Map<String, dynamic> map) {
+  FmCard _mapMapToFmCard(Map<String, dynamic> map) {
     return FmCard(
       name: map['name'] as String,
       value: (map['value'] as num).toDouble(),
@@ -829,56 +825,44 @@ abstract class FmTypedStringsMapper {
   @override
   FmNestedParent fromMap(Map<String, dynamic> map) {
     return FmNestedParent(
-      card: _mapMapOfStringAnddynamicToFmCard(
-        Map<String, dynamic>.from(map['card'] as Map),
-      ),
+      card: _mapMapToFmCard(Map<String, dynamic>.from(map['card'] as Map)),
       optionalCard: map['optionalCard'] != null
-          ? _mapMapOfStringAnddynamicToFmCard(
+          ? _mapMapToFmCard(
               Map<String, dynamic>.from(map['optionalCard'] as Map),
             )
           : null,
       cards: (map['cards'] as List)
           .map<FmCard>(
-            (e) => _mapMapOfStringAnddynamicToFmCard(
-              Map<String, dynamic>.from(e as Map),
-            ),
+            (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
           )
           .toList(),
       uniqueCards: (map['uniqueCards'] as List)
           .map<FmCard>(
-            (e) => _mapMapOfStringAnddynamicToFmCard(
-              Map<String, dynamic>.from(e as Map),
-            ),
+            (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
           )
           .toSet(),
       iterableCards: (map['iterableCards'] as List)
           .map<FmCard>(
-            (e) => _mapMapOfStringAnddynamicToFmCard(
-              Map<String, dynamic>.from(e as Map),
-            ),
+            (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
           )
           .toList(),
       maybeCards: map['maybeCards'] != null
           ? (map['maybeCards'] as List)
                 .map<FmCard>(
-                  (e) => _mapMapOfStringAnddynamicToFmCard(
-                    Map<String, dynamic>.from(e as Map),
-                  ),
+                  (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
                 )
                 .toList()
           : null,
       byName: (map['byName'] as Map).map<String, FmCard>(
         (key, value) => MapEntry(
           key as String,
-          _mapMapOfStringAnddynamicToFmCard(
-            Map<String, dynamic>.from(value as Map),
-          ),
+          _mapMapToFmCard(Map<String, dynamic>.from(value as Map)),
         ),
       ),
     );
   }
 
-  FmCard _mapMapOfStringAnddynamicToFmCard(Map<String, dynamic> map) {
+  FmCard _mapMapToFmCard(Map<String, dynamic> map) {
     return FmCard(
       name: map['name'] as String,
       value: (map['value'] as num).toDouble(),
@@ -923,9 +907,7 @@ abstract class FmNestedMapper {
       cardsByStatus: (map['cardsByStatus'] as Map).map<FmStatus, FmCard>(
         (key, value) => MapEntry(
           FmStatus.values.byName(key as String),
-          _mapMapOfStringAnddynamicToFmCard(
-            Map<String, dynamic>.from(value as Map),
-          ),
+          _mapMapToFmCard(Map<String, dynamic>.from(value as Map)),
         ),
       ),
       groups: (map['groups'] as Map).map<String, List<FmCard>>(
@@ -933,9 +915,7 @@ abstract class FmNestedMapper {
           key as String,
           (value as List)
               .map<FmCard>(
-                (e) => _mapMapOfStringAnddynamicToFmCard(
-                  Map<String, dynamic>.from(e as Map),
-                ),
+                (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
               )
               .toList(),
         ),
@@ -944,7 +924,7 @@ abstract class FmNestedMapper {
     );
   }
 
-  FmCard _mapMapOfStringAnddynamicToFmCard(Map<String, dynamic> map) {
+  FmCard _mapMapToFmCard(Map<String, dynamic> map) {
     return FmCard(
       name: map['name'] as String,
       value: (map['value'] as num).toDouble(),
@@ -989,9 +969,7 @@ abstract class FmCollectionsMapper {
       cardsByStatus: (map['cardsByStatus'] as Map).map<FmStatus, FmCard>(
         (key, value) => MapEntry(
           FmStatus.values.byName(key as String),
-          _mapMapOfStringAnddynamicToFmCard(
-            Map<String, dynamic>.from(value as Map),
-          ),
+          _mapMapToFmCard(Map<String, dynamic>.from(value as Map)),
         ),
       ),
       groups: (map['groups'] as Map).map<String, List<FmCard>>(
@@ -999,9 +977,7 @@ abstract class FmCollectionsMapper {
           key as String,
           (value as List)
               .map<FmCard>(
-                (e) => _mapMapOfStringAnddynamicToFmCard(
-                  Map<String, dynamic>.from(e as Map),
-                ),
+                (e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map)),
               )
               .toList(),
         ),
@@ -1010,7 +986,7 @@ abstract class FmCollectionsMapper {
     );
   }
 
-  FmCard _mapMapOfStringAnddynamicToFmCard(Map<String, dynamic> map) {
+  FmCard _mapMapToFmCard(Map<String, dynamic> map) {
     return FmCard(
       name: map['name'] as String,
       value: (map['value'] as num).toDouble(),
@@ -1274,20 +1250,16 @@ abstract class FmDotNotationMapper {
   @override
   FmTreeHolder fromMap(Map<String, dynamic> map) {
     return FmTreeHolder(
-      tree: _mapMapOfStringAnddynamicToFmTree(
-        Map<String, dynamic>.from(map['tree'] as Map),
-      ),
+      tree: _mapMapToFmTree(Map<String, dynamic>.from(map['tree'] as Map)),
     );
   }
 
-  FmTree _mapMapOfStringAnddynamicToFmTree(Map<String, dynamic> map) {
+  FmTree _mapMapToFmTree(Map<String, dynamic> map) {
     return FmTree(
       name: map['name'] as String,
       children: (map['children'] as List)
           .map<FmTree>(
-            (e) => _mapMapOfStringAnddynamicToFmTree(
-              Map<String, dynamic>.from(e as Map),
-            ),
+            (e) => _mapMapToFmTree(Map<String, dynamic>.from(e as Map)),
           )
           .toList(),
     );
@@ -1557,14 +1529,14 @@ abstract class FmBuiltForceMapper {
       (b) => b
         ..id = map['id'] as String
         ..label = (map['label'] as String?)
-        ..main = _mapMapOfStringAnddynamicToFmBuiltCard(
+        ..main = _mapMapToFmBuiltCard(
           Map<String, dynamic>.from(map['main'] as Map),
         )
         ..tags = ListBuilder(List<String>.from(map['tags'] as List))
         ..cards = ListBuilder(
           (map['cards'] as List)
               .map<FmBuiltCard>(
-                (e) => _mapMapOfStringAnddynamicToFmBuiltCard(
+                (e) => _mapMapToFmBuiltCard(
                   Map<String, dynamic>.from(e as Map),
                 ).build(),
               )
@@ -1574,9 +1546,7 @@ abstract class FmBuiltForceMapper {
     );
   }
 
-  FmBuiltCardBuilder _mapMapOfStringAnddynamicToFmBuiltCard(
-    Map<String, dynamic> map,
-  ) {
+  FmBuiltCardBuilder _mapMapToFmBuiltCard(Map<String, dynamic> map) {
     return FmBuiltCardBuilder()..replace(
       FmBuiltCard(
         (b) => b

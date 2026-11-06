@@ -110,19 +110,15 @@ class SessionDTO {
     return {
       'id': session.id,
       'current': session.current != null
-          ? _mapCardDTOToMapOfStringAnddynamic(session.current!)
+          ? _mapCardDTOToMap(session.current!)
           : null,
       'votes': session.votes.map(
-        (key, value) =>
-            MapEntry(key, _mapCardDTOToMapOfStringAnddynamic(value)),
+        (key, value) => MapEntry(key, _mapCardDTOToMap(value)),
       ),
-      'history': session.history
-          .map((item) => _mapCardDTOToMapOfStringAnddynamic(item))
-          .toList(),
+      'history': session.history.map((item) => _mapCardDTOToMap(item)).toList(),
       'allowed': session.allowed.map((item) => item.name).toList(),
       'byVote': session.byVote.map(
-        (key, value) =>
-            MapEntry(key.name, _mapCardDTOToMapOfStringAnddynamic(value)),
+        (key, value) => MapEntry(key.name, _mapCardDTOToMap(value)),
       ),
       'createdAt': session.createdAt,
       'tags': session.tags,
@@ -131,7 +127,7 @@ class SessionDTO {
   contains: true,
 )
 @ShouldGenerate(
-  r'''Map<String, dynamic> _mapCardDTOToMapOfStringAnddynamic(CardDTO cardDTO) {
+  r'''Map<String, dynamic> _mapCardDTOToMap(CardDTO cardDTO) {
     return {
       'label': cardDTO.label,
       'value': cardDTO.value,
@@ -468,7 +464,7 @@ class DateConverters {
           .map((item) => dateConverters.toMillis(item))
           .toList(),
       'role': dto.role.name,
-      'card': _mapCardDTOToMapOfStringAnddynamic(dto.card),
+      'card': _mapCardDTOToMap(dto.card),
     };
   }''',
   contains: true,
@@ -609,7 +605,7 @@ abstract class SelfReferencingMapper {
       'deletedAt': dto.deletedAt,
       'reminders': dto.reminders,
       'role': dto.role.name,
-      'card': _mapCardDTOToMapOfStringAnddynamic(dto.card),
+      'card': _mapCardDTOToMap(dto.card),
     };
   }''',
   contains: true,
