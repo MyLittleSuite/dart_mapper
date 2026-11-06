@@ -146,8 +146,9 @@ class FromMapExpressionFactory extends ExpressionFactory {
       return read;
     }
 
-    if (_sameBase(valueType, parameterType) &&
-        (!valueType.isNullable || parameterType.isNullable)) {
+    // A map read is always nullable (`map['key']` is `T?`), so it flows as it
+    // is only into a parameter accepting null.
+    if (_sameBase(valueType, parameterType) && parameterType.isNullable) {
       return read;
     }
 

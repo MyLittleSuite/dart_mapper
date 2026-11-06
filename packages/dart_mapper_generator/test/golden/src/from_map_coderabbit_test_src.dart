@@ -256,3 +256,23 @@ class CrIdSet {
 abstract class CrListToSetMapper {
   CrIdSet fromMap(Map<String, List<int>> map);
 }
+
+// ----- 10. non-nullable map value into a matching callable parameter -----
+
+int crTwice(int value) => value * 2;
+
+class CrTwice {
+  final int count;
+
+  const CrTwice({required this.count});
+}
+
+@ShouldGenerate(
+  r'''return CrTwice(count: crTwice(map['count'] as int));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrTypedCallableMapper {
+  @Mapping(target: 'count', callable: crTwice)
+  CrTwice fromMap(Map<String, int> map);
+}

@@ -579,9 +579,12 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
     // compatible when their keys and their elements (or map values) are.
     final valueElement = _elementOf(v);
     final targetElement = _elementOf(t);
-    if (valueElement != null &&
-        targetElement != null &&
-        v.isIterable == t.isIterable) {
+    if (valueElement != null && targetElement != null) {
+      // A map is never read as an iterable (or the other way around), not
+      // even through a converter of the elements.
+      if (v.isIterable != t.isIterable) {
+        return false;
+      }
       if (t.isMap && !_compatibleKey(run, v, t)) {
         return false;
       }

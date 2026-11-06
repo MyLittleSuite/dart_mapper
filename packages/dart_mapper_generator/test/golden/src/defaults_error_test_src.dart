@@ -172,3 +172,16 @@ abstract class NumConstantTypeMismatchMapper {
   @Mapping(target: 'amount', constant: 'abc')
   AmountOutput toOutput(AmountInput source);
 }
+
+// constant + source split across two annotations: not allowed either
+@ShouldThrow(
+  "Invalid @Mapping combination for target 'name': constant cannot be combined with source.\n"
+  "The following combinations are not allowed: constant+source, constant+defaultValue, constant+callable, defaultValue+callable.\n"
+  "Fix: Use only one of: source, defaultValue, constant, or callable per target field.",
+)
+@Mapper()
+abstract class SplitConstantWithSourceMapper {
+  @Mapping(target: "name", source: "fullName")
+  @Mapping(target: "name", constant: "test")
+  ErrorOutput toOutput(ErrorInput source);
+}

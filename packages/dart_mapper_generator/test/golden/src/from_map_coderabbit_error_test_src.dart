@@ -123,3 +123,72 @@ abstract class CrListToMapMismatchMapper {
 abstract class CrMapKeyMismatchMapper {
   CrIntMap fromMap(Map<String, Map<int, int>> map);
 }
+
+// ----- 10. collection kind mismatch through a generated element mapper -----
+
+class CrLeaf {
+  final int value;
+
+  const CrLeaf({required this.value});
+}
+
+class CrLeaves {
+  final List<CrLeaf> leaves;
+
+  const CrLeaves({required this.leaves});
+}
+
+@ShouldThrow(
+  "Field 'leaves' of type 'List<CrLeaf>' is not compatible with the map value type 'Map<String, int>'.\n"
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'Map<String, int>' to 'List<CrLeaf>', or use callable.",
+)
+@Mapper()
+abstract class CrMapToLeafListMismatchMapper {
+  CrLeaves fromMap(Map<String, Map<String, int>> map);
+}
+
+// ----- 11. conflicting settings split across annotations -----
+
+int crParse(String value) => int.parse(value);
+
+class CrParsed {
+  final int id;
+
+  const CrParsed({required this.id});
+}
+
+@ShouldThrow(
+  "Invalid @Mapping combination for target 'id': defaultValue cannot be combined with callable.\n"
+  "The following combinations are not allowed: constant+source, constant+defaultValue, constant+callable, defaultValue+callable.\n"
+  "Fix: Use only one of: source, defaultValue, constant, or callable per target field.",
+)
+@Mapper()
+abstract class CrSplitCallableDefaultMapper {
+  @Mapping(target: 'id', callable: crParse)
+  @Mapping(target: 'id', defaultValue: '0')
+  CrParsed fromMap(Map<String, dynamic> map);
+}
+
+@ShouldThrow(
+  "Invalid @Mapping combination for target 'id': constant cannot be combined with source.\n"
+  "The following combinations are not allowed: constant+source, constant+defaultValue, constant+callable, defaultValue+callable.\n"
+  "Fix: Use only one of: source, defaultValue, constant, or callable per target field.",
+)
+@Mapper()
+abstract class CrSplitSourceConstantMapper {
+  @Mapping(target: 'id', source: 'key')
+  @Mapping(target: 'id', constant: '1')
+  CrParsed fromMap(Map<String, dynamic> map);
+}
+
+@ShouldThrow(
+  "Invalid @Mapping combination for target 'id': expression cannot be combined with source.\n"
+  "The following combinations are not allowed: constant+source, constant+defaultValue, constant+callable, defaultValue+callable.\n"
+  "Fix: Use only one of: source, defaultValue, constant, or callable per target field.",
+)
+@Mapper()
+abstract class CrSplitSourceExpressionMapper {
+  @Mapping(target: 'id', source: 'key')
+  @Mapping(target: 'id', expression: '1')
+  CrParsed fromMap(Map<String, dynamic> map);
+}
