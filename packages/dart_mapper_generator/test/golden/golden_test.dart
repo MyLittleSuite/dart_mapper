@@ -321,4 +321,18 @@ void main() async {
     'string_to_enum_sentinel_test_src.dart',
   );
   testAnnotatedElements<Mapper>(stringToEnumSentinelReader, generator);
+
+  // Group: Map -> class mapping (MappingBehavior.fromMap)
+  final fromMapReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'from_map_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(fromMapReader, generator);
+
+  // Group: Map -> class mapping errors
+  final fromMapErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'from_map_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(fromMapErrorReader, generator);
 }
