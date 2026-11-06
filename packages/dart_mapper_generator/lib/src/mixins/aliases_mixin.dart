@@ -36,14 +36,27 @@ mixin AliasesMixin {
   String? resolvePrefix(DartType type) =>
       importAliases?[type.element?.library?.firstFragment.source.uri];
 
-  String resolveType(DartType type, {bool withNullability = false}) =>
-      chainDot([
-        importAliases?[type.element?.library?.firstFragment.source.uri],
-        chain([
-          _withoutNullability(type),
-          if (withNullability) '?',
-        ]),
-      ]);
+  /// The name of [type] with its import prefix. The type arguments of a
+  /// generic type are prefixed as well (`Box<models.Foo>`).
+  String resolveType(DartType type, {bool withNullability = false}) {
+    if (type is InterfaceType &&
+        type.typeArguments.isNotEmpty &&
+        type.alias == null) {
+      final deep = resolveTypeDeep(type);
+      final plain =
+          deep.endsWith('?') ? deep.substring(0, deep.length - 1) : deep;
+
+      return withNullability ? '$plain?' : plain;
+    }
+
+    return chainDot([
+      importAliases?[type.element?.library?.firstFragment.source.uri],
+      chain([
+        _withoutNullability(type),
+        if (withNullability) '?',
+      ]),
+    ]);
+  }
 
   /// Like [resolveType], but the import prefix is applied to every type
   /// argument too (`Map<String, models.Item?>`). The nullability of the type

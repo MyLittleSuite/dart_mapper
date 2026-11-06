@@ -52,9 +52,18 @@ bool isPlainMapPrimitive(DartType type) =>
 
 /// The key identifying [type] in the per-run caches of generated nested
 /// methods. It is qualified with the library, so that same-named classes of
-/// different libraries (prefixed imports) are told apart.
-String mapTypeKey(DartType type) =>
-    '${type.element?.library?.uri}#${type.getDisplayString()}';
+/// different libraries (prefixed imports) are told apart, type arguments
+/// included: `Box<a.Foo>` and `Box<b.Foo>` get different keys.
+String mapTypeKey(DartType type) {
+  final base = '${type.element?.library?.uri}#';
+  if (type is! InterfaceType || type.typeArguments.isEmpty) {
+    return '$base${type.getDisplayString()}';
+  }
+
+  final arguments = type.typeArguments.map(mapTypeKey).join(', ');
+
+  return '$base${type.element.name}<$arguments>${type.isNullable ? '?' : ''}';
+}
 
 /// Whether [type] is a user class that has to be converted to a nested map.
 bool isMapCustomClass(DartType type) {

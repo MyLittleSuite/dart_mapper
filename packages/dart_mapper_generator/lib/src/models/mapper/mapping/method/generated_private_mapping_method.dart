@@ -71,7 +71,7 @@ final class GeneratedPrivateMappingMethod extends BindableMappingMethod {
               if (param.nullable) 'Nullable',
               if (context.resolvePrefix(param.type) != null)
                 context.resolvePrefix(param.type)!.toCapitalised(),
-              _typeName(param.type),
+              _typeName(context, param.type),
             ].join(),
           )
           .join('And'),
@@ -79,14 +79,15 @@ final class GeneratedPrivateMappingMethod extends BindableMappingMethod {
       if (nullable) 'Nullable',
       if (returnType != null && context.resolvePrefix(returnType) != null)
         context.resolvePrefix(returnType)!.toCapitalised(),
-      returnType != null ? _typeName(returnType) : 'Void',
+      returnType != null ? _typeName(context, returnType) : 'Void',
     ].join();
   }
 
   /// Untyped maps (raw, `dynamic`/`Object`-valued) collapse to `Map` so that
   /// class <-> Map helpers read `_mapCardToMap` / `_mapMapToCard`. Typed maps
-  /// keep their full name to stay unique.
-  static String _typeName(DartType type) {
+  /// keep their full name to stay unique, with the import prefix of each
+  /// type argument (`Box<models.Foo>` reads `BoxOfModelsFoo`).
+  static String _typeName(FieldsAnalyzerContext context, DartType type) {
     if (type.isDartCoreMap) {
       bool isLoose(DartType t) => t is DynamicType || t.isDartCoreObject;
       final arguments = type.asGenerics ?? const <DartType>[];
@@ -97,6 +98,6 @@ final class GeneratedPrivateMappingMethod extends BindableMappingMethod {
       if (untyped) return 'Map';
     }
 
-    return type.uniqueName.toCapitalised();
+    return type.uniqueNameWith(context.resolvePrefix).toCapitalised();
   }
 }

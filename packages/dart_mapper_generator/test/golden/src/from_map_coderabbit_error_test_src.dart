@@ -82,3 +82,44 @@ class CrStrings {
 abstract class CrElementMismatchMapper {
   CrStrings fromMap(Map<String, List<int>> map);
 }
+
+// ----- 9. collection kind and map key validation -----
+
+class CrInts {
+  final List<int> values;
+
+  const CrInts({required this.values});
+}
+
+@ShouldThrow(
+  "Field 'values' of type 'List<int>' is not compatible with the map value type 'Map<String, int>'.\n"
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'Map<String, int>' to 'List<int>', or use callable.",
+)
+@Mapper()
+abstract class CrMapToListMismatchMapper {
+  CrInts fromMap(Map<String, Map<String, int>> map);
+}
+
+class CrIntMap {
+  final Map<String, int> values;
+
+  const CrIntMap({required this.values});
+}
+
+@ShouldThrow(
+  "Field 'values' of type 'Map<String, int>' is not compatible with the map value type 'List<int>'.\n"
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'List<int>' to 'Map<String, int>', or use callable.",
+)
+@Mapper()
+abstract class CrListToMapMismatchMapper {
+  CrIntMap fromMap(Map<String, List<int>> map);
+}
+
+@ShouldThrow(
+  "Field 'values' of type 'Map<String, int>' is not compatible with the map value type 'Map<int, int>'.\n"
+  "Fix: Declare the source map as Map<String, dynamic> (or Map<String, Object?>), declare a converter method from 'Map<int, int>' to 'Map<String, int>', or use callable.",
+)
+@Mapper()
+abstract class CrMapKeyMismatchMapper {
+  CrIntMap fromMap(Map<String, Map<int, int>> map);
+}

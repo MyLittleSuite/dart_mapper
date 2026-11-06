@@ -575,10 +575,17 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
     final v = system.promoteToNonNull(value);
     final t = system.promoteToNonNull(target);
 
-    // Collections are compatible when their elements (or map values) are.
+    // Collections of the same kind (iterable to iterable, map to map) are
+    // compatible when their keys and their elements (or map values) are.
     final valueElement = _elementOf(v);
     final targetElement = _elementOf(t);
-    if (valueElement != null && targetElement != null) {
+    if (valueElement != null &&
+        targetElement != null &&
+        v.isIterable == t.isIterable) {
+      if (t.isMap && !_compatibleKey(run, v, t)) {
+        return false;
+      }
+
       return _compatible(run, valueElement, targetElement, extra);
     }
 
@@ -599,6 +606,24 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
         (t.isIterable && v.isIterable) ||
         (t.isMap && v.isMapLikeSource) ||
         (needsGeneratedMapping(t) && v.isMapLikeSource);
+  }
+
+  /// Whether the keys of the typed map [value] can be read as the keys of the
+  /// map [target]: assignable either way, or a `String` read as an enum.
+  bool _compatibleKey(_Run run, DartType value, DartType target) {
+    final valueKey = value.asGenerics?.firstOrNull;
+    final targetKey = target.asGenerics?.firstOrNull;
+    if (valueKey == null || targetKey == null) {
+      return true;
+    }
+
+    final system = run.typeSystem;
+    final v = system.promoteToNonNull(valueKey);
+    final t = system.promoteToNonNull(targetKey);
+
+    return system.isAssignableTo(v, t) ||
+        system.isAssignableTo(t, v) ||
+        (t.isEnum && v.isDartCoreString);
   }
 }
 

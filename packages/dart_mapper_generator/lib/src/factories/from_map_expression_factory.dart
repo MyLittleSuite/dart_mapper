@@ -197,9 +197,12 @@ class FromMapExpressionFactory extends ExpressionFactory {
     var raw = mapRead(source.instance!.name, source.keys);
 
     // A typed `Map<String, T?>` value with forceNonNull is unwrapped, whether
-    // or not the target is nullable (as the class -> class mapping does).
+    // or not the target is nullable (as the class -> class mapping does). A
+    // defaultValue takes precedence: the null entry falls back to it instead.
     var bang = false;
-    if (context.forceNonNull && source.nullable) {
+    if (context.forceNonNull &&
+        source.nullable &&
+        context.defaultValue == null) {
       raw = raw.nullChecked;
       bang = true;
     }

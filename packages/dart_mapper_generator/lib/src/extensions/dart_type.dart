@@ -108,7 +108,13 @@ extension DartTypeExtension on DartType {
   /// generic arguments included: `Box<String?>` is `BoxOfNullableString`
   /// whereas `Box<String>` is `BoxOfString`. The nullability of the type
   /// itself is left to the caller.
-  String get uniqueName {
+  String get uniqueName => uniqueNameWith((_) => null);
+
+  /// Like [uniqueName], with the import prefix given by [prefixOf] prepended
+  /// to every generic argument: `Box<models.Foo>` is `BoxOfModelsFoo`, so it
+  /// stays apart from `Box<Foo>`. The prefix of the type itself is left to the
+  /// caller.
+  String uniqueNameWith(String? Function(DartType type) prefixOf) {
     final type = this;
     if (type is! InterfaceType || type.typeArguments.isEmpty) {
       return humanReadable;
@@ -117,7 +123,8 @@ extension DartTypeExtension on DartType {
     final arguments = type.typeArguments
         .map((argument) => [
               if (argument.isNullable) 'Nullable',
-              argument.uniqueName,
+              prefixOf(argument)?.toCapitalised() ?? '',
+              argument.uniqueNameWith(prefixOf),
             ].join())
         .join('And');
 

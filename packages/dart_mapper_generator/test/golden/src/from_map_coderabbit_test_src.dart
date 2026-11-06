@@ -201,3 +201,58 @@ abstract class CrGenericMapper {
 
   CrCity toCity(CrAddress address);
 }
+
+// ----- 8. defaultValue takes precedence over forceNonNull -----
+
+class CrCounter {
+  final int id;
+
+  const CrCounter({required this.id});
+}
+
+@ShouldGenerate(
+  r'''return CrCounter(id: map['id'] ?? 0);''',
+  contains: true,
+)
+@Mapper()
+abstract class CrForceNonNullDefaultMapper {
+  @Mapping(target: 'id', forceNonNull: true, defaultValue: '0')
+  CrCounter fromMap(Map<String, int?> map);
+}
+
+// ----- 9. collection kinds and enum keys still convert -----
+
+enum CrLevel { low, high }
+
+class CrLevels {
+  final Map<CrLevel, int> levels;
+
+  const CrLevels({required this.levels});
+}
+
+@ShouldGenerate(
+  r'''      levels: (map['levels'] as Map).map<CrLevel, int>(
+        (key, value) =>
+            MapEntry(CrLevel.values.byName(key as String), value as int),
+      ),''',
+  contains: true,
+)
+@Mapper()
+abstract class CrEnumKeyMapper {
+  CrLevels fromMap(Map<String, Map<String, int>> map);
+}
+
+class CrIdSet {
+  final Set<int> ids;
+
+  const CrIdSet({required this.ids});
+}
+
+@ShouldGenerate(
+  r'''return CrIdSet(ids: Set<int>.from(map['ids'] as Iterable));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrListToSetMapper {
+  CrIdSet fromMap(Map<String, List<int>> map);
+}

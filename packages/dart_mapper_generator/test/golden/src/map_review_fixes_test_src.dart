@@ -168,6 +168,65 @@ abstract class MrfTwinsFromMapMapper {
   MrfTwins fromMap(Map<String, dynamic> map);
 }
 
+// ----- 3b. Generic classes over same-named classes of different libraries -----
+
+class MrfBox<T> {
+  final T value;
+
+  const MrfBox({required this.value});
+}
+
+class MrfBoxedTwins {
+  final MrfBox<AliasObject> local;
+  final MrfBox<models.AliasObject> remote;
+
+  const MrfBoxedTwins({required this.local, required this.remote});
+}
+
+@ShouldGenerate(
+  r'''      'local': _mapMrfBoxOfAliasObjectToMap(dto.local),
+      'remote': _mapMrfBoxOfModelsAliasObjectToMap(dto.remote),''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''  Map<String, dynamic> _mapMrfBoxOfModelsAliasObjectToMap(
+    MrfBox<models.AliasObject> mrfBoxAliasObject,
+  ) {
+    return {'value': _mapModelsAliasObjectToMap(mrfBoxAliasObject.value)};
+  }''',
+  contains: true,
+)
+@Mapper()
+abstract class MrfBoxedTwinsToMapMapper {
+  Map<String, dynamic> toMap(MrfBoxedTwins dto);
+}
+
+@ShouldGenerate(
+  r'''      local: _mapMapToMrfBoxOfAliasObject(
+        Map<String, dynamic>.from(map['local'] as Map),
+      ),
+      remote: _mapMapToMrfBoxOfModelsAliasObject(
+        Map<String, dynamic>.from(map['remote'] as Map),
+      ),''',
+  contains: true,
+)
+@ShouldGenerate(
+  r'''  MrfBox<models.AliasObject> _mapMapToMrfBoxOfModelsAliasObject(
+    Map<String, dynamic> map,
+  ) {
+    return MrfBox(
+      value: _mapMapToModelsAliasObject(
+        Map<String, dynamic>.from(map['value'] as Map),
+      ),
+    );
+  }''',
+  contains: true,
+)
+@Mapper()
+abstract class MrfBoxedTwinsFromMapMapper {
+  MrfBoxedTwins fromMap(Map<String, dynamic> map);
+}
+
 // ----- 4. Import prefixes -----
 
 class MrfKinds {
