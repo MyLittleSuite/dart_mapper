@@ -335,4 +335,24 @@ void main() async {
     'from_map_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(fromMapErrorReader, generator);
+  // Group: class -> Map mapping (MappingBehavior.toMap)
+  final toMapReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapReader, generator);
+
+  // Group: class -> Map mapping of built_value sources
+  final toMapBuiltReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_built_value_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapBuiltReader, generator);
+
+  // Group: class -> Map mapping errors
+  final toMapErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapErrorReader, generator);
 }

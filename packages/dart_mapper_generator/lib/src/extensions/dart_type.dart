@@ -38,6 +38,16 @@ extension DartTypeExtension on DartType {
 
   bool get isMap => isDartCoreMap || isBuiltMap;
 
+  /// Whether this is a `dart:core` [Map] whose key type is `String`, such as
+  /// `Map<String, dynamic>` or `Map<String, Object?>`.
+  bool get isStringKeyedMap {
+    final type = this;
+    return type is InterfaceType &&
+        type.isDartCoreMap &&
+        type.typeArguments.firstOrNull?.isDartCoreString == true &&
+        !type.typeArguments.first.isNullable;
+  }
+
   bool get isEnum => element is EnumElement || isBuiltEnum;
 
   /// Whether this type is a `dart:core` [Map] accepted as the source of a

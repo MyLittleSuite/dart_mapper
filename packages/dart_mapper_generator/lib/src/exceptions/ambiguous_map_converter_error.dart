@@ -27,7 +27,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
 
 /// Thrown when more than one converter / nested mapping method is a candidate
-/// for the same type in a Map -> class mapping.
+/// for the same type in a class <-> Map mapping.
 class AmbiguousMapConverterError extends InvalidGenerationSourceError {
   AmbiguousMapConverterError({
     required String type,
@@ -37,7 +37,7 @@ class AmbiguousMapConverterError extends InvalidGenerationSourceError {
           "Ambiguous mapping for type '$type': multiple methods are "
           "candidates (${candidates.join(', ')}).\n"
           "Fix: Keep a single candidate per type, or select the one to use "
-          "with @Mapping(callable: ...).",
+          "with @Mapping(target: '...', callable: yourFunction).",
           element: element,
         );
 }

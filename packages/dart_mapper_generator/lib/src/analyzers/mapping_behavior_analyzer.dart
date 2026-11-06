@@ -29,6 +29,7 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/field_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/map_to_map_mapping_not_supported_error.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
@@ -47,6 +48,15 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
           'MappingBehaviorAnalyzer context is not handled.',
         ),
     };
+
+    // class -> Map: the method returns a Map<String, ...>.
+    if (context is MethodAnalyzerContext && targetType.isStringKeyedMap) {
+      if (context.method.formalParameters.any((param) => param.type.isMap)) {
+        throw MapToMapMappingNotSupportedError(method: context.method);
+      }
+
+      return MappingBehavior.toMap;
+    }
 
     if (_isMapToClass(sourceParams, targetType)) {
       return MappingBehavior.fromMap;
