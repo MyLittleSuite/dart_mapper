@@ -363,4 +363,11 @@ void main() async {
     'map_round_trip_test_src.dart',
   );
   testAnnotatedElements<Mapper>(mapRoundTripReader, generator);
+
+  // Group: additional class <-> Map coverage
+  final mapCoverageReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_coverage_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapCoverageReader, generator);
 }
