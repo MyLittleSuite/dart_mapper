@@ -1546,9 +1546,9 @@ abstract class FmBuiltForceMapper {
         ..cards = ListBuilder(
           (map['cards'] as List)
               .map<FmBuiltCard>(
-                (e) => _mapMapToFmBuiltCard(
-                  Map<String, dynamic>.from(e as Map),
-                ).build(),
+                (e) =>
+                    _mapMapToFmBuiltCard(Map<String, dynamic>.from(e as Map))
+                        .build(),
               )
               .toList(),
         )
