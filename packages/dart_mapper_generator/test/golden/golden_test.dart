@@ -229,7 +229,8 @@ void main() async {
   testAnnotatedElements<Mapper>(conditionExpressionReader, generator);
 
   // Group: Condition expression errors (D-07)
-  final conditionExpressionErrorReader = await initializeLibraryReaderForDirectory(
+  final conditionExpressionErrorReader =
+      await initializeLibraryReaderForDirectory(
     'test/golden/src',
     'condition_expression_error_test_src.dart',
   );
@@ -355,4 +356,11 @@ void main() async {
     'to_map_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(toMapErrorReader, generator);
+
+  // Group: class <-> Map mapping combined (cross-direction inheritance)
+  final mapRoundTripReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_round_trip_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapRoundTripReader, generator);
 }

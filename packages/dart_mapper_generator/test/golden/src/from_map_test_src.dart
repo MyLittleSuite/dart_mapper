@@ -574,6 +574,18 @@ String joinNames(Object? first, Object? second) => '$first $second';
   FmUserMapperImpl();
 
   @override
+  Map<String, dynamic> toFirestore(FmUser dto) {
+    return {
+      'uid': dto.id,
+      'email': dto.email,
+      'displayName': dto.displayName,
+      'phoneNumber': dto.phoneNumber,
+      'photoURL': dto.photoURL,
+      'emailVerified': dto.verified,
+    };
+  }
+
+  @override
   FmUser fromFirestore(Map<String, dynamic> map) {
     return FmUser(
       id: map['uid'] as String,
@@ -589,11 +601,9 @@ String joinNames(Object? first, Object? second) => '$first $second';
 )
 @Mapper()
 abstract class FmUserMapper {
-  // Declared with a body so that this golden only exercises the fromMap
-  // side; the class -> Map direction generates it once it is abstract.
   @Mapping(source: 'id', target: 'uid')
   @Mapping(source: 'verified', target: 'emailVerified')
-  Map<String, dynamic> toFirestore(FmUser dto) => {};
+  Map<String, dynamic> toFirestore(FmUser dto);
 
   @InheritInverseConfiguration()
   FmUser fromFirestore(Map<String, dynamic> map);
