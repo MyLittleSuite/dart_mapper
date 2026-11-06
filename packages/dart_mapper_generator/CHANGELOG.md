@@ -1,3 +1,14 @@
+## 1.1.0
+
+- Feature: class ↔ `Map<String, dynamic>` mapping, detected automatically from the method signature (class → Map when the return type is a `Map<String, ...>`, Map → class when a source parameter is a `Map`). Works with standard classes, Freezed and Built Value
+- Feature: raw `Map`, `Map<Object?, Object?>` and `Map<dynamic, dynamic>` sources (Firebase Realtime Database)
+- Feature: nested classes, collections of classes, `Map<K, X>` fields, enums (by name) and `double` (read via `num`) in map conversions
+- Feature: converters via `@Mapper(uses: ...)` and declared methods (e.g. `DateTime` ↔ epoch milliseconds)
+- Feature: dot notation on map sources, and target dot notation building nested maps (class → Map)
+- Feature: multi-source Map → class methods (e.g. `fromRealtime(Map map, String id)`)
+- Feature: `@InheritConfiguration` / `@InheritInverseConfiguration` across mapping directions
+- Known limitations: target dot notation in Map → class (#118), sealed/discriminator targets (#119), collection-level mapping methods (#120)
+
 ## 1.0.10
 
 - Fix: skip nested converter synthesis for ignored targets — `@Mapping(target: '...', ignore: true)` no longer triggers `NoRelationFoundError` for code that is never emitted (#110)

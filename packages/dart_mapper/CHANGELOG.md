@@ -1,3 +1,7 @@
+## 1.1.0
+
+- Document class ↔ `Map` mapping support (implemented in dart_mapper_generator 1.1.0); no annotation changes
+
 ## 1.0.10
 
 - Bump version to keep in sync with dart_mapper_generator 1.0.10

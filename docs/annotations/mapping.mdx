@@ -147,6 +147,20 @@ These combinations are **not allowed** and produce a build-time error:
 | `conditionExpression` + `constant` | Condition needs source access |
 | `conditionExpression` + `callable` | Both control the output flow |
 
+## With Maps
+
+When a method maps to or from a `Map`, each map key plays the role of a field:
+
+| Attribute | Behavior |
+|-----------|----------|
+| `target` / `source` | The map key. `source: 'id', target: 'uid'` writes key `uid`; on the way back, `source: 'uid', target: 'id'` reads it. |
+| `ignore` | Omits the key from the produced map. |
+| `defaultValue` | Fallback for a missing key when reading (`map['k'] as String? ?? 'x'`). |
+| `forceNonNull` | A no-op for `dynamic` / `Object?` values, generates `!` for `Map<String, T?>`. |
+| Dot notation | Source paths walk nested maps; a dotted `target` builds nested maps (class to Map only). |
+
+See the [Map Mapping guide](/guides/map-mapping).
+
 ## See Also
 
 - [Dot Notation guide](/guides/dot-notation) — `source: 'nested.field'`
@@ -154,3 +168,4 @@ These combinations are **not allowed** and produce a build-time error:
 - [Conditional Expressions guide](/guides/conditional-expressions) — `conditionExpression:` deep dive
 - [Callable Mapping guide](/guides/callable-mapping) — `callable:` deep dive
 - [Defaults & Constants guide](/guides/defaults-and-constants) — `defaultValue:` and `constant:`
+- [Map Mapping guide](/guides/map-mapping) — `@Mapping` on `Map<String, dynamic>` methods
