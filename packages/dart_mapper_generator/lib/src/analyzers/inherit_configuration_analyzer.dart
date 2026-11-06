@@ -84,16 +84,19 @@ class InheritConfigurationAnalyzer
           .where((method) => method.formalParameters.length == 1)
           .where(
             (method) =>
-                method.returnType.same(
-                  returnType,
-                  useNullability: false,
-                  aliases: context.importAliases,
-                ) &&
-                method.formalParameters.first.type.same(
+                _sameType(context, method.returnType, returnType) &&
+                _sameType(
+                  context,
+                  method.formalParameters.first.type,
                   parameterType,
-                  useNullability: false,
-                  aliases: context.importAliases,
                 ),
           )
           .expand((method) => MappingAnnotation.load(method, inverse: inverse));
+
+  /// Two types match when equal, or when both are maps usable as the source
+  /// of a Map -> class mapping (`Map<String, dynamic>` vs raw `Map`, ...), so
+  /// that a class <-> Map pair can inherit from each other.
+  bool _sameType(MethodAnalyzerContext context, DartType a, DartType b) =>
+      a.same(b, useNullability: false, aliases: context.importAliases) ||
+      (a.isMapLikeSource && b.isMapLikeSource);
 }

@@ -23,6 +23,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/field_analyzer_context.dart';
@@ -46,6 +48,10 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
         ),
     };
 
+    if (_isMapToClass(sourceParams, targetType)) {
+      return MappingBehavior.fromMap;
+    }
+
     if (targetType.isEnum ||
         sourceParams?.where((param) => param.type.isEnum).isNotEmpty == true) {
       return MappingBehavior.enums;
@@ -60,4 +66,17 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
         ? MappingBehavior.built
         : MappingBehavior.standard;
   }
+
+  /// A Map -> class mapping: at least one source parameter is a map accepted
+  /// by [DartTypeExtension.isMapLikeSource] and the target is a plain class.
+  static bool _isMapToClass(
+    List<FormalParameterElement>? sourceParams,
+    DartType targetType,
+  ) =>
+      sourceParams?.any((param) => param.type.isMapLikeSource) == true &&
+      targetType.element is ClassElement &&
+      !targetType.isEnum &&
+      !targetType.isMap &&
+      !targetType.isIterable &&
+      !targetType.isPrimitive;
 }
