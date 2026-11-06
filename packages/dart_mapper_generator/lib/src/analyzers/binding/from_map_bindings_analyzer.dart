@@ -28,14 +28,15 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/type_provider.dart';
 import 'package:analyzer/dart/element/type_system.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
+import 'package:dart_mapper_generator/src/analyzers/binding/map_converter_lookup.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
-import 'package:dart_mapper_generator/src/exceptions/ambiguous_map_converter_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/from_map_target_not_instantiable_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/incompatible_map_value_type_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/map_target_dot_notation_unsupported_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/target_field_requires_non_optional_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_target_class_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
@@ -49,10 +50,7 @@ import 'package:dart_mapper_generator/src/models/instance.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/generated_private_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/internal_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -104,7 +102,7 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
           .map((param) => _Param(param.name!, param.type))
           .toList(growable: false),
       config: config,
-      visiting: {_typeKey(method.returnType)},
+      visiting: {mapTypeKey(method.returnType)},
     );
   }
 
@@ -132,6 +130,7 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       final type = substituted?[target.name] ?? target.type;
       final binding = _bind(
         run,
+        targetClass: targetClass,
         target: target,
         type: type,
         params: params,
@@ -176,6 +175,7 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
 
   Binding? _bind(
     _Run run, {
+    required ClassElement targetClass,
     required _Target target,
     required DartType type,
     required List<_Param> params,
@@ -282,12 +282,11 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
         !forceNonNull &&
         defaultValue == null &&
         config.conditionExpressions[name] == null) {
-      throw InvalidGenerationSourceError(
-        "Target field '$name' is non-nullable but the map value for "
-        "'${source.name}' is nullable.\n"
-        "Fix: Add forceNonNull: true or provide a defaultValue to handle "
-        "the null case.",
-        element: run.method,
+      throw TargetFieldRequiresNonOptionalSourceFieldError(
+        fieldName: name,
+        targetClass: targetClass,
+        mapperName: run.context.mapperClass.name!,
+        methodName: run.method.name!,
       );
     }
 
@@ -450,78 +449,12 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       return null;
     }
 
-    final declared = _findDeclared(run, leaf);
+    final declared = run.converters.find(leaf);
     if (declared != null) {
       return declared;
     }
 
     return needsGeneratedMapping(leaf) ? _generate(run, leaf, visiting) : null;
-  }
-
-  MappingMethod? _findDeclared(_Run run, DartType leaf) {
-    final context = run.context;
-    final abstractMethods = context.mapperClass.methods
-        .where((method) => method.isAbstract)
-        .map((method) => method.name)
-        .toSet();
-    final externalAbstract = <String>{
-      for (final use in context.mapperAnnotation.uses ?? const <Object>[])
-        ...?(use as DartType)
-            .element
-            ?.classElementOrNull
-            ?.methods
-            .where((method) => method.isAbstract)
-            .map((method) => '${use.parameterName}.${method.name}'),
-    };
-
-    for (final internally in [true, false]) {
-      final usages =
-          internally ? context.internalMapperUsages : context.mapperUsages;
-      final candidates = usages.where((usage) =>
-          usage.parameters.length == 1 &&
-          usage.returnType.same(
-            leaf,
-            aliases: context.importAliases,
-            useNullability: false,
-          ));
-
-      // Converters (single non-map parameter) must be implemented by hand:
-      // abstract methods are generated class -> class mappings.
-      final converters = candidates
-          .where((usage) => !usage.parameters.first.field.type.isMapLikeSource)
-          .where((usage) => internally
-              ? !abstractMethods.contains(usage.functionName)
-              : !externalAbstract
-                  .contains('${usage.mapperName}.${usage.functionName}'))
-          .toList(growable: false);
-      final nested = candidates
-          .where((usage) => usage.parameters.first.field.type.isMapLikeSource)
-          .toList(growable: false);
-
-      final chosen =
-          _single(run, leaf, converters) ?? _single(run, leaf, nested);
-      if (chosen != null) {
-        return internally
-            ? InternalMappingMethod(mapperUsage: chosen)
-            : ExternalMappingMethod(mapperUsage: chosen);
-      }
-    }
-
-    return null;
-  }
-
-  MapperUsage? _single(_Run run, DartType type, List<MapperUsage> usages) {
-    if (usages.length > 1) {
-      throw AmbiguousMapConverterError(
-        type: type.displayString,
-        candidates: usages
-            .map((usage) => '${usage.mapperName}.${usage.functionName}')
-            .toList(growable: false),
-        element: run.method,
-      );
-    }
-
-    return usages.firstOrNull;
   }
 
   MappingMethod _generate(_Run run, DartType leaf, Set<String> visiting) {
@@ -541,9 +474,15 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       target: Field.from(name: nonNullLeaf.displayString, type: nonNullLeaf),
     );
 
-    final key = _typeKey(nonNullLeaf);
+    final key = mapTypeKey(nonNullLeaf);
+    final cached = run.generated[key];
+    if (cached != null) {
+      return cached;
+    }
+
     // Recursive structures: the method is emitted once, by the outer level.
-    final bindings = visiting.contains(key)
+    final recursive = visiting.contains(key);
+    final bindings = recursive
         ? <Binding>[]
         : _bindings(
             run,
@@ -553,17 +492,21 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
             visiting: {...visiting, key},
           );
 
-    return GeneratedPrivateMappingMethod(
+    final method = GeneratedPrivateMappingMethod(
       context: context,
       returnType: nonNullLeaf,
       parameters: [MappingParameter(field: mapField, isNullable: false)],
       bindings: bindings,
       behavior: MappingBehavior.fromMap,
     );
-  }
 
-  String _typeKey(DartType type) =>
-      '${type.element?.library?.uri}#${type.displayString}';
+    // A recursive reference is only a placeholder of the method being built.
+    if (!recursive) {
+      run.generated[key] = method;
+    }
+
+    return method;
+  }
 
   // --- Typed map validation ----------------------------------------------------
 
@@ -661,11 +604,20 @@ class _Run {
   final MethodElement method;
   final Analyzer<MappingMethod?> extraMappingMethodAnalyzer;
 
-  const _Run({
+  _Run({
     required this.context,
     required this.method,
     required this.extraMappingMethodAnalyzer,
   });
+
+  /// The nested methods generated so far, by [mapTypeKey].
+  final Map<String, MappingMethod> generated = {};
+
+  late final MapConverterLookup converters = MapConverterLookup(
+    context: context,
+    element: method,
+    direction: MapConverterDirection.fromMap,
+  );
 
   LibraryElement get library => context.mapperClass.library;
 

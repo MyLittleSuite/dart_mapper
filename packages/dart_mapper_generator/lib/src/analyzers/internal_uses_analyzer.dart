@@ -39,6 +39,7 @@ class InternalUsesAnalyzer extends Analyzer<Set<MapperUsage>> {
               mapperType: context.mapperClass.thisType,
               returnType: method.returnType,
               functionName: method.name!,
+              isAbstract: method.isAbstract,
               parameters: method.formalParameters
                   .where((parameter) => parameter.name != null)
                   .map(MappingParameter.from)

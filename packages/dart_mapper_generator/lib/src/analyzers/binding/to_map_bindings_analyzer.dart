@@ -30,8 +30,8 @@ import 'package:analyzer/dart/element/type_system.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/binding/map_converter_lookup.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
-import 'package:dart_mapper_generator/src/exceptions/ambiguous_map_converter_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/incompatible_map_value_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_map_source_parameter_error.dart';
@@ -46,10 +46,7 @@ import 'package:dart_mapper_generator/src/models/instance.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/generated_private_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/internal_mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper_usage.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -284,7 +281,7 @@ class _ToMapBuilder {
         _unorderedOffset,
         Binding(
           source: _placeholder(key),
-          target: _target(key, _constantType(entry.value)),
+          target: _target(key, _constantType),
           constant: entry.value,
         ),
       );
@@ -526,25 +523,11 @@ class _ToMapBuilder {
         nullable: _acceptsNull,
       );
 
-  /// The type used to decide how a constant is rendered: a string literal
-  /// or the verbatim Dart source.
-  DartType _constantType(String constant) {
-    if (!_isFree) return valueType;
-
-    final trimmed = constant.trim();
-    final isCode = trimmed == 'true' ||
-        trimmed == 'false' ||
-        trimmed == 'null' ||
-        num.tryParse(trimmed) != null ||
-        trimmed.startsWith("'") ||
-        trimmed.startsWith('"') ||
-        trimmed.startsWith('[') ||
-        trimmed.startsWith('{') ||
-        trimmed.startsWith('<') ||
-        trimmed.startsWith('const ');
-
-    return isCode ? session.typeProvider.intType : session.stringType;
-  }
+  /// The type deciding how a constant is rendered. Like everywhere else a
+  /// constant is a Dart expression emitted verbatim, so untyped maps never
+  /// turn it into a string literal; only a `String` value type does, as it
+  /// does for a `String` target of a class to class mapping.
+  DartType get _constantType => _isFree ? session.dynamicType : valueType;
 
   void _checkCallable(String key, CallableMappingMethod callable) {
     final returnType = callable.returnType;
@@ -652,19 +635,8 @@ class _ToMapBuilder {
   }
 
   /// Whether [type] is a user class that has to be converted to a nested map.
-  bool _isCustomClass(DartType type) {
-    final plain = _typeSystem.promoteToNonNull(type);
-    final element = plain.element;
-
-    return plain is InterfaceType &&
-        element is ClassElement &&
-        element.library.isInSdk == false &&
-        !plain.isEnum &&
-        !plain.isIterable &&
-        !plain.isMap &&
-        !plain.isPrimitive &&
-        !plain.isLibraryBuilt;
-  }
+  bool _isCustomClass(DartType type) =>
+      isMapCustomClass(_typeSystem.promoteToNonNull(type));
 
   bool _isWholeMatch(MappingMethod method, DartType type) {
     final parameter = method.firstParameterType;
@@ -732,85 +704,16 @@ class _ToMapBuilder {
   // Converters (declared methods, `uses`)
   // --------------------------------------------------------------------------
 
-  static bool _isPlainPrimitive(DartType type) =>
-      type.isDartCoreBool ||
-      type.isDartCoreInt ||
-      type.isDartCoreDouble ||
-      type.isDartCoreNum ||
-      type.isDartCoreString;
-
-  bool _isWireType(DartType type) {
-    if (type is DynamicType || type.isDartCoreObject) return true;
-    if (_isPlainPrimitive(type)) return true;
-    if (type.isDartCoreMap) return true;
-    if (type.isDartCoreList || type.isDartCoreSet || type.isDartCoreIterable) {
-      final item = (type as InterfaceType).typeArguments.firstOrNull;
-      return item == null || _isWireType(item);
-    }
-
-    return false;
-  }
+  late final MapConverterLookup _converters = MapConverterLookup(
+    context: session.context,
+    element: session.element,
+    direction: MapConverterDirection.toMap,
+    valueType: valueType,
+  );
 
   /// Looks for a method converting [type] into a map value: first among the
   /// methods declared in the mapper, then in the `uses` mappers.
-  MappingMethod? _findConverter(DartType type) {
-    final plain = _typeSystem.promoteToNonNull(type);
-    if (_isPlainPrimitive(plain) || plain.isMap || plain.isIterable) {
-      return null;
-    }
-
-    final semantic = _isCustomClass(plain) || plain.isEnum;
-
-    bool accepts(MapperUsage usage) {
-      if (usage.parameters.length != 1) return false;
-      final parameter = usage.parameters.single.field.type;
-      if (!parameter.same(
-        plain,
-        aliases: session.context.importAliases,
-        useNullability: false,
-      )) {
-        return false;
-      }
-      final returnType = usage.returnType;
-      if (returnType.same(
-        plain,
-        aliases: session.context.importAliases,
-        useNullability: false,
-      )) {
-        return false;
-      }
-      if (_isFree) {
-        return !semantic || _isWireType(returnType);
-      }
-
-      return _typeSystem.isAssignableTo(returnType, valueType);
-    }
-
-    for (final internally in const [true, false]) {
-      final usages = (internally
-              ? session.context.internalMapperUsages
-              : session.context.mapperUsages)
-          .where(accepts)
-          .toList(growable: false);
-
-      if (usages.length > 1) {
-        throw AmbiguousMapConverterError(
-          type: plain.getDisplayString(),
-          candidates: usages
-              .map((u) => '${u.mapperName}.${u.functionName}')
-              .toList(growable: false),
-          element: session.element,
-        );
-      }
-      if (usages.length == 1) {
-        return internally
-            ? InternalMappingMethod(mapperUsage: usages.single)
-            : ExternalMappingMethod(mapperUsage: usages.single);
-      }
-    }
-
-    return null;
-  }
+  MappingMethod? _findConverter(DartType type) => _converters.find(type);
 
   // --------------------------------------------------------------------------
   // Generated private methods for nested classes
@@ -818,16 +721,17 @@ class _ToMapBuilder {
 
   MappingMethod _privateMethodFor(DartType type) {
     final plain = _typeSystem.promoteToNonNull(type);
-    final key = plain.getDisplayString();
+    final key = mapTypeKey(plain);
+    final name = plain.getDisplayString();
 
     final cached = session.generated[key];
     if (cached != null) return cached;
 
     if (!session.inProgress.add(key)) {
       throw InvalidGenerationSourceError(
-        "Type '$key' references itself and cannot be converted to a nested "
+        "Type '$name' references itself and cannot be converted to a nested "
         "map automatically.\n"
-        "Fix: Declare a method 'Map<String, dynamic> toMap($key value)' in "
+        "Fix: Declare a method 'Map<String, dynamic> toMap($name value)' in "
         "the mapper (or in a mapper listed in 'uses') to handle it.",
         element: session.element,
       );

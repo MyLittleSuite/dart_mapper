@@ -88,10 +88,10 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
             binding?.conditionExpression == null &&
             binding?.callableMappingMethod == null) {
           throw TargetFieldRequiresNonOptionalSourceFieldError(
-            parameter: parameter,
+            fieldName: parameter.name!,
             targetClass: targetClass,
-            mapperClass: context.mapperClass,
-            method: method,
+            mapperName: context.mapperClass.name,
+            methodName: method.name,
           );
         }
 
