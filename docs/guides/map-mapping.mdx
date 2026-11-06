@@ -173,8 +173,11 @@ A missing key or a wrong type on a non-null field throws a `TypeError` at runtim
 
 ```dart
 @Mapping(target: 'votes', defaultValue: 'const {}')
+@Mapping(target: 'tags', defaultValue: 'const []')
 SessionDTO fromRealtimeSession(Map map);
 ```
+
+This matters for Firebase Realtime Database, which does not store empty collections: an empty `votes` or `tags` comes back as a missing key.
 
 Generated (from the `RealtimeMapper` in the example project):
 
@@ -317,7 +320,7 @@ SessionDTO fromRealtimeSession(Map<dynamic, dynamic> map) {
           key as String,
           _mapMapToCardDTO(Map<String, dynamic>.from(value as Map)),
         )),
-    tags: List<String>.from(map['tags'] as Iterable),
+    tags: List<String>.from(map['tags'] as Iterable? ?? const []),
   );
 }
 
@@ -589,6 +592,12 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 | A whole key and one of its sub-keys are both mapped, or a dotted target has an empty segment | `MapKeyPathConflictError` | `Invalid @Mapping target 'address.nickname': 'address' is already mapped as a whole value.` / `Invalid @Mapping target 'address..id': it contains an empty segment.` |
 | More than one converter matches the same type and direction | `AmbiguousMapConverterError` | `Ambiguous mapping for type 'DateTime': multiple methods are candidates (this.toMillis, this.toIso).` |
 | The same field exists in several source parameters | `AmbiguousSourceFieldError` | `Ambiguous source field 'id' found in multiple parameters: user, other.` |
+| A dotted source path starts with a field that exists in several source parameters | `AmbiguousSourceFieldError` | `Ambiguous source field 'address' found in multiple parameters: man, woman.` (suggests `source: 'man.address.city'`) |
+| `@InheritConfiguration` / `@InheritInverseConfiguration` finds several Map methods with different signatures and none matches exactly | `AmbiguousInheritConfigurationError` | `Ambiguous inherited configuration for method 'fromRealtime': multiple methods are candidates (toFirestore, toRealtime).` |
+| Class → Map: a constructor parameter has no readable getter and is not ignored or overridden | `UnreadableMapSourcePropertyError` | `Constructor parameter 'secret' of 'CrSecret' has no readable getter, so it cannot be read to build the map.` |
+| `callable` combined with `defaultValue` or `conditionExpression` for the same key, even across separate annotations | `InvalidMappingCombinationError` | `Invalid @Mapping combination for target 'name': defaultValue cannot be combined with callable.` |
+| Target dot notation on a typed map whose value type cannot hold a nested map (`Map<String, String>`) | `IncompatibleMapValueError` | `Field 'address' of type 'Map<String, dynamic>' is not compatible with the value type 'String' of 'Map<String, String>'.` |
+| Map → class: a collection's element type is incompatible with the typed source map (`Map<String, List<int>>` into `List<String>`) | `IncompatibleMapValueTypeError` | `Field 'values' of type 'List<String>' is not compatible with the map value type 'List<int>'.` |
 | `conditionExpression` on a non-nullable map value without `defaultValue` | `InvalidGenerationSourceError` | `conditionExpression on non-nullable map value 'id': requires a defaultValue or a nullable map value type.` |
 | A self-referencing class is written to a nested map without a declared method | `InvalidGenerationSourceError` | `Type 'ErrorNode' references itself and cannot be converted to a nested map automatically.` |
 | A dotted source path names a missing property | `InvalidGenerationSourceError` | `Property 'missing' not found on type 'ErrorUser' while resolving dot notation path.` |
