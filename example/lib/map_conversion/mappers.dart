@@ -63,7 +63,11 @@ abstract class RealtimeMapper {
   RoomDTO fromRealtime(Map map, String id);
 
   /// Used for the nested `session` field of a room.
+  ///
+  /// Realtime Database drops empty collections, so `votes` and `tags` fall
+  /// back to an empty collection when the key is missing.
   @Mapping(target: 'votes', defaultValue: 'const {}')
+  @Mapping(target: 'tags', defaultValue: 'const []')
   SessionDTO fromRealtimeSession(Map map);
 
   Map<String, dynamic> toRealtimeSession(SessionDTO session);
