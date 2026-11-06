@@ -40,6 +40,22 @@ extension DartTypeExtension on DartType {
 
   bool get isEnum => element is EnumElement || isBuiltEnum;
 
+  /// Whether this type is a `dart:core` [Map] accepted as the source of a
+  /// Map -> class mapping: a raw/`dynamic`-keyed map, an `Object?`/`Object`
+  /// keyed map or a `String`-keyed map.
+  bool get isMapLikeSource {
+    if (!isDartCoreMap) {
+      return false;
+    }
+
+    final key = asGenerics?.firstOrNull;
+
+    return key == null ||
+        key is DynamicType ||
+        key.isDartCoreObject ||
+        key.isDartCoreString;
+  }
+
   bool get isDateTime => className == 'DateTime';
 
   bool get isDuration => className == 'Duration';
@@ -146,6 +162,11 @@ extension DartTypeBuilt on DartType {
       {
         'BuiltMap',
       }.contains(className);
+
+  /// Whether this type is a class implementing `Built<V, B>`.
+  bool get isBuiltValue =>
+      (element?.interfaceElementOrNull?.allSupertypes ?? const [])
+          .any((type) => type.isLibraryBuilt);
 
   bool get isBuiltEnum {
     final superType = element?.classElementOrNull?.supertype;
