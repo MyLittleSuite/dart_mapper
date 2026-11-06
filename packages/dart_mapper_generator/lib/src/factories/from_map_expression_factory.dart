@@ -622,13 +622,16 @@ class FromMapExpressionFactory extends ExpressionFactory {
   }
 
   /// Whether [a] and [b] are the same type, ignoring only their top-level
-  /// nullability: the nullability of type arguments (`List<int?>` and
-  /// `List<int>`) still sets them apart.
+  /// nullability. Analyzer types are compared, not their names: same-named
+  /// classes of different libraries and the nullability of type arguments
+  /// (`List<int?>` and `List<int>`) still set them apart.
   bool _sameBase(DartType a, DartType b) {
-    String base(DartType type) =>
-        type.getDisplayString().replaceFirst(RegExp(r'\?$'), '');
+    final system = (a.element ?? b.element)?.library?.typeSystem;
+    if (system == null) {
+      return a == b;
+    }
 
-    return base(a) == base(b);
+    return system.promoteToNonNull(a) == system.promoteToNonNull(b);
   }
 }
 

@@ -29,6 +29,8 @@
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:source_gen_test/annotations.dart';
 
+import 'same_name_models.dart' as other;
+
 // ----- 1. forceNonNull before a callable -----
 
 String crUpper(String value) => value.toUpperCase();
@@ -331,4 +333,28 @@ abstract class CrInheritOverrideMapper {
   @InheritConfiguration()
   @Mapping(target: 'id', defaultValue: '0')
   CrParsedId fromMapWithDefault(Map<String, dynamic> map);
+}
+
+// ----- 13. same-named classes of different libraries into a callable -----
+
+class CrItem extends other.CrItem {
+  const CrItem(super.id);
+}
+
+int crItemId(CrItem? item) => item?.id ?? 0;
+
+class CrItemRef {
+  final int id;
+
+  const CrItemRef({required this.id});
+}
+
+@ShouldGenerate(
+  r'''return CrItemRef(id: crItemId(map['item'] as CrItem?));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrSameNameCallableMapper {
+  @Mapping(target: 'id', source: 'item', callable: crItemId)
+  CrItemRef fromMap(Map<String, other.CrItem> map);
 }
