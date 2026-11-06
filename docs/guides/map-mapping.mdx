@@ -45,7 +45,14 @@ Field-level `Map<K, V>` properties inside class-to-class mappings are unchanged.
 
 Raw maps are what Firebase Realtime Database returns, so you can pass them straight to the mapper. A parameter typed `Object` is **not** treated as a map.
 
-With a typed `Map<String, V>` (where `V` is not `dynamic`, `Object`, or `Object?`), every mapped field must be compatible with `V`: assignable, or convertible through a nested mapping or converter. Otherwise the build fails and names the incompatible field and its type.
+With a typed `Map<String, V>` (for example `Map<String, String?>`, `Map<String, Object>`, or `Map<String, num>`), every mapped field must be compatible with `V`: assignable, or convertible through a nested mapping, converter, or `callable`. Otherwise the build fails and names the incompatible field and its type (see [Compile-Time Errors](#compile-time-errors)).
+
+```dart
+Map<String, String?> toMap(LabelsDTO dto);       // {'name': dto.name, 'description': dto.description}
+Map<String, Object> toMap(LabelsDTO dto);        // needs forceNonNull or defaultValue on nullable fields
+```
+
+On the way out, `forceNonNull` generates `dto.description!` and `defaultValue` generates `dto.description ?? 'none'`.
 
 ## Basic Example
 
@@ -108,7 +115,7 @@ By default the key is the field name (the constructor parameter name). Rename a 
 | Class → Map | `@Mapping(source: 'id', target: 'uid')`: class field `id` is written to key `uid` |
 | Map → class | `@Mapping(source: 'uid', target: 'id')`: key `uid` is read into class field `id` |
 
-[`@InheritConfiguration`](/annotations/inherit-configuration) and [`@InheritInverseConfiguration`](/annotations/inherit-inverse-configuration) work across directions, so you declare the renames once (see the example above).
+[`@InheritConfiguration`](/annotations/inherit-configuration) and [`@InheritInverseConfiguration`](/annotations/inherit-inverse-configuration) work across directions, so you declare the renames once (see the example above). `@InheritConfiguration` between two class → Map methods reuses the same renames.
 
 There is no global key naming strategy (such as snake_case for every key). Rename keys individually.
 
@@ -125,8 +132,20 @@ For class → Map, the keys come from:
 Computed getters, static fields, `hashCode`, and similar members are **not** keys. To include a computed getter, map it explicitly:
 
 ```dart
-@Mapping(source: 'users', target: 'users')
-Map<String, dynamic> toMap(RoomDTO room);
+@Mapping(source: 'initials', target: 'initials')
+Map<String, dynamic> toMap(ProfileDTO dto);
+```
+
+Generated:
+
+```dart
+return {
+  'id': dto.id,
+  'nickname': dto.nickname,
+  'secret': dto.secret,
+  'names': dto.names,
+  'initials': dto.initials,
+};
 ```
 
 Use `@Mapping(target: 'k', ignore: true)` to omit a key from the produced map.
@@ -140,34 +159,90 @@ Reads use **strict casts**:
 | `String name` | `map['name'] as String` |
 | `String? name` | `map['name'] as String?` |
 | `double value` | `(map['value'] as num).toDouble()` |
-| `double? value` | `(map['value'] as num?)?.toDouble()` |
+| `double? maybeRatio` with `defaultValue: '1.5'` | `(map['maybeRatio'] as num?)?.toDouble() ?? 1.5` |
+| `num amount` | `map['amount'] as num` |
+| `DateTime createdAt` | `map['createdAt'] as DateTime` |
 
 A missing key or a wrong type on a non-null field throws a `TypeError` at runtime. This is by design: bad data fails loudly instead of silently producing defaults.
 
-`double` fields are read as `num` and converted, because JSON-like stores often return whole numbers (`3`) for doubles. `int` stays a strict `as int`.
+`double` fields are read as `num` and converted, because JSON-like stores often return whole numbers (`3`) for doubles. `int` stays a strict `as int`. The target class can be a standard class, a freezed class, or a built_value class (see [Freezed and Built Value](#freezed-and-built-value)).
 
 ### Default Values
 
-`defaultValue` provides a fallback for missing keys, including for collections:
+`defaultValue` provides a fallback for missing keys, including for collections and enums:
 
 ```dart
 @Mapping(target: 'votes', defaultValue: 'const {}')
-SessionDTO fromRealtime(Map map);
+SessionDTO fromRealtimeSession(Map map);
 ```
 
-Freezed `@Default(...)` values are **not** read automatically. Use `defaultValue` instead.
+Generated (from the `RealtimeMapper` in the example project):
+
+```dart
+votes: (map['votes'] as Map? ?? const {}).map<String, CardDTO>((
+  key,
+  value,
+) =>
+    MapEntry(
+      key as String,
+      _mapMapToCardDTO(Map<String, dynamic>.from(value as Map)),
+    )),
+```
+
+Other defaults generate:
+
+| Field | Generated read |
+|-------|----------------|
+| `bool flag`, `defaultValue: 'false'` | `map['flag'] as bool? ?? false` |
+| `String note`, `defaultValue: 'none'` | `map['note'] as String? ?? 'none'` |
+| `List<String> tags`, `defaultValue: 'const []'` | `List<String>.from(map['tags'] as List? ?? const [])` |
+| `FmColor color`, `defaultValue: 'FmColor.red'` | `map['color'] != null ? FmColor.values.byName(map['color'] as String) : FmColor.red` |
+
+Freezed `@Default(...)` values are **not** read automatically. Use `defaultValue` instead. Without `defaultValue`, the read of a missing `votes` key is the strict `(map['votes'] as Map).map<String, FmCard>(...)`.
 
 ### forceNonNull
 
 | Map value type | Behavior |
 |----------------|----------|
 | `dynamic`, `Object?`, `Object` | The implicit `as T` already rejects `null`. `forceNonNull` is accepted and does nothing. |
-| Typed nullable (`Map<String, T?>`) | A non-null target field requires `forceNonNull` (generates `!`) or `defaultValue`. Otherwise the build fails with `TargetFieldRequiresNonOptionalSourceFieldError`. |
+| Typed nullable (`Map<String, T?>`) | A non-null target field requires `forceNonNull` (generates `map['id']!`) or `defaultValue` (generates `map['id'] ?? 0`). Otherwise the build fails with `TargetFieldRequiresNonOptionalSourceFieldError` (see [Compile-Time Errors](#compile-time-errors)). |
 
 ## Writing Values (Class → Map)
 
 - `null` values are **always included**: `'owner': dto.owner`. Omit a key only with `ignore: true`.
-- With `conditionExpression`, a false condition writes `defaultValue` if set, otherwise `null`. The key stays present.
+- With `conditionExpression`, a false condition writes `defaultValue` if set, otherwise `null`. The key stays present: `'secret': dto.secret.length > 3 ? dto.secret : null`.
+- A `conditionExpression` on a key whose map value type is non-nullable needs a `defaultValue` or a nullable map value type, otherwise the build fails.
+- A nullable source parameter and return type are supported: `Map<String, dynamic>? toMap(ProfileDTO? dto)` generates `if (dto == null) { return null; }` before the map literal.
+
+### Other @Mapping attributes
+
+`constant`, `expression`, `callable`, `defaultValue`, and `conditionExpression` work on map keys:
+
+```dart
+@Mapping(target: 'id', callable: shout)
+@Mapping(target: 'nickname', defaultValue: 'anonymous')
+@Mapping(target: 'secret', conditionExpression: 'dto.secret.length > 3')
+@Mapping(target: 'version', constant: '2')
+@Mapping(target: 'upper', expression: 'dto.id.toUpperCase()')
+@Mapping(source: 'id, nickname', target: 'joined', callable: join)
+Map<String, dynamic> toMap(ProfileDTO dto);
+```
+
+Generated:
+
+```dart
+return {
+  'id': shout(dto.id),
+  'nickname': dto.nickname ?? 'anonymous',
+  'secret': dto.secret.length > 3 ? dto.secret : null,
+  'names': dto.names,
+  'joined': join(dto.id, dto.nickname),
+  'version': 2,
+  'upper': dto.id.toUpperCase(),
+};
+```
+
+On the read side the same attributes generate `code: 7` (`constant`), `upperCase(map['nickname'])` (`callable`), `joinNames(map['first'], map['last'])` (`callable` with `source: 'first,last'`), `slug: 'x-${map['name']}'` (`expression`), and `map.containsKey('nick') ? map['nick'] as String? : null` (`conditionExpression`). Ignoring a required nullable target passes `null`; ignoring an optional one omits the argument.
 
 ## Nested Classes, Collections, and Maps
 
@@ -178,68 +253,92 @@ Nested values are converted recursively in both directions:
 | Nested class | `Map<String, dynamic>` |
 | `List<X>`, `Set<X>`, `Iterable<X>` of classes | list of maps |
 | `Map<K, X>` of classes | `Map<K, Map<String, dynamic>>`, keys preserved |
-| `List` / `Set` / `Map` of primitives | passed through on write, rebuilt as typed copies on read |
+| `List` / `Set` / `Map` of primitives | passed through on write, rebuilt as typed copies on read (`List<String>.from(map['tags'] as List)`) |
 | `BuiltList`, `BuiltSet`, `BuiltMap` | plain `List` / `Set` / `Map` on write, rebuilt on read |
 
 The conversion method is looked up in this order:
 
 1. A method declared in the same mapper with a matching signature
 2. A method from a mapper listed in `@Mapper(uses: ...)`
-3. Otherwise a private method is generated
+3. Otherwise a private method is generated, named `_map<Class>ToMap` (class to Map) or `_mapMapTo<Class>` (Map to class)
+
+Using `RealtimeMapper` from the example project (`session` and `votes` shown):
 
 ```dart
-class SessionDTO {
-  final String id;
-  final Map<String, CardDTO> votes;
-  final List<String> tags;
-  // constructor omitted
-}
-
-class CardDTO {
-  final String id;
-  final double value;
-  // constructor omitted
-}
-
-@Mapper()
-abstract class SessionMapper {
-  Map<String, dynamic> toMap(SessionDTO session);
-
-  @Mapping(target: 'votes', defaultValue: 'const {}')
-  SessionDTO fromMap(Map<String, dynamic> map);
-}
+Map<String, dynamic> toRealtime(RoomDTO room);
+RoomDTO fromRealtime(Map map, String id);
 ```
 
-Generated (private method names are illustrative):
+Generated:
 
 ```dart
 @override
-Map<String, dynamic> toMap(SessionDTO session) {
+Map<String, dynamic> toRealtime(RoomDTO room) {
+  return {
+    'name': room.name,
+    'owner': room.owner,
+    'session': room.session != null ? toRealtimeSession(room.session!) : null,
+  };
+}
+
+@override
+Map<String, dynamic> toRealtimeSession(SessionDTO session) {
   return {
     'id': session.id,
-    'votes': session.votes.map(
-      (key, value) => MapEntry(key, _mapCardDTOToMap(value)),
-    ),
+    'status': session.status.name,
+    'createdAt': dateTimeMillisConverter.toMillis(session.createdAt),
+    'votes': session.votes.map((
+      key,
+      value,
+    ) =>
+        MapEntry(
+          key,
+          _mapCardDTOToMap(value),
+        )),
     'tags': session.tags,
   };
 }
 
 @override
-SessionDTO fromMap(Map<String, dynamic> map) {
+SessionDTO fromRealtimeSession(Map<dynamic, dynamic> map) {
   return SessionDTO(
     id: map['id'] as String,
-    votes: (map['votes'] as Map? ?? const {}).map(
-      (key, value) => MapEntry(
-        key as String,
-        _mapMapToCardDTO(Map<String, dynamic>.from(value as Map)),
-      ),
-    ),
+    status: SessionStatus.values.byName(map['status'] as String),
+    createdAt: dateTimeMillisConverter.fromMillis(map['createdAt'] as int),
+    votes: (map['votes'] as Map? ?? const {}).map<String, CardDTO>((
+      key,
+      value,
+    ) =>
+        MapEntry(
+          key as String,
+          _mapMapToCardDTO(Map<String, dynamic>.from(value as Map)),
+        )),
     tags: List<String>.from(map['tags'] as List),
   );
 }
+
+CardDTO _mapMapToCardDTO(Map<String, dynamic> map) {
+  return CardDTO(
+    id: map['id'] as String,
+    label: map['label'] as String,
+    value: (map['value'] as num).toDouble(),
+  );
+}
+
+Map<String, dynamic> _mapCardDTOToMap(CardDTO cardDTO) {
+  return {
+    'id': cardDTO.id,
+    'label': cardDTO.label,
+    'value': cardDTO.value,
+  };
+}
 ```
 
-Without `defaultValue`, the read is `(map['votes'] as Map).map(...)`.
+Nullable nested values are guarded on both sides: `room.session != null ? toRealtimeSession(room.session!) : null` when writing, `map['session'] != null ? fromRealtimeSession(map['session'] as Map) : null` when reading.
+
+Nested lists and sets of classes are read as `(map['cards'] as List).map<FmCard>((e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map))).toList()` (`.toSet()` for sets), and written as `session.history.map((item) => _mapCardDTOToMap(item)).toList()`.
+
+A self-referencing class (for example a tree node) works on read, where the recursion goes through the generated private method. On write it needs a declared method in the mapper (or in a mapper listed in `uses`); otherwise the build fails (see [Compile-Time Errors](#compile-time-errors)).
 
 Re-keying a collection (for example turning a list into a map keyed by `id`) is not automatic. Use [`callable`](/guides/callable-mapping).
 
@@ -249,14 +348,14 @@ Enum fields are stored **by name**:
 
 | Direction | Generated |
 |-----------|-----------|
-| Write | `session.status.name` (nullable: `session.status?.name`) |
-| Read | `SessionStatus.values.byName(map['status'] as String)` (nullable-guarded) |
+| Write | `session.status.name` (nullable: `cardDTO.vote?.name`) |
+| Read | `SessionStatus.values.byName(map['status'] as String)` (nullable: `map['maybeStatus'] != null ? FmStatus.values.byName(map['maybeStatus'] as String) : null`) |
 
-Enum keys of nested `Map<MyEnum, X>` fields use `.name` on write and `byName` on read. Other key types pass through unchanged.
+Enum keys of nested `Map<MyEnum, X>` fields use `.name` on write (`MapEntry(key.name, ...)`) and `byName` on read (`FmStatus.values.byName(key as String)`). Collections of enums are written as `session.allowed.map((item) => item.name).toList()`.
 
 ## DateTime, Duration, and Converters
 
-`DateTime` and `Duration` pass through unchanged, with no implicit format. This suits Firestore, whose SDK stores `DateTime` natively. When your store needs another representation, such as epoch milliseconds, declare a converter and pass it via `uses`:
+`DateTime` and `Duration` pass through unchanged, with no implicit format (`'createdAt': session.createdAt` on write, `map['createdAt'] as DateTime` on read). This suits Firestore, whose SDK stores `DateTime` natively. When your store needs another representation, such as epoch milliseconds, declare a converter and pass it via `uses`. This is what `RealtimeMapper` in the example project does:
 
 ```dart
 class DateTimeMillisConverter {
@@ -269,19 +368,26 @@ class DateTimeMillisConverter {
 }
 
 @Mapper(uses: {DateTimeMillisConverter})
-abstract class SessionMapper {
-  Map<String, dynamic> toMap(SessionDTO session);
-  SessionDTO fromMap(Map<String, dynamic> map);
+abstract class RealtimeMapper {
+  const RealtimeMapper();
+  // ...
 }
 ```
 
 Generated:
 
 ```dart
-'createdAt': dateTimeMillisConverter.toMillis(session.createdAt),
-// ...
-createdAt: dateTimeMillisConverter.fromMillis(map['createdAt'] as int),
+class RealtimeMapperImpl extends RealtimeMapper {
+  const RealtimeMapperImpl({required this.dateTimeMillisConverter});
+
+  final DateTimeMillisConverter dateTimeMillisConverter;
+  // ...
+}
 ```
+
+with `'createdAt': dateTimeMillisConverter.toMillis(session.createdAt)` on write and `createdAt: dateTimeMillisConverter.fromMillis(map['createdAt'] as int)` on read. Converters also apply to nullable fields (`dto.deletedAt != null ? dateConverters.toMillis(dto.deletedAt!) : null`) and to list items (`dto.reminders.map((item) => dateConverters.toMillis(item)).toList()`).
+
+A converter can also be declared directly in the mapper as a concrete method, for instance `int toMillis(DateTime date) => date.millisecondsSinceEpoch;`.
 
 Converters are matched on the **class-side type** `T` of the field:
 
@@ -290,7 +396,14 @@ Converters are matched on the **class-side type** `T` of the field:
 | Class → Map | takes a single parameter of type `T` and returns a value assignable to the map value type (and not `T` itself) |
 | Map → class | returns `T` and takes a single parameter of type `P`; the map value is cast to `P` before the call |
 
-A converter takes precedence over pass-through and over enum-by-name. If more than one candidate matches the same type and direction, the build fails with an ambiguity error; use [`callable`](/guides/callable-mapping) to choose explicitly.
+Precedence:
+
+1. A converter declared in the mapper wins over one from `uses`.
+2. A converter takes precedence over pass-through and over enum-by-name (a declared `String roleLabel(Role role)` replaces `dto.role.name`).
+3. Plain primitive types (`int`, `String`, `bool`, `double`, `num`) never use a converter.
+4. Only concrete (hand-written) methods act as Map → class converters: abstract methods are generated mappings.
+
+If more than one candidate matches the same type and direction, the build fails with an ambiguity error; use [`callable`](/guides/callable-mapping) to choose explicitly.
 
 ## Dot Notation
 
@@ -307,7 +420,10 @@ Contact fromMap(Map<String, dynamic> map);
 
 ```dart
 street: (map['address'] as Map?)?['street'] as String,
+city: (map['address'] as Map?)?['city'] as String,
 ```
+
+Deeper paths nest the same way: `((map['address'] as Map?)?['geo'] as Map?)?['zip'] as String?`.
 
 A dot **always** means nesting. If a key contains a literal dot, use `callable`.
 
@@ -316,12 +432,21 @@ A dot **always** means nesting. If a key contains a literal dot, use `callable`.
 Works as for class-to-class mappings, with `?.` on nullable intermediates:
 
 ```dart
-@Mapping(source: 'address.street', target: 'street')
-Map<String, dynamic> toMap(Person person);
+@Mapping(source: 'address.city', target: 'city')
+@Mapping(source: 'address.street.name', target: 'street')
+@Mapping(source: 'previous.city', target: 'previousCity')
+Map<String, dynamic> toMap(PersonDTO dto);
 ```
 
+Generated:
+
 ```dart
-'street': person.address.street,
+return {
+  'fullName': dto.fullName,
+  'city': dto.address.city,
+  'street': dto.address.street?.name,
+  'previousCity': dto.previous?.city,
+};
 ```
 
 ### Target, Class → Map
@@ -341,12 +466,17 @@ Generated:
 Map<String, dynamic> toMap(Contact contact) {
   return {
     'name': contact.name,
-    'address': {'street': contact.street, 'city': contact.city},
+    'address': {
+      'street': contact.street,
+      'city': contact.city,
+    },
   };
 }
 ```
 
-Mapping both a whole key (`address`) and one of its sub-keys (`address.street`) is a compile-time error.
+Targets can be nested more than one level (`location.address.street`), and `constant` works with them: `@Mapping(target: 'location.address.zip', constant: 'n/a')` generates `'zip': 'n/a'` inside the nested map.
+
+Mapping both a whole key (`address`) and one of its sub-keys (`address.street`) is a compile-time error, and so is an empty segment (`address..id`).
 
 ### Target, Map → Class
 
@@ -358,7 +488,7 @@ A Map → class method can take a `Map` plus other parameters. This fits Realtim
 
 ```dart
 @Mapper()
-abstract class RoomMapper {
+abstract class RealtimeMapper {
   RoomDTO fromRealtime(Map map, String id);
 }
 ```
@@ -367,11 +497,17 @@ Generated:
 
 ```dart
 @override
-RoomDTO fromRealtime(Map map, String id) {
+RoomDTO fromRealtime(
+  Map<dynamic, dynamic> map,
+  String id,
+) {
   return RoomDTO(
     id: id,
     name: map['name'] as String,
     owner: map['owner'] as String?,
+    session: map['session'] != null
+        ? fromRealtimeSession(map['session'] as Map)
+        : null,
   );
 }
 ```
@@ -382,14 +518,39 @@ Resolution order:
 2. The Map is the fallback for everything else.
 3. Qualify with the parameter name to force a read from the map: `@Mapping(source: 'map.id', target: 'id')`. The first segment is the parameter name, the rest are nested keys.
 
-For class → Map with several class parameters, fields are gathered from all parameters with the existing multi-source rules.
+A non-Map class parameter works the same way: `FmRoom fromRealtime(Map map, FmOwner owner, String id)` reads `ownerName: owner.ownerName`.
+
+For class → Map with several class parameters, fields are gathered from all parameters with the existing multi-source rules. A field name present in more than one parameter must be qualified, otherwise the build fails; `@Mapping(source: 'profile.id', target: 'profileId')` generates `'profileId': profile.id`.
 
 ## Freezed and Built Value
 
 | Type | Notes |
 |------|-------|
 | Freezed | Keys come from the factory constructor parameters. `@Default` values are not read; use `defaultValue`. |
-| Built Value | Keys come from the abstract getters. Map → class goes through the builder. `BuiltList`, `BuiltSet`, and `BuiltMap` are written as plain collections and rebuilt on read. |
+| Built Value | Keys come from the abstract getters. Map → class goes through the builder. `BuiltList`, `BuiltSet`, and `BuiltMap` are written as plain collections (`task.tags.toList()`, `task.stepsByName.toMap().map(...)`) and rebuilt on read (`ListBuilder(List<String>.from(map['tags'] as List))`, `MapBuilder(Map<String, int>.from(map['counters'] as Map))`). |
+
+Built Value output from `ProfileMapMapper` in the example project:
+
+```dart
+@override
+Map<String, dynamic> toMap(Profile profile) {
+  return {
+    'id': profile.id,
+    'nickname': profile.nickname,
+    'age': profile.age,
+  };
+}
+
+@override
+Profile fromMap(Map<String, dynamic> map) {
+  return Profile((b) => b
+    ..id = map['id'] as String
+    ..nickname = (map['nickname'] as String?)
+    ..age = map['age'] as int);
+}
+```
+
+Computed getters of a Built Value class are not keys unless mapped explicitly. Reading a nullable typed map value (`Map<String, String?>`) into a non-null built field needs `forceNonNull` (`b..id = map['id']!`) or `defaultValue`.
 
 A sealed or abstract class as the target of a Map → class method is a compile-time error. See [issue #119](https://github.com/MyLittleSuite/dart_mapper/issues/119).
 
@@ -405,16 +566,25 @@ A sealed or abstract class as the target of a Map → class method is a compile-
 
 ## Compile-Time Errors
 
-The build fails with a clear message when:
+The build fails with a clear message (and a `Fix:` hint) in these cases:
 
-- a method maps a `Map` to a `Map`
-- a typed `Map<String, V>` target has a mapped field incompatible with `V`
-- a non-null target field reads from a `Map<String, T?>` without `forceNonNull` or `defaultValue`
-- the target of a Map → class method is sealed or abstract ([#119](https://github.com/MyLittleSuite/dart_mapper/issues/119))
-- target dot notation is used in a Map → class method ([#118](https://github.com/MyLittleSuite/dart_mapper/issues/118))
-- a whole key and one of its sub-keys are both mapped (`address` and `address.street`)
-- more than one converter matches the same type and direction
-- no source is found for a required target field (`NoRelationFoundError`)
+| Trigger | Error class | Message |
+|---------|-------------|---------|
+| A method maps a `Map` to a `Map` | `MapToMapMappingNotSupportedError` | `Method 'toMap' maps a Map to a Map, which is not supported.` |
+| A class → Map method has a non-class source parameter | `InvalidMapSourceParameterError` | `Parameter 'source' of type 'String' in method 'toMap' cannot be mapped to a Map<String, ...>.` |
+| Class → Map: a field is incompatible with the typed map value | `IncompatibleMapValueError` | `Field 'score' of type 'double' is not compatible with the value type 'String' of 'Map<String, String>'.` |
+| Map → class: a field is incompatible with the typed source map | `IncompatibleMapValueTypeError` | `Field 'count' of type 'int' is not compatible with the map value type 'String'.` |
+| Non-null target field read from a `Map<String, T?>` without `forceNonNull` or `defaultValue` | `TargetFieldRequiresNonOptionalSourceFieldError` | `Target field 'id' of 'FmHolderNullableSource' in 'FmTypedNullableMapper.fromNullable' requires a non-nullable source, but the source field is nullable.` |
+| Same, for a Built Value target | `InvalidGenerationSourceError` | `Target field 'id' is non-nullable but the map value for 'id' is nullable.` |
+| The target of a Map → class method is sealed or abstract ([#119](https://github.com/MyLittleSuite/dart_mapper/issues/119)) | `FromMapTargetNotInstantiableError` | `Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.` |
+| Target dot notation in a Map → class method ([#118](https://github.com/MyLittleSuite/dart_mapper/issues/118)) | `MapTargetDotNotationUnsupportedError` | `Target dot notation 'address.street' is not supported when mapping a Map to a class (tracked in issue #118).` |
+| A whole key and one of its sub-keys are both mapped, or a dotted target has an empty segment | `MapKeyPathConflictError` | `Invalid @Mapping target 'address.nickname': 'address' is already mapped as a whole value.` / `Invalid @Mapping target 'address..id': it contains an empty segment.` |
+| More than one converter matches the same type and direction | `AmbiguousMapConverterError` | `Ambiguous mapping for type 'DateTime': multiple methods are candidates (this.toMillis, this.toIso).` |
+| The same field exists in several source parameters | `AmbiguousSourceFieldError` | `Ambiguous source field 'id' found in multiple parameters: user, other.` |
+| `conditionExpression` on a non-nullable map value without `defaultValue` | `InvalidGenerationSourceError` | `conditionExpression on non-nullable map value 'id': requires a defaultValue or a nullable map value type.` |
+| A self-referencing class is written to a nested map without a declared method | `InvalidGenerationSourceError` | `Type 'ErrorNode' references itself and cannot be converted to a nested map automatically.` |
+| A dotted source path names a missing property | `InvalidGenerationSourceError` | `Property 'missing' not found on type 'ErrorUser' while resolving dot notation path.` |
+| An `Object` parameter is used as a map source (it is not a map, so standard mapping applies and fields are missing) | `NoRelationFoundError` | `No relation found for required field 'name' in 'FmObjectParamMapper.fromObject'.` |
 
 ## See Also
 

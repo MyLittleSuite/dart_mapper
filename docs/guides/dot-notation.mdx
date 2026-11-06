@@ -122,9 +122,12 @@ Generated:
 
 ```dart
 street: (map['address'] as Map?)?['street'] as String,
+city: (map['address'] as Map?)?['city'] as String,
 ```
 
 A dot always means nesting, so a key containing a literal dot needs a `callable`.
+
+For a class to Map method, source paths use `?.` on nullable intermediates (`'street': dto.address.street?.name`).
 
 ## Target Dot Notation (Class to Map)
 
@@ -143,12 +146,15 @@ Generated:
 Map<String, dynamic> toMap(Contact contact) {
   return {
     'name': contact.name,
-    'address': {'street': contact.street, 'city': contact.city},
+    'address': {
+      'street': contact.street,
+      'city': contact.city,
+    },
   };
 }
 ```
 
-Target dot notation is not supported for Map to class methods. See the [Map Mapping guide](/guides/map-mapping) for details.
+Target dot notation is not supported for Map to class methods (build error `MapTargetDotNotationUnsupportedError`, tracked in issue #118). See the [Map Mapping guide](/guides/map-mapping) for details.
 
 ## See Also
 
