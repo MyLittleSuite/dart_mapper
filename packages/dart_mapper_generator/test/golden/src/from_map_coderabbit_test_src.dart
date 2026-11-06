@@ -1,0 +1,360 @@
+/*
+ * Copyright (c) 2026 MyLittleSuite
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+// Golden test source for the CodeRabbit review findings of the Map -> class
+// side.
+
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:source_gen_test/annotations.dart';
+
+import 'same_name_models.dart' as other;
+
+// ----- 1. forceNonNull before a callable -----
+
+String crUpper(String value) => value.toUpperCase();
+
+String crUpperNullable(String? value) => (value ?? '').toUpperCase();
+
+class CrNick {
+  final String nick;
+
+  const CrNick({required this.nick});
+}
+
+@ShouldGenerate(
+  r'''return CrNick(nick: crUpperNullable(map['nick']!));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrForceCallableMapper {
+  @Mapping(target: 'nick', callable: crUpperNullable, forceNonNull: true)
+  CrNick fromMap(Map<String, String?> map);
+}
+
+// ----- 3. recursive multi-source -----
+
+class CrTree {
+  final String name;
+  final int depth;
+  final List<CrTree> children;
+
+  const CrTree({
+    required this.name,
+    required this.depth,
+    required this.children,
+  });
+}
+
+@ShouldGenerate(
+  r'''    return CrTree(
+      name: map['name'] as String,
+      depth: level,
+      children: (map['children'] as Iterable)
+          .map<CrTree>(
+            (e) => _mapMapToCrTree(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList(),
+    );
+  }
+
+  CrTree _mapMapToCrTree(Map<String, dynamic> map) {
+    return CrTree(
+      name: map['name'] as String,
+      depth: map['depth'] as int,
+      children: (map['children'] as Iterable)
+          .map<CrTree>(
+            (e) => _mapMapToCrTree(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList(),
+    );''',
+  contains: true,
+)
+@Mapper()
+abstract class CrRecursiveMapper {
+  @Mapping(target: 'depth', source: 'level')
+  CrTree fromMap(Map<String, dynamic> map, int level);
+}
+
+// ----- 4b. compatible iterable elements are still accepted -----
+
+class CrNumbers {
+  final List<double> values;
+  final List<int> counts;
+
+  const CrNumbers({required this.values, required this.counts});
+}
+
+@ShouldGenerate(
+  r'''    return CrNumbers(
+      values: (map['values'] as Iterable)
+          .map<double>((e) => (e as num).toDouble())
+          .toList(),
+      counts: List<int>.from(map['counts'] as Iterable),
+    );''',
+  contains: true,
+)
+@Mapper()
+abstract class CrElementCompatibleMapper {
+  CrNumbers fromMap(Map<String, List<num>> map);
+}
+
+// ----- 5. Set round trip -----
+
+class CrSets {
+  final Set<int> ids;
+  final List<String> names;
+
+  const CrSets({required this.ids, required this.names});
+}
+
+@ShouldGenerate(
+  r'''    return CrSets(
+      ids: Set<int>.from(map['ids'] as Iterable),
+      names: List<String>.from(map['names'] as Iterable),
+    );''',
+  contains: true,
+)
+@Mapper()
+abstract class CrSetMapper {
+  Map<String, dynamic> toMap(CrSets sets);
+
+  CrSets fromMap(Map<String, dynamic> map);
+}
+
+// ----- 6. forceNonNull on nullable target -----
+
+class CrOptional {
+  final String? label;
+
+  const CrOptional({this.label});
+}
+
+@ShouldGenerate(
+  r'''return CrOptional(label: map['label']!);''',
+  contains: true,
+)
+@Mapper()
+abstract class CrNullableForceMapper {
+  @Mapping(target: 'label', forceNonNull: true)
+  CrOptional fromMap(Map<String, String?> map);
+}
+
+// ----- 7. generic parameter -----
+
+class CrAddress {
+  final String city;
+
+  const CrAddress({required this.city});
+}
+
+class CrCity {
+  final String city;
+
+  const CrCity({required this.city});
+}
+
+class CrBox<T> {
+  final T value;
+
+  const CrBox(this.value);
+}
+
+class CrHolder {
+  final CrCity city;
+
+  const CrHolder({required this.city});
+}
+
+@ShouldGenerate(
+  r'''    return CrHolder(city: toCity(box.value));
+  }
+
+  @override
+  CrCity toCity(CrAddress address) {
+    return CrCity(city: address.city);''',
+  contains: true,
+)
+@Mapper()
+abstract class CrGenericMapper {
+  @Mapping(target: 'city', source: 'box.value')
+  CrHolder fromBox(CrBox<CrAddress> box, Map<String, dynamic> map);
+
+  CrCity toCity(CrAddress address);
+}
+
+// ----- 8. defaultValue takes precedence over forceNonNull -----
+
+class CrCounter {
+  final int id;
+
+  const CrCounter({required this.id});
+}
+
+@ShouldGenerate(
+  r'''return CrCounter(id: map['id'] ?? 0);''',
+  contains: true,
+)
+@Mapper()
+abstract class CrForceNonNullDefaultMapper {
+  @Mapping(target: 'id', forceNonNull: true, defaultValue: '0')
+  CrCounter fromMap(Map<String, int?> map);
+}
+
+// ----- 9. collection kinds and enum keys still convert -----
+
+enum CrLevel { low, high }
+
+class CrLevels {
+  final Map<CrLevel, int> levels;
+
+  const CrLevels({required this.levels});
+}
+
+@ShouldGenerate(
+  r'''      levels: (map['levels'] as Map).map<CrLevel, int>(
+        (key, value) =>
+            MapEntry(CrLevel.values.byName(key as String), value as int),
+      ),''',
+  contains: true,
+)
+@Mapper()
+abstract class CrEnumKeyMapper {
+  CrLevels fromMap(Map<String, Map<String, int>> map);
+}
+
+class CrIdSet {
+  final Set<int> ids;
+
+  const CrIdSet({required this.ids});
+}
+
+@ShouldGenerate(
+  r'''return CrIdSet(ids: Set<int>.from(map['ids'] as Iterable));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrListToSetMapper {
+  CrIdSet fromMap(Map<String, List<int>> map);
+}
+
+// ----- 10. non-nullable map value into a matching callable parameter -----
+
+int crTwice(int value) => value * 2;
+
+class CrTwice {
+  final int count;
+
+  const CrTwice({required this.count});
+}
+
+@ShouldGenerate(
+  r'''return CrTwice(count: crTwice(map['count'] as int));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrTypedCallableMapper {
+  @Mapping(target: 'count', callable: crTwice)
+  CrTwice fromMap(Map<String, int> map);
+}
+
+// ----- 11. nested nullable type arguments into a callable parameter -----
+
+int crSum(List<int>? values) => values?.fold<int>(0, (a, b) => a + b) ?? 0;
+
+class CrTotal {
+  final int total;
+
+  const CrTotal({required this.total});
+}
+
+@ShouldGenerate(
+  r'''return CrTotal(total: crSum(map['total'] as List<int>?));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrNestedNullableCallableMapper {
+  @Mapping(target: 'total', callable: crSum)
+  CrTotal fromMap(Map<String, List<int?>> map);
+}
+
+@ShouldGenerate(
+  r'''return CrTotal(total: crSum(map['total']));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrNestedCallableMapper {
+  @Mapping(target: 'total', callable: crSum)
+  CrTotal fromMap(Map<String, List<int>> map);
+}
+
+// ----- 12. own @Mapping overrides the inherited one of the same target -----
+
+int crParseId(String value) => int.parse(value);
+
+class CrParsedId {
+  final int id;
+  final String name;
+
+  const CrParsedId({required this.id, required this.name});
+}
+
+@ShouldGenerate(
+  r'''return CrParsedId(id: map['id'] as int? ?? 0, name: map['label'] as String);''',
+  contains: true,
+)
+@Mapper()
+abstract class CrInheritOverrideMapper {
+  @Mapping(target: 'id', callable: crParseId)
+  @Mapping(source: 'label', target: 'name')
+  CrParsedId fromMap(Map<String, dynamic> map);
+
+  @InheritConfiguration()
+  @Mapping(target: 'id', defaultValue: '0')
+  CrParsedId fromMapWithDefault(Map<String, dynamic> map);
+}
+
+// ----- 13. same-named classes of different libraries into a callable -----
+
+class CrItem extends other.CrItem {
+  const CrItem(super.id);
+}
+
+int crItemId(CrItem? item) => item?.id ?? 0;
+
+class CrItemRef {
+  final int id;
+
+  const CrItemRef({required this.id});
+}
+
+@ShouldGenerate(
+  r'''return CrItemRef(id: crItemId(map['item'] as CrItem?));''',
+  contains: true,
+)
+@Mapper()
+abstract class CrSameNameCallableMapper {
+  @Mapping(target: 'id', source: 'item', callable: crItemId)
+  CrItemRef fromMap(Map<String, other.CrItem> map);
+}

@@ -26,22 +26,22 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapper_class.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:source_gen/source_gen.dart';
 
+/// Thrown when a non-nullable target field (constructor parameter or built
+/// value getter) is bound to a nullable source.
 class TargetFieldRequiresNonOptionalSourceFieldError
     extends InvalidGenerationSourceError {
   TargetFieldRequiresNonOptionalSourceFieldError({
-    required FormalParameterElement parameter,
+    required String fieldName,
     required ClassElement targetClass,
-    required MapperClass mapperClass,
-    required MappingMethod method,
+    required String mapperName,
+    required String methodName,
   }) : super(
-          'Target field \'${parameter.name}\' of \'${targetClass.name}\' '
-          'in \'${mapperClass.name}.${method.name}\' requires a non-nullable source, '
+          'Target field \'$fieldName\' of \'${targetClass.name}\' '
+          'in \'$mapperName.$methodName\' requires a non-nullable source, '
           'but the source field is nullable.\n'
-          'Fix: Add @Mapping(target: \'${parameter.name}\', forceNonNull: true) '
+          'Fix: Add @Mapping(target: \'$fieldName\', forceNonNull: true) '
           'to force-unwrap the nullable source field, or make the source field non-nullable.',
           element: targetClass,
         );

@@ -109,7 +109,56 @@ abstract class EmployeeMapper {
 }
 ```
 
+## Map Paths
+
+Dot notation also works when one side is a `Map`. With a Map source, each segment is a nested key and every intermediate level is treated as nullable:
+
+```dart
+@Mapping(source: 'address.street', target: 'street')
+@Mapping(source: 'address.city', target: 'city')
+Contact fromMap(Map<String, dynamic> map);
+```
+
+Generated:
+
+```dart
+street: (map['address'] as Map?)?['street'] as String,
+city: (map['address'] as Map?)?['city'] as String,
+```
+
+A dot always means nesting, so a key containing a literal dot needs a `callable`.
+
+For a class to Map method, source paths use `?.` on nullable intermediates (`'street': dto.address.street?.name`).
+
+## Target Dot Notation (Class to Map)
+
+When the **target** is a map, a dotted `target` builds nested maps and groups targets that share a prefix:
+
+```dart
+@Mapping(source: 'street', target: 'address.street')
+@Mapping(source: 'city', target: 'address.city')
+Map<String, dynamic> toMap(Contact contact);
+```
+
+Generated:
+
+```dart
+@override
+Map<String, dynamic> toMap(Contact contact) {
+  return {
+    'name': contact.name,
+    'address': {
+      'street': contact.street,
+      'city': contact.city,
+    },
+  };
+}
+```
+
+Target dot notation is not supported for Map to class methods (build error `MapTargetDotNotationUnsupportedError`, tracked in issue #118). See the [Map Mapping guide](/guides/map-mapping) for details.
+
 ## See Also
 
 - [@Mapping annotation reference](/annotations/mapping)
 - [Multi-Source Mapping guide](/guides/multi-source)
+- [Map Mapping guide](/guides/map-mapping)

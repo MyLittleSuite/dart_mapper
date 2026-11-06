@@ -38,7 +38,33 @@ extension DartTypeExtension on DartType {
 
   bool get isMap => isDartCoreMap || isBuiltMap;
 
+  /// Whether this is a `dart:core` [Map] whose key type is `String`, such as
+  /// `Map<String, dynamic>` or `Map<String, Object?>`.
+  bool get isStringKeyedMap {
+    final type = this;
+    return type is InterfaceType &&
+        type.isDartCoreMap &&
+        type.typeArguments.firstOrNull?.isDartCoreString == true &&
+        !type.typeArguments.first.isNullable;
+  }
+
   bool get isEnum => element is EnumElement || isBuiltEnum;
+
+  /// Whether this type is a `dart:core` [Map] accepted as the source of a
+  /// Map -> class mapping: a raw/`dynamic`-keyed map, an `Object?`/`Object`
+  /// keyed map or a `String`-keyed map.
+  bool get isMapLikeSource {
+    if (!isDartCoreMap) {
+      return false;
+    }
+
+    final key = asGenerics?.firstOrNull;
+
+    return key == null ||
+        key is DynamicType ||
+        key.isDartCoreObject ||
+        key.isDartCoreString;
+  }
 
   bool get isDateTime => className == 'DateTime';
 
@@ -73,8 +99,37 @@ extension DartTypeExtension on DartType {
 
   bool get isNullable => nullabilitySuffix == NullabilitySuffix.question;
 
-  String get parameterName =>
-      displayString.toSnakeCase().toCamelCase(lower: true);
+  String get parameterName => displayString
+      .replaceAll(RegExp(r'[^A-Za-z0-9_$]+'), '_')
+      .toSnakeCase()
+      .toCamelCase(lower: true);
+
+  /// A readable identifier fragment unique per type, nullability of the
+  /// generic arguments included: `Box<String?>` is `BoxOfNullableString`
+  /// whereas `Box<String>` is `BoxOfString`. The nullability of the type
+  /// itself is left to the caller.
+  String get uniqueName => uniqueNameWith((_) => null);
+
+  /// Like [uniqueName], with the import prefix given by [prefixOf] prepended
+  /// to every generic argument: `Box<models.Foo>` is `BoxOfModelsFoo`, so it
+  /// stays apart from `Box<Foo>`. The prefix of the type itself is left to the
+  /// caller.
+  String uniqueNameWith(String? Function(DartType type) prefixOf) {
+    final type = this;
+    if (type is! InterfaceType || type.typeArguments.isEmpty) {
+      return humanReadable;
+    }
+
+    final arguments = type.typeArguments
+        .map((argument) => [
+              if (argument.isNullable) 'Nullable',
+              prefixOf(argument)?.toCapitalised() ?? '',
+              argument.uniqueNameWith(prefixOf),
+            ].join())
+        .join('And');
+
+    return '${type.className}Of$arguments';
+  }
 
   /// Returns a map of getter name to substituted [DartType] for this type,
   /// using [InterfaceType.getters] which performs type-parameter substitution
@@ -146,6 +201,12 @@ extension DartTypeBuilt on DartType {
       {
         'BuiltMap',
       }.contains(className);
+
+  /// Whether this type is a class implementing `Built<V, B>`.
+  bool get isBuiltValue =>
+      (element?.interfaceElementOrNull?.allSupertypes ?? const []).any(
+        (type) => type.isLibraryBuilt && type.element.name == 'Built',
+      );
 
   bool get isBuiltEnum {
     final superType = element?.classElementOrNull?.supertype;

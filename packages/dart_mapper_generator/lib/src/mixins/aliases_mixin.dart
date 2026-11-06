@@ -26,8 +26,8 @@
  */
 
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/misc/strings.dart';
 
 mixin AliasesMixin {
@@ -36,14 +36,63 @@ mixin AliasesMixin {
   String? resolvePrefix(DartType type) =>
       importAliases?[type.element?.library?.firstFragment.source.uri];
 
-  String resolveType(DartType type, {bool withNullability = false}) =>
+  /// The name of [type] with its import prefix. The type arguments of a
+  /// generic type are prefixed as well (`Box<models.Foo>`).
+  String resolveType(DartType type, {bool withNullability = false}) {
+    if (type is InterfaceType &&
+        type.typeArguments.isNotEmpty &&
+        type.alias == null) {
+      final deep = resolveTypeDeep(type);
+      final plain =
+          deep.endsWith('?') ? deep.substring(0, deep.length - 1) : deep;
+
+      return withNullability ? '$plain?' : plain;
+    }
+
+    return chainDot([
+      importAliases?[type.element?.library?.firstFragment.source.uri],
+      chain([
+        _withoutNullability(type),
+        if (withNullability) '?',
+      ]),
+    ]);
+  }
+
+  /// Like [resolveType], but the import prefix is applied to every type
+  /// argument too (`Map<String, models.Item?>`). The nullability of the type
+  /// and of its arguments is kept.
+  String resolveTypeDeep(DartType type) {
+    if (type is! InterfaceType) {
+      return type.getDisplayString();
+    }
+
+    final name = type.element.name;
+    if (name == null) {
+      return type.getDisplayString();
+    }
+
+    final arguments = type.typeArguments;
+
+    return chain([
       chainDot([
-        importAliases?[type.element?.library?.firstFragment.source.uri],
-        chain([
-          type.displayString,
-          if (withNullability) '?',
-        ]),
-      ]);
+        importAliases?[type.element.library.firstFragment.source.uri],
+        name,
+      ]),
+      if (arguments.isNotEmpty)
+        '<${arguments.map(resolveTypeDeep).join(', ')}>',
+      if (type.nullabilitySuffix == NullabilitySuffix.question) '?',
+    ]);
+  }
+
+  /// The display string of [type] without the nullability suffix of the type
+  /// itself; nullability of type arguments (`Map<String, Object?>`) is kept.
+  String _withoutNullability(DartType type) {
+    final display = type.getDisplayString();
+
+    return display.endsWith('?')
+        ? display.substring(0, display.length - 1)
+        : display;
+  }
 
   String resolveConstructor(ConstructorElement constructor) => chainDot([
         importAliases?[constructor.library.firstFragment.source.uri],

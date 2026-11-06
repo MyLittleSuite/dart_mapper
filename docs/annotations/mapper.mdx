@@ -101,6 +101,10 @@ final addressMapper = AddressMapperImpl();
 final userMapper = UserMapperImpl(addressMapper: addressMapper);
 ```
 
+## Converters for Map Mapping
+
+`uses` also accepts plain converter classes for Map mappings, such as one with `int toMillis(DateTime d)` and `DateTime fromMillis(int ms)`. They are matched by field type, and the generated implementation receives them as required constructor parameters (`const RealtimeMapperImpl({required this.dateTimeMillisConverter})`). See the [Map Mapping guide](/guides/map-mapping).
+
 ## Requirements
 
 - The annotated class must be `abstract`.

@@ -229,7 +229,8 @@ void main() async {
   testAnnotatedElements<Mapper>(conditionExpressionReader, generator);
 
   // Group: Condition expression errors (D-07)
-  final conditionExpressionErrorReader = await initializeLibraryReaderForDirectory(
+  final conditionExpressionErrorReader =
+      await initializeLibraryReaderForDirectory(
     'test/golden/src',
     'condition_expression_error_test_src.dart',
   );
@@ -321,4 +322,93 @@ void main() async {
     'string_to_enum_sentinel_test_src.dart',
   );
   testAnnotatedElements<Mapper>(stringToEnumSentinelReader, generator);
+
+  // Group: Map -> class mapping (MappingBehavior.fromMap)
+  final fromMapReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'from_map_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(fromMapReader, generator);
+
+  // Group: Map -> class mapping errors
+  final fromMapErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'from_map_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(fromMapErrorReader, generator);
+  // Group: class -> Map mapping (MappingBehavior.toMap)
+  final toMapReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapReader, generator);
+
+  // Group: class -> Map mapping of built_value sources
+  final toMapBuiltReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_built_value_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapBuiltReader, generator);
+
+  // Group: class -> Map mapping errors
+  final toMapErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapErrorReader, generator);
+
+  // Group: class <-> Map mapping combined (cross-direction inheritance)
+  final mapRoundTripReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_round_trip_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapRoundTripReader, generator);
+
+  // Group: additional class <-> Map coverage
+  final mapCoverageReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_coverage_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapCoverageReader, generator);
+
+  // Group: fixes of the class <-> Map review
+  final mapReviewFixesReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_review_fixes_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapReviewFixesReader, generator);
+
+  // Group: Map -> Map detection errors of the class <-> Map review
+  final mapReviewFixesErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_review_fixes_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapReviewFixesErrorReader, generator);
+
+  // Group: CodeRabbit review findings of the Map -> class side
+  final fromMapCodeRabbitReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'from_map_coderabbit_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(fromMapCodeRabbitReader, generator);
+
+  final fromMapCodeRabbitErrorReader =
+      await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'from_map_coderabbit_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(fromMapCodeRabbitErrorReader, generator);
+  // Group: findings of the CodeRabbit review of the class -> Map mapping
+  final toMapCodeRabbitReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_coderabbit_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapCodeRabbitReader, generator);
+
+  // Group: findings of the CodeRabbit review reported as errors
+  final toMapCodeRabbitErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'to_map_coderabbit_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(toMapCodeRabbitErrorReader, generator);
 }

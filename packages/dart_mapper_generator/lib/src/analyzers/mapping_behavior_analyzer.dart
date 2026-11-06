@@ -23,10 +23,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/field_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/map_to_map_mapping_not_supported_error.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
@@ -46,6 +49,26 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
         ),
     };
 
+    if (context is MethodAnalyzerContext && targetType.isDartCoreMap) {
+      final parameters = context.method.formalParameters;
+
+      // A Map is never converted to a Map, whatever its key type.
+      if (parameters.any((param) => param.type.isDartCoreMap) ||
+          (targetType.isStringKeyedMap &&
+              parameters.any((param) => param.type.isMap))) {
+        throw MapToMapMappingNotSupportedError(method: context.method);
+      }
+
+      // class -> Map: the method returns a Map<String, ...>.
+      if (targetType.isStringKeyedMap) {
+        return MappingBehavior.toMap;
+      }
+    }
+
+    if (_isMapToClass(sourceParams, targetType)) {
+      return MappingBehavior.fromMap;
+    }
+
     if (targetType.isEnum ||
         sourceParams?.where((param) => param.type.isEnum).isNotEmpty == true) {
       return MappingBehavior.enums;
@@ -60,4 +83,17 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
         ? MappingBehavior.built
         : MappingBehavior.standard;
   }
+
+  /// A Map -> class mapping: at least one source parameter is a map accepted
+  /// by [DartTypeExtension.isMapLikeSource] and the target is a plain class.
+  static bool _isMapToClass(
+    List<FormalParameterElement>? sourceParams,
+    DartType targetType,
+  ) =>
+      sourceParams?.any((param) => param.type.isMapLikeSource) == true &&
+      targetType.element is ClassElement &&
+      !targetType.isEnum &&
+      !targetType.isMap &&
+      !targetType.isIterable &&
+      !targetType.isPrimitive;
 }

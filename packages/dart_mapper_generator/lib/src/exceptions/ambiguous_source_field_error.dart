@@ -31,13 +31,15 @@ class AmbiguousSourceFieldError extends InvalidGenerationSourceError {
     required String fieldName,
     required List<String> parameterNames,
     required Element element,
+    String? targetName,
+    String? sourcePath,
   }) : super(
           "Ambiguous source field '$fieldName' found in multiple parameters: "
           "${parameterNames.join(', ')}.\n"
           "When multiple source parameters share a field name, you must qualify "
           "the source explicitly.\n"
-          "Fix: Add @Mapping(target: '$fieldName', source: "
-          "'${parameterNames.first}.$fieldName') to specify which parameter to use.",
+          "Fix: Add @Mapping(target: '${targetName ?? fieldName}', source: "
+          "'${parameterNames.first}.${sourcePath ?? fieldName}') to specify which parameter to use.",
           element: element,
         );
 }

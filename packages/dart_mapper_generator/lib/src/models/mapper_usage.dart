@@ -33,12 +33,16 @@ class MapperUsage {
   final String functionName;
   final List<MappingParameter> parameters;
 
+  /// Whether the method is abstract, i.e. generated rather than hand-written.
+  final bool isAbstract;
+
   MapperUsage({
     required this.mapperName,
     required this.mapperType,
     required this.returnType,
     required this.functionName,
     required this.parameters,
+    this.isAbstract = false,
   });
 
   @override

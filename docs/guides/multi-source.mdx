@@ -97,7 +97,28 @@ abstract class EmployeeMapper {
 }
 ```
 
+## Map Parameters
+
+A `Map` can be one of the source parameters of a Map to class method:
+
+```dart
+@Mapper()
+abstract class RoomMapper {
+  RoomDTO fromRealtime(Map map, String id);
+}
+```
+
+Unqualified names resolve **first** against the non-Map parameters, and the Map is the fallback for everything else. Use `map.k` (the parameter name followed by the key) to force a read from the map:
+
+```dart
+@Mapping(source: 'map.id', target: 'id')
+RoomDTO fromRealtime(Map map, String id);
+```
+
+See the [Map Mapping guide](/guides/map-mapping) for the full rules.
+
 ## See Also
 
 - [Dot Notation guide](/guides/dot-notation) — `source: 'param.nested.field'`
 - [Expressions guide](/guides/expressions) — reference multiple parameters in expressions
+- [Map Mapping guide](/guides/map-mapping) — `Map` parameters

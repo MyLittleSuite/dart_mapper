@@ -85,12 +85,30 @@ class MappingProcessor extends ComponentProcessor<Method> {
         (p) => Parameter(
           (b) => b
             ..name = p.field.name
-            ..type = refer(context.resolveType(
-              p.field.type,
-              withNullability: p.field.nullable,
-            )),
+            ..type = refer(_resolveParameterType(context, p)),
         ),
       );
+
+  /// Map parameters keep the nullability of their value type
+  /// (`Map<String, String?>`), which the plain display string strips.
+  String _resolveParameterType(
+    ProcessorMethodContext context,
+    MappingParameter parameter,
+  ) {
+    final type = parameter.field.type;
+    if (!type.isMapLikeSource) {
+      return context.resolveType(
+        type,
+        withNullability: parameter.field.nullable,
+      );
+    }
+
+    final display = context.resolveTypeDeep(type);
+
+    return parameter.field.nullable && !display.endsWith('?')
+        ? '$display?'
+        : display;
+  }
 
   Reference _processReturns(
     ProcessorMethodContext context,
@@ -101,7 +119,10 @@ class MappingProcessor extends ComponentProcessor<Method> {
       return refer('void');
     }
 
-    if (!method.isOverride && method.behavior == MappingBehavior.built) {
+    if (!method.isOverride &&
+        (method.behavior == MappingBehavior.built ||
+            (method.behavior == MappingBehavior.fromMap &&
+                returnType.isBuiltValue))) {
       return refer(returnType.builtBuilderClass);
     }
 

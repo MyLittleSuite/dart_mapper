@@ -47,15 +47,15 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
   });
 
   Map<String, List<String>> get renamingMap => _renamingMappings
-      .where((annotation) => annotation.source != null)
-      .fold<Map<String, List<String>>>({}, (map, element) {
-    map.update(
-      element.source!,
-      (targets) => targets..add(element.target),
-      ifAbsent: () => [element.target],
-    );
-    return map;
-  });
+          .where((annotation) => annotation.source != null)
+          .fold<Map<String, List<String>>>({}, (map, element) {
+        map.update(
+          element.source!,
+          (targets) => targets..add(element.target),
+          ifAbsent: () => [element.target],
+        );
+        return map;
+      });
 
   Map<String, String> get renamingMapReversed => Map.fromEntries(
         renamingMap.entries.expand(
@@ -76,8 +76,7 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
         _renamingMappings
             .where((annotation) => annotation.constant != null)
             .map(
-              (annotation) =>
-                  MapEntry(annotation.target, annotation.constant!),
+              (annotation) => MapEntry(annotation.target, annotation.constant!),
             ),
       );
 
@@ -99,93 +98,136 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
             ),
       );
 
+  /// Rejects conflicting settings of a target. The effective `@Mapping`
+  /// annotations (inherited ones overridden by the method's own) are combined
+  /// by target first, so that a conflict split across separate annotations
+  /// (`callable` in one, `defaultValue` in another) is rejected as well
+  /// instead of silently dropping one of the settings.
   void validateMappingCombinations() {
-    for (final annotation in _renamingMappings) {
-      if (annotation.constant != null) {
-        if (annotation.source != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'constant cannot be combined with source',
-            element: method,
-          );
-        }
-        if (annotation.defaultValue != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription:
-                'constant cannot be combined with defaultValue',
-            element: method,
-          );
-        }
-        if (annotation.callable != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'constant cannot be combined with callable',
-            element: method,
-          );
-        }
-        if (annotation.ignore == true) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'constant cannot be combined with ignore',
-            element: method,
-          );
-        }
+    for (final annotation in _combinedByTarget(_renamingMappings)) {
+      _validateMappingCombination(annotation);
+    }
+  }
+
+  /// One [ResolvedMapping] per target, with the settings of every annotation
+  /// of that target.
+  Iterable<ResolvedMapping> _combinedByTarget(
+    Iterable<ResolvedMapping> annotations,
+  ) {
+    final byTarget = <String, List<ResolvedMapping>>{};
+    for (final annotation in annotations) {
+      byTarget.putIfAbsent(annotation.target, () => []).add(annotation);
+    }
+
+    return byTarget.entries.map((entry) {
+      final group = entry.value;
+      if (group.length == 1) {
+        return group.single;
       }
-      if (annotation.expression != null) {
-        if (annotation.source != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'expression cannot be combined with source',
-            element: method,
-          );
-        }
-        if (annotation.defaultValue != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription:
-                'expression cannot be combined with defaultValue',
-            element: method,
-          );
-        }
-        if (annotation.constant != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'expression cannot be combined with constant',
-            element: method,
-          );
-        }
-        if (annotation.callable != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'expression cannot be combined with callable',
-            element: method,
-          );
-        }
-      }
-      if (annotation.conditionExpression != null) {
-        if (annotation.constant != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'conditionExpression cannot be combined with constant',
-            element: method,
-          );
-        }
-        if (annotation.callable != null) {
-          throw InvalidMappingCombinationError(
-            target: annotation.target,
-            conflictDescription: 'conditionExpression cannot be combined with callable',
-            element: method,
-          );
-        }
-      }
-      if (annotation.defaultValue != null && annotation.callable != null) {
+
+      T? first<T>(T? Function(ResolvedMapping annotation) read) =>
+          group.map(read).whereType<T>().firstOrNull;
+
+      return ResolvedMapping(
+        target: entry.key,
+        source: first((a) => a.source),
+        ignore: group.any((a) => a.ignore),
+        forceNonNull: group.any((a) => a.forceNonNull),
+        callable: first((a) => a.callable),
+        defaultValue: first((a) => a.defaultValue),
+        constant: first((a) => a.constant),
+        expression: first((a) => a.expression),
+        conditionExpression: first((a) => a.conditionExpression),
+      );
+    });
+  }
+
+  void _validateMappingCombination(ResolvedMapping annotation) {
+    if (annotation.constant != null) {
+      if (annotation.source != null) {
         throw InvalidMappingCombinationError(
           target: annotation.target,
-          conflictDescription: 'defaultValue cannot be combined with callable',
+          conflictDescription: 'constant cannot be combined with source',
           element: method,
         );
       }
+      if (annotation.defaultValue != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription: 'constant cannot be combined with defaultValue',
+          element: method,
+        );
+      }
+      if (annotation.callable != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription: 'constant cannot be combined with callable',
+          element: method,
+        );
+      }
+      if (annotation.ignore == true) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription: 'constant cannot be combined with ignore',
+          element: method,
+        );
+      }
+    }
+    if (annotation.expression != null) {
+      if (annotation.source != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription: 'expression cannot be combined with source',
+          element: method,
+        );
+      }
+      if (annotation.defaultValue != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription:
+              'expression cannot be combined with defaultValue',
+          element: method,
+        );
+      }
+      if (annotation.constant != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription: 'expression cannot be combined with constant',
+          element: method,
+        );
+      }
+      if (annotation.callable != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription: 'expression cannot be combined with callable',
+          element: method,
+        );
+      }
+    }
+    if (annotation.conditionExpression != null) {
+      if (annotation.constant != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription:
+              'conditionExpression cannot be combined with constant',
+          element: method,
+        );
+      }
+      if (annotation.callable != null) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription:
+              'conditionExpression cannot be combined with callable',
+          element: method,
+        );
+      }
+    }
+    if (annotation.defaultValue != null && annotation.callable != null) {
+      throw InvalidMappingCombinationError(
+        target: annotation.target,
+        conflictDescription: 'defaultValue cannot be combined with callable',
+        element: method,
+      );
     }
   }
 
@@ -247,9 +289,19 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
             ),
       );
 
-  Iterable<ResolvedMapping> get _renamingMappings => [
-        ...?inheritedRenaming,
-        ...?inheritedRenamingReversed,
-        ...MappingAnnotation.load(method),
-      ];
+  /// The effective `@Mapping` annotations of the method: a target mapped by
+  /// the method itself overrides every inherited mapping of that target, so
+  /// that inherited and own settings are never mixed.
+  Iterable<ResolvedMapping> get _renamingMappings {
+    final own = MappingAnnotation.load(method).toList();
+    final ownTargets = own.map((annotation) => annotation.target).toSet();
+    bool notOverridden(ResolvedMapping annotation) =>
+        !ownTargets.contains(annotation.target);
+
+    return [
+      ...?inheritedRenaming?.where(notOverridden),
+      ...?inheritedRenamingReversed?.where(notOverridden),
+      ...own,
+    ];
+  }
 }

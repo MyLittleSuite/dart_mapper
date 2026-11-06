@@ -23,10 +23,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/ambiguous_inherit_configuration_error.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
@@ -73,27 +75,69 @@ class InheritConfigurationAnalyzer
       parameterType: inverse ? returnType : parameters.first.type,
     );
   }
-
   Iterable<ResolvedMapping> _loadMappings(
     MethodAnalyzerContext context, {
     required DartType returnType,
     required DartType parameterType,
-  }) =>
-      context.mapperClass.methods
-          .where((method) => method != context.method)
-          .where((method) => method.formalParameters.length == 1)
-          .where(
-            (method) =>
-                method.returnType.same(
-                  returnType,
-                  useNullability: false,
-                  aliases: context.importAliases,
-                ) &&
-                method.formalParameters.first.type.same(
-                  parameterType,
-                  useNullability: false,
-                  aliases: context.importAliases,
-                ),
-          )
-          .expand((method) => MappingAnnotation.load(method, inverse: inverse));
+  }) {
+    final candidates = context.mapperClass.methods
+        .where((method) => method != context.method)
+        .where((method) => method.formalParameters.length == 1)
+        .toList(growable: false);
+
+    // Methods with the very same signature always win.
+    final exact = candidates.where(
+      (method) =>
+          _sameExactType(context, method.returnType, returnType) &&
+          _sameExactType(
+            context,
+            method.formalParameters.first.type,
+            parameterType,
+          ),
+    );
+    if (exact.isNotEmpty) {
+      return exact.expand(
+        (method) => MappingAnnotation.load(method, inverse: inverse),
+      );
+    }
+
+    final relaxed = candidates
+        .where(
+          (method) =>
+              _sameType(context, method.returnType, returnType) &&
+              _sameType(
+                context,
+                method.formalParameters.first.type,
+                parameterType,
+              ),
+        )
+        .toList(growable: false);
+
+    // Several methods that differ only by the kind of map would mix their
+    // configurations.
+    if (relaxed.where(_hasMappings).length > 1) {
+      throw AmbiguousInheritConfigurationError(
+        method: context.method.displayName,
+        candidates: relaxed.map((method) => method.displayName).toList(),
+        element: context.method,
+      );
+    }
+
+    return relaxed.expand(
+      (method) => MappingAnnotation.load(method, inverse: inverse),
+    );
+  }
+
+  bool _hasMappings(MethodElement method) =>
+      MappingAnnotation.load(method, inverse: inverse).isNotEmpty;
+
+  bool _sameExactType(MethodAnalyzerContext context, DartType a, DartType b) =>
+      a.same(b, useNullability: false, aliases: context.importAliases);
+
+  /// Two types match when equal, or when both are maps usable as the source
+  /// of a Map -> class mapping (`Map<String, dynamic>` vs raw `Map`, ...), so
+  /// that a class <-> Map pair can inherit from each other.
+  bool _sameType(MethodAnalyzerContext context, DartType a, DartType b) =>
+      a.same(b, useNullability: false, aliases: context.importAliases) ||
+      (a.isMapLikeSource && b.isMapLikeSource);
 }
