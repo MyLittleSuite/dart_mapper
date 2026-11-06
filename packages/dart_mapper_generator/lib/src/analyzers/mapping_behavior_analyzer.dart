@@ -49,13 +49,20 @@ class MappingBehaviorAnalyzer extends Analyzer<MappingBehavior> {
         ),
     };
 
-    // class -> Map: the method returns a Map<String, ...>.
-    if (context is MethodAnalyzerContext && targetType.isStringKeyedMap) {
-      if (context.method.formalParameters.any((param) => param.type.isMap)) {
+    if (context is MethodAnalyzerContext && targetType.isDartCoreMap) {
+      final parameters = context.method.formalParameters;
+
+      // A Map is never converted to a Map, whatever its key type.
+      if (parameters.any((param) => param.type.isMapLikeSource) ||
+          (targetType.isStringKeyedMap &&
+              parameters.any((param) => param.type.isMap))) {
         throw MapToMapMappingNotSupportedError(method: context.method);
       }
 
-      return MappingBehavior.toMap;
+      // class -> Map: the method returns a Map<String, ...>.
+      if (targetType.isStringKeyedMap) {
+        return MappingBehavior.toMap;
+      }
     }
 
     if (_isMapToClass(sourceParams, targetType)) {
