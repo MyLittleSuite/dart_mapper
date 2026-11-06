@@ -54,7 +54,7 @@ bool isPlainMapPrimitive(DartType type) =>
 /// methods. It is qualified with the library, so that same-named classes of
 /// different libraries (prefixed imports) are told apart.
 String mapTypeKey(DartType type) =>
-    '${type.element?.library?.uri}#${type.displayString}';
+    '${type.element?.library?.uri}#${type.getDisplayString()}';
 
 /// Whether [type] is a user class that has to be converted to a nested map.
 bool isMapCustomClass(DartType type) {
