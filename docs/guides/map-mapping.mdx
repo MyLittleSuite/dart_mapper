@@ -195,7 +195,7 @@ Other defaults generate:
 |-------|----------------|
 | `bool flag`, `defaultValue: 'false'` | `map['flag'] as bool? ?? false` |
 | `String note`, `defaultValue: 'none'` | `map['note'] as String? ?? 'none'` |
-| `List<String> tags`, `defaultValue: 'const []'` | `List<String>.from(map['tags'] as List? ?? const [])` |
+| `List<String> tags`, `defaultValue: 'const []'` | `List<String>.from(map['tags'] as Iterable? ?? const [])` |
 | `FmColor color`, `defaultValue: 'FmColor.red'` | `map['color'] != null ? FmColor.values.byName(map['color'] as String) : FmColor.red` |
 
 Freezed `@Default(...)` values are **not** read automatically. Use `defaultValue` instead. Without `defaultValue`, the read of a missing `votes` key is the strict `(map['votes'] as Map).map<String, FmCard>(...)`.
@@ -257,7 +257,7 @@ Nested values are converted recursively in both directions:
 | Nested class | `Map<String, dynamic>` |
 | `List<X>`, `Set<X>`, `Iterable<X>` of classes | list of maps |
 | `Map<K, X>` of classes | `Map<K, Map<String, dynamic>>`, keys preserved |
-| `List` / `Set` / `Map` of primitives | passed through on write, rebuilt as typed copies on read (`List<String>.from(map['tags'] as List)`) |
+| `List` / `Set` / `Map` of primitives | passed through on write, rebuilt as typed copies on read (`List<String>.from(map['tags'] as Iterable)`) |
 | `BuiltList`, `BuiltSet`, `BuiltMap` | plain `List` / `Set` / `Map` on write, rebuilt on read |
 
 The conversion method is looked up in this order:
@@ -317,7 +317,7 @@ SessionDTO fromRealtimeSession(Map<dynamic, dynamic> map) {
           key as String,
           _mapMapToCardDTO(Map<String, dynamic>.from(value as Map)),
         )),
-    tags: List<String>.from(map['tags'] as List),
+    tags: List<String>.from(map['tags'] as Iterable),
   );
 }
 
@@ -340,7 +340,7 @@ Map<String, dynamic> _mapCardDTOToMap(CardDTO cardDTO) {
 
 Nullable nested values are guarded on both sides: `room.session != null ? toRealtimeSession(room.session!) : null` when writing, `map['session'] != null ? fromRealtimeSession(map['session'] as Map) : null` when reading.
 
-Nested lists and sets of classes are read as `(map['cards'] as List).map<FmCard>((e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map))).toList()` (`.toSet()` for sets), and written as `session.history.map((item) => _mapCardDTOToMap(item)).toList()`.
+Nested lists and sets of classes are read as `(map['cards'] as Iterable).map<FmCard>((e) => _mapMapToFmCard(Map<String, dynamic>.from(e as Map))).toList()` (`.toSet()` for sets), and written as `session.history.map((item) => _mapCardDTOToMap(item)).toList()`.
 
 A self-referencing class (for example a tree node) works on read, where the recursion goes through the generated private method. On write it needs a declared method in the mapper (or in a mapper listed in `uses`); otherwise the build fails (see [Compile-Time Errors](#compile-time-errors)).
 
@@ -534,7 +534,7 @@ For class → Map with several class parameters, fields are gathered from all pa
 | Type | Notes |
 |------|-------|
 | Freezed | Keys come from the factory constructor parameters. `@Default` values are not read; use `defaultValue`. |
-| Built Value | Keys come from the abstract getters. Map → class goes through the builder. `BuiltList`, `BuiltSet`, and `BuiltMap` are written as plain collections (`task.tags.toList()`, `task.stepsByName.toMap().map(...)`) and rebuilt on read (`ListBuilder(List<String>.from(map['tags'] as List))`, `MapBuilder(Map<String, int>.from(map['counters'] as Map))`). |
+| Built Value | Keys come from the abstract getters. Map → class goes through the builder. `BuiltList`, `BuiltSet`, and `BuiltMap` are written as plain collections (`task.tags.toList()`, `task.stepsByName.toMap().map(...)`) and rebuilt on read (`ListBuilder(List<String>.from(map['tags'] as Iterable))`, `MapBuilder(Map<String, int>.from(map['counters'] as Map))`). |
 
 Built Value output from `ProfileMapMapper` in the example project:
 

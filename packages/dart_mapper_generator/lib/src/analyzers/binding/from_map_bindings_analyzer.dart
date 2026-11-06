@@ -102,8 +102,17 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
           .map((param) => _Param(param.name!, param.type))
           .toList(growable: false),
       config: config,
-      visiting: {mapTypeKey(method.returnType)},
+      // Only a method taking the map alone can be called back by nested
+      // values of its own type.
+      visiting:
+          _isSelfReferencing(method) ? {mapTypeKey(method.returnType)} : {},
     );
+  }
+
+  bool _isSelfReferencing(MethodElement method) {
+    final parameters = method.formalParameters;
+
+    return parameters.length == 1 && parameters.single.type.isMapLikeSource;
   }
 
   List<Binding> _bindings(
@@ -367,11 +376,18 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
     } else {
       // Unqualified dot notation: a non-map class parameter owning the first
       // segment wins, otherwise the path walks nested maps.
-      final owner = others
+      final owners = others
           .where((p) => _classOf(p)?.getFieldOrGetter(segments.first) != null)
-          .firstOrNull;
-      if (owner != null) {
-        return _classPath(run, owner, segments);
+          .toList(growable: false);
+      if (owners.length > 1) {
+        throw AmbiguousSourceFieldError(
+          fieldName: segments.first,
+          parameterNames: owners.map((p) => p.name).toList(growable: false),
+          element: run.method,
+        );
+      }
+      if (owners.length == 1) {
+        return _classPath(run, owners.single, segments);
       }
     }
 
@@ -411,7 +427,7 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       }
 
       chain.add((segment, currentType.isNullable));
-      currentType = field.type;
+      currentType = currentType.substitutedGetterTypes?[segment] ?? field.type;
     }
 
     return _Resolved(
@@ -531,6 +547,22 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
     }
   }
 
+  /// The element of an iterable, or the value of a map, when typed.
+  DartType? _elementOf(DartType type) {
+    final generics = type.asGenerics;
+    if (generics == null) {
+      return null;
+    }
+    if (type.isIterable && generics.length == 1) {
+      return generics.first;
+    }
+    if (type.isMap && generics.length == 2) {
+      return generics[1];
+    }
+
+    return null;
+  }
+
   bool _compatible(
     _Run run,
     DartType value,
@@ -540,6 +572,13 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
     final system = run.typeSystem;
     final v = system.promoteToNonNull(value);
     final t = system.promoteToNonNull(target);
+
+    // Collections are compatible when their elements (or map values) are.
+    final valueElement = _elementOf(v);
+    final targetElement = _elementOf(t);
+    if (valueElement != null && targetElement != null) {
+      return _compatible(run, valueElement, targetElement, extra);
+    }
 
     final parameter = extra?.firstParameterType;
     if (extra != null && parameter != null) {

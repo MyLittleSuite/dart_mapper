@@ -54,7 +54,7 @@ class MrfEvent {
 @ShouldGenerate(
   r'''    return MrfEvent(
       count: map['count'] as int,
-      counts: List<int>.from(map['counts'] as List),
+      counts: List<int>.from(map['counts'] as Iterable),
       at: fromMillis(map['at'] as int),
     );''',
   contains: true,
