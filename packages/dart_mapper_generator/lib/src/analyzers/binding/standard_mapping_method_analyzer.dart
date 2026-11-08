@@ -98,6 +98,8 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       method.returnType,
       context.configuredTargets,
       element: method,
+      library: context.mapperClass.library,
+      importAliases: context.importAliases,
     );
     final nestedRoots = nestedTargetRoots(context.configuredTargets);
 
@@ -428,6 +430,20 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     // source field named like them.
     boundTargets.addAll(nestedRoots);
 
+    // A dotted target without a source reads the source property named like
+    // its last segment (`address.zip` reads `zip`), as a flat target does.
+    final implicitNestedSources = <String, List<String>>{};
+    for (final target in context.configuredTargets) {
+      if (target.contains('.') &&
+          !renamingMapReversed.containsKey(target) &&
+          !constantMap.containsKey(target) &&
+          !expressionMap.containsKey(target)) {
+        implicitNestedSources
+            .putIfAbsent(target.split('.').last, () => [])
+            .add(target);
+      }
+    }
+
     // --- Step 3: Auto-resolve fields from source parameters ---
     final targetSubstituted = method.returnType.substitutedGetterTypes;
     for (final sourceMethodParam in method.formalParameters) {
@@ -437,8 +453,10 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
 
       for (final sourceClassParam in sourceGetters) {
         if (sourceClassParam.name != null) {
-          final targetNames =
-              renamingMap[sourceClassParam.name!] ?? [sourceClassParam.name!];
+          final targetNames = [
+            ...renamingMap[sourceClassParam.name!] ?? [sourceClassParam.name!],
+            ...?implicitNestedSources[sourceClassParam.name!],
+          ];
 
           for (final targetClassParamName in targetNames) {
             // Skip already-bound targets (dot notation, constant, etc.)
@@ -529,6 +547,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
 
     return groupNestedBindings(
       bindings,
+      configuredTargets: context.configuredTargets,
       parentField: (path) {
         final param = targetParam[path]!;
 
@@ -582,7 +601,9 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       // The nullability of the access is whether the CURRENT type (parent) is nullable.
       final parentIsNullable = currentType.isNullable;
       accessChain.add((segment, parentIsNullable));
-      currentType = field.type;
+      // Resolve the type of the field against the type arguments of the
+      // receiver (`T value` of `Box<Address>` is `Address`).
+      currentType = currentType.substitutedGetterTypes?[segment] ?? field.type;
     }
 
     final lastSegment = segments.last;

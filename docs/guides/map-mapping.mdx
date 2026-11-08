@@ -490,20 +490,35 @@ Mapping both a whole key (`address`) and one of its sub-keys (`address.street`) 
 
 ### Target, Map → Class
 
-When the target is a class, a dotted `target` builds the nested object from flat keys of the map:
+When the target is a class, a dotted `target` builds the nested object from flat keys of the map. This example maps to a class holding an `Address`:
 
 ```dart
-@Mapping(source: 'street', target: 'address.street')
-@Mapping(source: 'city', target: 'address.city')
-Contact fromMap(Map<String, dynamic> map);
+class Address {
+  final String street;
+  final String city;
+  const Address({required this.street, required this.city});
+}
+
+class StructuredContact {
+  final String name;
+  final Address address;
+  const StructuredContact({required this.name, required this.address});
+}
+
+@Mapper()
+abstract class StructuredContactMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'city', target: 'address.city')
+  StructuredContact fromMap(Map<String, dynamic> map);
+}
 ```
 
 Generated:
 
 ```dart
 @override
-Contact fromMap(Map<String, dynamic> map) {
-  return Contact(
+StructuredContact fromMap(Map<String, dynamic> map) {
+  return StructuredContact(
     name: map['name'] as String,
     address: Address(
       street: map['street'] as String,
@@ -512,6 +527,8 @@ Contact fromMap(Map<String, dynamic> map) {
   );
 }
 ```
+
+A dotted target without a `source` reads the key named like its last segment (`@Mapping(target: 'address.street')` reads `map['street']`).
 
 This is also what `@InheritInverseConfiguration` generates from a class → Map method that flattens a nested source (`source: 'address.street', target: 'street'`). The nested object is built only from the listed targets; see [Dot Notation](/guides/dot-notation) for the rules (the same ones apply to class → class methods). Built Value targets do not support it.
 

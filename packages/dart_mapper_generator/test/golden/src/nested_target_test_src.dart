@@ -33,6 +33,8 @@ import 'package:built_value/built_value.dart';
 import 'package:dart_mapper/dart_mapper.dart';
 import 'package:source_gen_test/annotations.dart';
 
+import 'nested_target_models.dart' hide NtvHiddenAddress;
+
 // ----- Shared models -----
 
 class NtFlatContact {
@@ -132,6 +134,70 @@ class NtPerson {
   final String? zip;
 
   const NtPerson({required this.firstName, required this.lastName, this.zip});
+}
+
+class NtDefaultAddress {
+  final String street;
+  final String city;
+
+  const NtDefaultAddress({required this.street, this.city = 'n/a'});
+}
+
+class NtDefaultContact {
+  final String name;
+  final NtDefaultAddress address;
+
+  const NtDefaultContact({required this.name, required this.address});
+}
+
+class NtSlotAddress {
+  final String street;
+  final String city;
+  final String? zip;
+
+  const NtSlotAddress(this.street, [this.city = 'n/a', this.zip]);
+}
+
+class NtSlotContact {
+  final String name;
+  final NtSlotAddress address;
+
+  const NtSlotContact({required this.name, required this.address});
+}
+
+/// A nested class with a constructor that is private, but reachable from the
+/// library of the mapper.
+class NtOwnPrivateAddress {
+  final String street;
+
+  const NtOwnPrivateAddress._(this.street);
+}
+
+class NtOwnPrivateContact {
+  final String name;
+  final NtOwnPrivateAddress address;
+
+  const NtOwnPrivateContact({required this.name, required this.address});
+}
+
+class NtBox<T> {
+  final T value;
+
+  const NtBox(this.value);
+}
+
+class NtEnvelope<T> {
+  final String name;
+  final T value;
+
+  const NtEnvelope({required this.name, required this.value});
+}
+
+/// `input` is not stored in a field of the same name.
+class NtInputBox<T> {
+  final T value;
+
+  NtInputBox({required T input}) : value = input;
 }
 
 // ----- class -> class -----
@@ -344,7 +410,7 @@ abstract class NtMapMapper {
     return NtPlace(
       name: map['name'] as String,
       location: NtLocation(
-        street: (map['address'] as Map?)?['street'] as String,
+        street: (map['address'] as Map?)?['street'] as String? ?? 'n/a',
         geo: NtGeo(lat: (map['lat'] as num).toDouble(), lng: 0.0),
       ),
     );
@@ -354,7 +420,11 @@ abstract class NtMapMapper {
 )
 @Mapper()
 abstract class NtMapDeepMapper {
-  @Mapping(source: 'address.street', target: 'location.street')
+  @Mapping(
+    source: 'address.street',
+    target: 'location.street',
+    defaultValue: 'n/a',
+  )
   @Mapping(source: 'lat', target: 'location.geo.lat')
   @Mapping(constant: '0.0', target: 'location.geo.lng')
   NtPlace fromMap(Map<String, dynamic> map);
@@ -404,6 +474,200 @@ abstract class NtMapMultiSourceMapper {
   @Mapping(source: 'street', target: 'address.street')
   @Mapping(source: 'city', target: 'address.city')
   NtContact fromMap(Map<String, dynamic> map, String city);
+}
+
+// A dotted target without a source reads the property named like its last
+// segment, and keeps the other settings of the target.
+@ShouldGenerate(
+  r"""
+  @override
+  NtOptionalContact toContact(NtFlatContact flat) {
+    return NtOptionalContact(
+      name: flat.name,
+      address: NtOptionalAddress(street: flat.street, zip: flat.zip ?? '0000'),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtClassImplicitSourceMapper {
+  @Mapping(target: 'address.street')
+  @Mapping(target: 'address.zip', defaultValue: '0000')
+  NtOptionalContact toContact(NtFlatContact flat);
+}
+
+// Generic types are resolved while walking a source path.
+@ShouldGenerate(
+  r"""
+  @override
+  NtContact toContact(NtBox<NtFlatContact> box) {
+    return NtContact(
+      name: box.value.name,
+      address: NtAddress(street: box.value.street, city: box.value.city),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtGenericSourceMapper {
+  @Mapping(source: 'value.name', target: 'name')
+  @Mapping(source: 'value.street', target: 'address.street')
+  @Mapping(source: 'value.city', target: 'address.city')
+  NtContact toContact(NtBox<NtFlatContact> box);
+}
+
+// ... and the type arguments of the target.
+@ShouldGenerate(
+  r"""
+  @override
+  NtEnvelope<NtAddress> toEnvelope(NtFlatContact flat) {
+    return NtEnvelope(
+      name: flat.name,
+      value: NtAddress(street: flat.street, city: flat.city),
+    );
+  }
+
+  @override
+  NtEnvelope<NtAddress> fromMap(Map<String, dynamic> map) {
+    return NtEnvelope(
+      name: map['name'] as String,
+      value: NtAddress(
+        street: map['street'] as String,
+        city: map['city'] as String,
+      ),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtGenericTargetMapper {
+  @Mapping(source: 'street', target: 'value.street')
+  @Mapping(source: 'city', target: 'value.city')
+  NtEnvelope<NtAddress> toEnvelope(NtFlatContact flat);
+
+  @Mapping(source: 'street', target: 'value.street')
+  @Mapping(source: 'city', target: 'value.city')
+  NtEnvelope<NtAddress> fromMap(Map<String, dynamic> map);
+}
+
+// Constructor parameters are resolved even without a getter of the same name.
+@ShouldGenerate(
+  r"""
+  @override
+  NtInputBox<NtAddress> toBox(NtFlatContact flat) {
+    return NtInputBox(
+      input: NtAddress(street: flat.street, city: flat.city),
+    );
+  }
+
+  @override
+  NtInputBox<NtAddress> fromMap(Map<String, dynamic> map) {
+    return NtInputBox(
+      input: NtAddress(
+        street: map['street'] as String,
+        city: map['city'] as String,
+      ),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtInputParameterMapper {
+  @Mapping(source: 'street', target: 'input.street')
+  @Mapping(source: 'city', target: 'input.city')
+  NtInputBox<NtAddress> toBox(NtFlatContact flat);
+
+  @Mapping(source: 'street', target: 'input.street')
+  @Mapping(source: 'city', target: 'input.city')
+  NtInputBox<NtAddress> fromMap(Map<String, dynamic> map);
+}
+
+// A target mentioned without any other setting reads the key named like its
+// last segment.
+@ShouldGenerate(
+  r"""
+  @override
+  NtContact fromMap(Map<String, dynamic> map) {
+    return NtContact(
+      name: map['name'] as String,
+      address: NtAddress(
+        street: map['street'] as String,
+        city: map['city'] as String,
+      ),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtMapTargetOnlyMapper {
+  @Mapping(target: 'address.street')
+  @Mapping(target: 'address.city')
+  NtContact fromMap(Map<String, dynamic> map);
+}
+
+// An ignored optional property keeps its default value.
+@ShouldGenerate(
+  r"""
+  @override
+  NtDefaultContact toContact(NtFlatContact flat) {
+    return NtDefaultContact(
+      name: flat.name,
+      address: NtDefaultAddress(street: flat.street),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtClassIgnoredOptionalMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(target: 'address.city', ignore: true)
+  NtDefaultContact toContact(NtFlatContact flat);
+}
+
+// An optional positional parameter that is skipped keeps its default value
+// when a later one is passed.
+@ShouldGenerate(
+  r"""
+  @override
+  NtSlotContact toContact(NtFlatContact flat) {
+    return NtSlotContact(
+      name: flat.name,
+      address: NtSlotAddress(flat.street, 'n/a', flat.zip),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtClassPositionalSlotMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'zip', target: 'address.zip')
+  NtSlotContact toContact(NtFlatContact flat);
+}
+
+// A private constructor can be called from the library declaring it.
+@ShouldGenerate(
+  r"""
+  @override
+  NtOwnPrivateContact toContact(NtFlatContact flat) {
+    return NtOwnPrivateContact(
+      name: flat.name,
+      address: NtOwnPrivateAddress._(flat.street),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtOwnPrivateConstructorMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  NtOwnPrivateContact toContact(NtFlatContact flat);
 }
 
 // ----- Errors -----
@@ -461,13 +725,57 @@ abstract class NtEmptySegmentMapper {
 
 // A required property of the nested object that is not mapped.
 @ShouldThrow(
-  "No relation found for required field 'city' in 'NtMissingPropertyMapper.toContact'.\n"
-  "Fix: Add @Mapping(target: 'city', source: 'sourceField') to map from a differently named source field, or @Mapping(target: 'city', ignore: true) to skip it.",
+  "No relation found for required field 'address.city' in 'NtMissingPropertyMapper.toContact'.\n"
+  "Fix: Add @Mapping(target: 'address.city', source: 'sourceField') to map from a differently named source field, or @Mapping(target: 'address.city', ignore: true) to skip it.",
 )
 @Mapper()
 abstract class NtMissingPropertyMapper {
   @Mapping(source: 'street', target: 'address.street')
   NtContact toContact(NtFlatContact flat);
+}
+
+
+// A configured nested object is built even when none of its properties could
+// be bound, so the properties it is missing are reported.
+@ShouldThrow(
+  "No relation found for required field 'address.street' in 'NtNoSourceMapper.toContact'.\n"
+  "Fix: Add @Mapping(target: 'address.street', source: 'sourceField') to map from a differently named source field, or @Mapping(target: 'address.street', ignore: true) to skip it.",
+)
+@Mapper()
+abstract class NtNoSourceMapper {
+  @Mapping(source: 'nope', target: 'address.street')
+  NtOptionalContact toContact(NtFlatContact flat);
+}
+
+// Invalid target-only paths are validated as well.
+@ShouldThrow(
+  "Invalid @Mapping target 'address.country': 'country' is not a constructor parameter of 'NtAddress' (available: street, city).\n"
+  "Fix: A dotted target builds a nested object of the target class: every segment must be non-empty, name a constructor parameter of a class that can be instantiated, and the nested object cannot also be mapped as a whole value.",
+)
+@Mapper()
+abstract class NtMapTargetOnlyUnknownMapper {
+  @Mapping(target: 'address.country')
+  NtContact fromMap(Map<String, dynamic> map);
+}
+
+@ShouldThrow(
+  "Invalid @Mapping target 'address': the constructor 'NtvPrivateAddress._' of 'NtvPrivateAddress' is private to its library, so the mapper cannot call it.\n"
+  "Fix: Expose a public constructor on the nested class, or build the value with callable.",
+)
+@Mapper()
+abstract class NtPrivateConstructorMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  NtvPrivateContact toContact(NtFlatContact flat);
+}
+
+@ShouldThrow(
+  "Invalid @Mapping target 'address': 'NtvHiddenAddress' is not imported by the mapper's library, so the generated code cannot name it.\n"
+  "Fix: Import the library declaring 'NtvHiddenAddress' in the file of the mapper (and do not hide it).",
+)
+@Mapper()
+abstract class NtHiddenClassMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  NtvHiddenContact fromMap(Map<String, dynamic> map);
 }
 
 // ----- built_value targets -----

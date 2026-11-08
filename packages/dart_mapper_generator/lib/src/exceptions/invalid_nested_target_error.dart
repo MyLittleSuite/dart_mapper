@@ -32,13 +32,14 @@ class InvalidNestedTargetError extends InvalidGenerationSourceError {
   InvalidNestedTargetError({
     required String target,
     required String description,
+    String? fix,
     Element? element,
   }) : super(
           "Invalid @Mapping target '$target': $description.\n"
-          "Fix: A dotted target builds a nested object of the target class: "
-          "every segment must be non-empty, name a constructor parameter of a "
-          "class that can be instantiated, and the nested object cannot also "
-          "be mapped as a whole value.",
+          "Fix: ${fix ?? 'A dotted target builds a nested object of the target class: '
+              'every segment must be non-empty, name a constructor parameter of a '
+              'class that can be instantiated, and the nested object cannot also '
+              'be mapped as a whole value.'}",
           element: element,
         );
 }

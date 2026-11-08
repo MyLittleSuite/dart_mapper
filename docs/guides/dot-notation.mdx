@@ -219,11 +219,12 @@ StructuredContact fromMap(Map<String, dynamic> map) {
 
 Rules:
 
+- A dotted target without a `source` reads the source property (or map key) named like its last segment: `@Mapping(target: 'address.zip', defaultValue: '0000')` reads `zip`.
 - The nested object is built only from the targets you list. Its optional constructor parameters that are not mapped are left out, a required one that is not mapped fails with `NoRelationFoundError`.
 - The nested object is always instantiated, even when its type is nullable.
 - Paths can be nested more than one level (`location.geo.lat`).
 - Every `@Mapping` option works on a dotted target: `source` (including dotted sources), `constant`, `expression`, `defaultValue`, `callable`, `forceNonNull`, `ignore` and `conditionExpression`.
-- The classes along the path must be instantiable (not abstract without a factory, not sealed). Built Value classes, as root target or nested object, are not supported.
+- The classes along the path must be instantiable (not abstract without a factory, not sealed), and the mapper must be able to call their constructor: a private constructor of another library, or a class the mapper's file does not import, is a build error. Built Value classes, as root target or nested object, are not supported.
 - Mapping both a whole property (`address`) and one of its sub-properties (`address.street`) is a build error (`InvalidNestedTargetError`), and so is an unknown property or an empty segment.
 - `@InheritInverseConfiguration` of a flattening method (`source: 'address.street', target: 'street'`) generates the dotted target, so the inverse builds the nested object.
 

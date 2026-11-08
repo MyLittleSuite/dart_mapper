@@ -110,10 +110,17 @@ bool isBuildableNestedType(DartType type) =>
 ///
 /// Throws [InvalidNestedTargetError] when a dotted target cannot be resolved
 /// or when its class cannot be built.
+///
+/// When [library] (the library of the mapper) is given, a nested class whose
+/// constructor is private to another library, or that the library cannot name
+/// (not imported, hidden), is rejected too: the generated code could not
+/// instantiate it. [importAliases] gives the import prefix of each library.
 Map<String, TargetParam> resolveTargetParams(
   DartType targetType,
   Iterable<String> targets, {
   Element? element,
+  LibraryElement? library,
+  Map<Uri, String>? importAliases,
 }) {
   final targetClass = targetType.element?.classElementOrNull;
   if (targetClass == null) {
@@ -186,6 +193,16 @@ Map<String, TargetParam> resolveTargetParams(
       );
     }
 
+    if (library != null) {
+      _validateAccessible(
+        nestedClass,
+        library: library,
+        importAliases: importAliases,
+        target: container,
+        element: element,
+      );
+    }
+
     result.addAll(_parametersOf(nestedClass, param.type, '$container.'));
   }
 
@@ -209,21 +226,109 @@ Map<String, TargetParam> resolveTargetParams(
   return result;
 }
 
+void _validateAccessible(
+  ClassElement nestedClass, {
+  required LibraryElement library,
+  required Map<Uri, String>? importAliases,
+  required String target,
+  required Element? element,
+}) {
+  final constructor = nestedClass.mainConstructor;
+  if ((constructor.isPrivate || nestedClass.isPrivate) &&
+      constructor.library != library) {
+    throw InvalidNestedTargetError(
+      target: target,
+      description: "the constructor '${constructor.displayName}' of "
+          "'${nestedClass.displayName}' is private to its library, so the "
+          "mapper cannot call it",
+      fix: 'Expose a public constructor on the nested class, or build the '
+          'value with callable.',
+      element: element,
+    );
+  }
+
+  if (!_isNameable(library, nestedClass, importAliases)) {
+    throw InvalidNestedTargetError(
+      target: target,
+      description: "'${nestedClass.displayName}' is not imported by the "
+          "mapper's library, so the generated code cannot name it",
+      fix: "Import the library declaring '${nestedClass.displayName}' in the "
+          "file of the mapper (and do not hide it).",
+      element: element,
+    );
+  }
+}
+
+/// Whether [element] can be named in [library], directly or through the
+/// prefix it is imported with.
+bool _isNameable(
+  LibraryElement library,
+  ClassElement element,
+  Map<Uri, String>? importAliases,
+) {
+  final name = element.name;
+  if (name == null) {
+    return false;
+  }
+
+  final scope = library.firstFragment.scope;
+  if (scope.lookup(name).getter == element) {
+    return true;
+  }
+
+  final prefix = importAliases?[element.library.firstFragment.source.uri];
+  if (prefix != null) {
+    final prefixElement = scope.lookup(prefix).getter;
+    if (prefixElement is PrefixElement) {
+      return prefixElement.scope.lookup(name).getter == element;
+    }
+  }
+
+  return false;
+}
+
+/// The types of the parameters of the main constructor of [cls], resolved
+/// against the type arguments of [type] (`T value` of `Box<Address>` is
+/// `Address`). Unlike the types of the getters, they cover parameters that
+/// are not stored in a field of the same name.
+Map<String, DartType> constructorParameterTypes(
+  DartType type,
+  ClassElement cls,
+) {
+  final main = cls.mainConstructor;
+  final declared = {
+    for (final parameter in main.formalParameters)
+      if (parameter.name != null) parameter.name!: parameter.type,
+  };
+  if (type is! InterfaceType || type.typeArguments.isEmpty) {
+    return declared;
+  }
+
+  final substituted =
+      type.constructors.where((c) => c.name == main.name).firstOrNull;
+  if (substituted == null) {
+    return declared;
+  }
+
+  return {
+    for (final parameter in substituted.formalParameters)
+      if (parameter.name != null) parameter.name!: parameter.type,
+  };
+}
+
 Map<String, TargetParam> _parametersOf(
   ClassElement targetClass,
   DartType targetType,
   String prefix,
 ) {
-  final substituted = targetType.substitutedGetterTypes;
+  final types = constructorParameterTypes(targetType, targetClass);
 
   return {
     for (final parameter in targetClass.constructorParameters)
       if (parameter.name != null)
         '$prefix${parameter.name}': TargetParam(
           path: '$prefix${parameter.name}',
-          type: prefix.isEmpty
-              ? parameter.type
-              : substituted?[parameter.name!] ?? parameter.type,
+          type: types[parameter.name!] ?? parameter.type,
           isRequired: parameter.isRequired,
         ),
   };
@@ -239,10 +344,13 @@ String _lastSegment(String path) => path.split('.').last;
 ///
 /// [parentField] gives the field describing the nested object at a path
 /// (`address`). Bindings are expected to be named after their full path and
-/// are renamed after their last segment.
+/// are renamed after their last segment. A nested object named by
+/// [configuredTargets] is kept even when none of its properties got a
+/// binding, so that the properties it is missing are reported.
 List<Binding> groupNestedBindings(
   List<Binding> bindings, {
   required Field Function(String path) parentField,
+  Iterable<String> configuredTargets = const [],
   String prefix = '',
 }) {
   final plain = <Binding>[];
@@ -257,6 +365,17 @@ List<Binding> groupNestedBindings(
       groups
           .putIfAbsent('$prefix${relative.substring(0, dot)}', () => [])
           .add(binding);
+    }
+  }
+
+  for (final target in configuredTargets) {
+    if (!target.startsWith(prefix)) {
+      continue;
+    }
+    final relative = target.substring(prefix.length);
+    final dot = relative.indexOf('.');
+    if (dot > 0) {
+      groups.putIfAbsent('$prefix${relative.substring(0, dot)}', () => []);
     }
   }
 
@@ -277,6 +396,7 @@ List<Binding> groupNestedBindings(
           nestedBindings: groupNestedBindings(
             entry.value,
             parentField: parentField,
+            configuredTargets: configuredTargets,
             prefix: '${entry.key}.',
           ),
         );
