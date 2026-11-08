@@ -1,3 +1,7 @@
+## 1.2.0
+
+- Document target dot notation for nested target objects (implemented in dart_mapper_generator 1.2.0); no annotation changes
+
 ## 1.1.0
 
 - Document class ↔ `Map` mapping support (implemented in dart_mapper_generator 1.1.0); no annotation changes

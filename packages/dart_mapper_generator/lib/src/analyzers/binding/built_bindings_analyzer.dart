@@ -29,6 +29,7 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/invalid_nested_target_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/too_many_constructor_parameters_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_target_class_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
@@ -73,6 +74,17 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
       throw UnknownTargetClassError(
         mapperClass: context.mapperClass,
         method: method,
+      );
+    }
+
+    final nestedTarget = context.configuredTargets
+        .where((target) => target.contains('.'))
+        .firstOrNull;
+    if (nestedTarget != null) {
+      throw InvalidNestedTargetError(
+        target: nestedTarget,
+        description: 'nested targets cannot build a built_value class',
+        element: method,
       );
     }
 

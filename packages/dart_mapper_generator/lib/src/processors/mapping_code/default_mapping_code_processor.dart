@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/element/element.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 import 'package:dart_mapper_generator/src/exceptions/no_relation_found_error.dart';
@@ -32,6 +33,7 @@ import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/blocks.dart';
+import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 import 'package:dart_mapper_generator/src/processors/component_processor.dart';
 import 'package:dart_mapper_generator/src/strategies/strategy_dispatcher.dart';
@@ -61,92 +63,7 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
       );
     }
 
-    final targetConstructor = targetClass.mainConstructor;
-
-    final positionalArguments = <Expression>[];
-    final namedArguments = <String, Expression>{};
-
-    for (final parameter in targetConstructor.formalParameters) {
-      if (parameter.name != null) {
-        final binding = context.currentMethod.fromTarget(parameter.name!);
-        if (parameter.isRequired && binding == null) {
-          throw NoRelationFoundError(
-            parameter: parameter,
-            mapperClass: context.mapperClass,
-            method: method,
-            targetClass: targetClass,
-          );
-        }
-
-        if (binding?.forceNonNull == false &&
-            !parameter.isOptional &&
-            binding?.source.nullable == true &&
-            binding?.target.nullable == false &&
-            binding?.defaultValue == null &&
-            binding?.constant == null &&
-            binding?.expression == null &&
-            binding?.conditionExpression == null &&
-            binding?.callableMappingMethod == null) {
-          throw TargetFieldRequiresNonOptionalSourceFieldError(
-            fieldName: parameter.name!,
-            targetClass: targetClass,
-            mapperName: context.mapperClass.name,
-            methodName: method.name,
-          );
-        }
-
-        var sourceExpression = binding != null
-            ? expressionStrategyDispatcher.get(method.behavior).create(
-          ExpressionContext(
-            field: binding.source,
-            origin: FieldOrigin.source,
-            counterpartField: binding.target,
-            ignored: binding.ignored,
-            forceNonNull: binding.forceNonNull,
-            currentMethod: method,
-            expressionMappingMethod: binding.callableMappingMethod,
-            extraMappingMethod: binding.extraMappingMethod,
-            importAliases: context.importAliases,
-            defaultValue: binding.defaultValue,
-            constant: binding.constant,
-            expression: binding.expression,
-            conditionExpression: binding.conditionExpression,
-            accessChain: binding.accessChain,
-            sources: binding.sources,
-            sourceAccessChains: binding.sourceAccessChains,
-          ),
-        )
-            : null;
-
-        // Ternary wrapping for conditionExpression (D-07)
-        if (binding?.conditionExpression != null && sourceExpression != null) {
-          final isTargetNullable = binding!.target.nullable;
-          if (!isTargetNullable && binding.defaultValue == null) {
-            throw InvalidGenerationSourceError(
-              "conditionExpression on non-nullable target '${binding.target.name}': "
-              "requires a defaultValue or a nullable target type.\n"
-              "Fix: Add defaultValue: '...' to the @Mapping annotation, or make the target field nullable.",
-              element: targetClass,
-            );
-          }
-          final condition = CodeExpression(Code(resolveConditionExpression(binding.conditionExpression!)));
-          final falseExpr = binding.defaultValue != null
-              ? (binding.target.type.isDartCoreString
-                  ? literalString(binding.defaultValue!)
-                  : CodeExpression(Code(binding.defaultValue!)))
-              : literalNull;
-          sourceExpression = condition.conditional(sourceExpression, falseExpr);
-        }
-
-        if (sourceExpression != null) {
-          if (parameter.isNamed) {
-            namedArguments[parameter.name!] = sourceExpression;
-          } else {
-            positionalArguments.add(sourceExpression);
-          }
-        }
-      }
-    }
+    final instance = _instantiate(context, targetClass, method.bindings);
 
     return Block(
       (builder) {
@@ -158,12 +75,133 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
           }
         }
 
-        builder.addExpression(
-          refer(context.resolveConstructor(targetConstructor))
-              .newInstance(positionalArguments, namedArguments)
-              .returned,
-        );
+
+
+        builder.addExpression(instance.returned);
       },
     );
+  }
+
+  /// The instantiation of [targetClass] with the values of [bindings], one for
+  /// each constructor parameter. Nested objects built from dotted targets are
+  /// instantiated recursively.
+  Expression _instantiate(
+    ProcessorMethodContext context,
+    ClassElement targetClass,
+    List<Binding> bindings,
+  ) {
+    final method = context.currentMethod;
+    final targetConstructor = targetClass.mainConstructor;
+
+    final positionalArguments = <Expression>[];
+    final namedArguments = <String, Expression>{};
+
+    for (final parameter in targetConstructor.formalParameters) {
+      if (parameter.name == null) {
+        continue;
+      }
+
+      final binding =
+          bindings.where((b) => b.target.name == parameter.name).firstOrNull;
+      if (parameter.isRequired && binding == null) {
+        throw NoRelationFoundError(
+          parameter: parameter,
+          mapperClass: context.mapperClass,
+          method: method,
+          targetClass: targetClass,
+        );
+      }
+
+      final nestedBindings = binding?.nestedBindings;
+      if (binding != null && nestedBindings != null) {
+        final nestedClass = binding.target.type.element?.classElementOrNull;
+        if (nestedClass == null) {
+          throw UnknownReturnTypeError(
+            mapperClass: context.mapperClass,
+            method: method,
+          );
+        }
+
+        final nested = _instantiate(context, nestedClass, nestedBindings);
+        if (parameter.isNamed) {
+          namedArguments[parameter.name!] = nested;
+        } else {
+          positionalArguments.add(nested);
+        }
+        continue;
+      }
+
+      if (binding?.forceNonNull == false &&
+          !parameter.isOptional &&
+          binding?.source.nullable == true &&
+          binding?.target.nullable == false &&
+          binding?.defaultValue == null &&
+          binding?.constant == null &&
+          binding?.expression == null &&
+          binding?.conditionExpression == null &&
+          binding?.callableMappingMethod == null) {
+        throw TargetFieldRequiresNonOptionalSourceFieldError(
+          fieldName: parameter.name!,
+          targetClass: targetClass,
+          mapperName: context.mapperClass.name,
+          methodName: method.name,
+        );
+      }
+
+      var sourceExpression = binding != null
+          ? expressionStrategyDispatcher.get(method.behavior).create(
+                ExpressionContext(
+                  field: binding.source,
+                  origin: FieldOrigin.source,
+                  counterpartField: binding.target,
+                  ignored: binding.ignored,
+                  forceNonNull: binding.forceNonNull,
+                  currentMethod: method,
+                  expressionMappingMethod: binding.callableMappingMethod,
+                  extraMappingMethod: binding.extraMappingMethod,
+                  importAliases: context.importAliases,
+                  defaultValue: binding.defaultValue,
+                  constant: binding.constant,
+                  expression: binding.expression,
+                  conditionExpression: binding.conditionExpression,
+                  accessChain: binding.accessChain,
+                  sources: binding.sources,
+                  sourceAccessChains: binding.sourceAccessChains,
+                ),
+              )
+          : null;
+
+      // Ternary wrapping for conditionExpression (D-07)
+      if (binding?.conditionExpression != null && sourceExpression != null) {
+        final isTargetNullable = binding!.target.nullable;
+        if (!isTargetNullable && binding.defaultValue == null) {
+          throw InvalidGenerationSourceError(
+            "conditionExpression on non-nullable target '${binding.target.name}': "
+            "requires a defaultValue or a nullable target type.\n"
+            "Fix: Add defaultValue: '...' to the @Mapping annotation, or make the target field nullable.",
+            element: targetClass,
+          );
+        }
+        final condition = CodeExpression(
+            Code(resolveConditionExpression(binding.conditionExpression!)));
+        final falseExpr = binding.defaultValue != null
+            ? (binding.target.type.isDartCoreString
+                ? literalString(binding.defaultValue!)
+                : CodeExpression(Code(binding.defaultValue!)))
+            : literalNull;
+        sourceExpression = condition.conditional(sourceExpression, falseExpr);
+      }
+
+      if (sourceExpression != null) {
+        if (parameter.isNamed) {
+          namedArguments[parameter.name!] = sourceExpression;
+        } else {
+          positionalArguments.add(sourceExpression);
+        }
+      }
+    }
+
+    return refer(context.resolveConstructor(targetConstructor))
+        .newInstance(positionalArguments, namedArguments);
   }
 }

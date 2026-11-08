@@ -33,6 +33,7 @@ import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_erro
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/misc/nested_targets.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
@@ -91,12 +92,14 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       }
     }
 
-    final targetClass = method.returnType.element?.classElementOrNull;
-    final targetParam = targetClass?.constructorParameters
-        .where((parameter) => parameter.name != null)
-        .toList(growable: false)
-        .asMap()
-        .map((_, value) => MapEntry(value.name!, value));
+    // Constructor parameters of the target class by name, plus the ones of the
+    // classes nested in it that dotted targets (`address.street`) build.
+    final targetParam = resolveTargetParams(
+      method.returnType,
+      context.configuredTargets,
+      element: method,
+    );
+    final nestedRoots = nestedTargetRoots(context.configuredTargets);
 
     // --- Step 0: Process comma-source callable targets ---
     // Must run before Step 1 so that targets with comma+dot sources (e.g. "a.x,b.y")
@@ -113,7 +116,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       final callableMappingMethod = callableMap[targetName];
       if (callableMappingMethod == null) continue;
 
-      final resolvedTargetParam = targetParam?[targetName];
+      final resolvedTargetParam = targetParam[targetName];
       if (resolvedTargetParam == null) continue;
 
       final parts = sourceExpression.split(',').map((p) => p.trim()).toList();
@@ -236,7 +239,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
         continue;
       }
 
-      final resolvedTargetParam = targetParam?[targetName];
+      final resolvedTargetParam = targetParam[targetName];
       if (resolvedTargetParam == null) {
         continue;
       }
@@ -352,7 +355,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
 
       if (boundTargets.contains(targetName)) continue;
 
-      final resolvedTargetParam = targetParam?[targetName];
+      final resolvedTargetParam = targetParam[targetName];
       if (resolvedTargetParam == null) continue;
 
       // Create a placeholder source field — expression factory ignores it when constant != null.
@@ -392,7 +395,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
 
       if (boundTargets.contains(targetName)) continue;
 
-      final resolvedTargetParam = targetParam?[targetName];
+      final resolvedTargetParam = targetParam[targetName];
       if (resolvedTargetParam == null) continue;
 
       final targetField = Field.from(
@@ -421,6 +424,10 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       boundTargets.add(targetName);
     }
 
+    // Nested objects are built from their dotted targets only, never from a
+    // source field named like them.
+    boundTargets.addAll(nestedRoots);
+
     // --- Step 3: Auto-resolve fields from source parameters ---
     final targetSubstituted = method.returnType.substitutedGetterTypes;
     for (final sourceMethodParam in method.formalParameters) {
@@ -437,7 +444,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
             // Skip already-bound targets (dot notation, constant, etc.)
             if (boundTargets.contains(targetClassParamName)) continue;
 
-            final resolvedTargetParam = targetParam?[targetClassParamName];
+            final resolvedTargetParam = targetParam[targetClassParamName];
             if (resolvedTargetParam == null || sourceMethodParam.name == null) {
               continue;
             }
@@ -516,7 +523,23 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       }
     }
 
-    return bindings;
+    if (nestedRoots.isEmpty) {
+      return bindings;
+    }
+
+    return groupNestedBindings(
+      bindings,
+      parentField: (path) {
+        final param = targetParam[path]!;
+
+        return Field.from(
+          name: path,
+          type: param.type,
+          required: param.isRequired,
+          nullable: param.type.isNullable,
+        );
+      },
+    );
   }
 
   /// Resolves a dot-notation source path like 'address.street' or (in single-source)

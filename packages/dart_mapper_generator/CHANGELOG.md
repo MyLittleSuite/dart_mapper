@@ -1,3 +1,8 @@
+## 1.2.0
+
+- Feature: target dot notation builds nested target objects in class → class and Map → class mappings (`@Mapping(source: 'street', target: 'address.street')` generates `address: Address(street: ...)`), at any depth and with every `@Mapping` option. `@InheritInverseConfiguration` of a class → Map method flattening a nested source now builds the nested object (#118)
+- Breaking (build error only): `MapTargetDotNotationUnsupportedError` is removed; invalid dotted targets of a class target raise `InvalidNestedTargetError`. Dotted targets on class → class methods, previously ignored, now build nested objects
+
 ## 1.1.0
 
 - Feature: class ↔ `Map<String, dynamic>` mapping, detected automatically from the method signature (class → Map when the return type is a `Map<String, ...>`, Map → class when a source parameter is a `Map`). Works with standard classes, Freezed and Built Value
@@ -7,7 +12,7 @@
 - Feature: dot notation on map sources, and target dot notation building nested maps (class → Map)
 - Feature: multi-source Map → class methods (e.g. `fromRealtime(Map map, String id)`)
 - Feature: `@InheritConfiguration` / `@InheritInverseConfiguration` across mapping directions
-- Known limitations: target dot notation in Map → class (#118), sealed/discriminator targets (#119), collection-level mapping methods (#120)
+- Known limitations: sealed/discriminator targets (#119), collection-level mapping methods (#120)
 
 ## 1.0.10
 

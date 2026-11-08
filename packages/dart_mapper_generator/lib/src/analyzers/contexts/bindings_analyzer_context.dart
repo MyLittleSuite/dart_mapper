@@ -28,6 +28,7 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_con
 import 'package:dart_mapper_generator/src/exceptions/invalid_comma_separated_source_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_mapping_combination_error.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
+import 'package:dart_mapper_generator/src/misc/nested_targets.dart';
 import 'package:dart_mapper_generator/src/models/annotations/resolved_mapping.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
 
@@ -97,6 +98,14 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
                   MapEntry(annotation.target, annotation.conditionExpression!),
             ),
       );
+
+  /// Every target configured by the effective `@Mapping` annotations.
+  Set<String> get configuredTargets =>
+      _renamingMappings.map((annotation) => annotation.target).toSet();
+
+  /// Rejects invalid dotted targets (see [validateNestedTargetPaths]).
+  void validateNestedTargets() =>
+      validateNestedTargetPaths(configuredTargets, element: method);
 
   /// Rejects conflicting settings of a target. The effective `@Mapping`
   /// annotations (inherited ones overridden by the method's own) are combined

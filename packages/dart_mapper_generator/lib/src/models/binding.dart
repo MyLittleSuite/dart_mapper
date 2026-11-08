@@ -43,6 +43,11 @@ class Binding {
   final List<Field>? sources;
   final List<List<(String, bool)>?>? sourceAccessChains;
 
+  /// The bindings of the properties of a nested target object, built from
+  /// dotted targets (`address.street`). When set, [target] is the nested
+  /// object itself and [source] is only a placeholder.
+  final List<Binding>? nestedBindings;
+
   Binding({
     required this.source,
     required this.target,
@@ -57,11 +62,33 @@ class Binding {
     this.accessChain,
     this.sources,
     this.sourceAccessChains,
+    this.nestedBindings,
   }) /* : assert(target.required && ignored,
             'Target field \'${target.name}\' must be required') TODO:*/
   ;
 
+  /// This binding with another [target].
+  Binding withTarget(Field target) => Binding(
+        source: source,
+        target: target,
+        ignored: ignored,
+        forceNonNull: forceNonNull,
+        callableMappingMethod: callableMappingMethod,
+        extraMappingMethod: extraMappingMethod,
+        defaultValue: defaultValue,
+        constant: constant,
+        expression: expression,
+        conditionExpression: conditionExpression,
+        accessChain: accessChain,
+        sources: sources,
+        sourceAccessChains: sourceAccessChains,
+        nestedBindings: nestedBindings,
+      );
+
   Iterable<MappingMethod> get mappingMethods sync* {
+    yield* nestedBindings?.expand((binding) => binding.mappingMethods) ??
+        const <MappingMethod>[];
+
     if (extraMappingMethod != null &&
         extraMappingMethod is GeneratedPrivateMappingMethod) {
       yield extraMappingMethod!;
@@ -86,6 +113,7 @@ class Binding {
       'conditionExpression: $conditionExpression, '
       'accessChain: $accessChain, '
       'sources: $sources, '
-      'sourceAccessChains: $sourceAccessChains'
+      'sourceAccessChains: $sourceAccessChains, '
+      'nestedBindings: $nestedBindings'
       '}';
 }

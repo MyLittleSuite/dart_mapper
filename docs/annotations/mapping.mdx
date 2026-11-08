@@ -27,7 +27,7 @@ const Mapping({
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `target` | `String` | — (required) | Name of the target field to configure. |
+| `target` | `String` | — (required) | Name of the target field to configure. A dotted name (`'address.street'`) configures a property of a nested target object, or a nested key of a target map. |
 | `source` | `String?` | `null` | Name of the source field. Use dot notation for nested access (`'address.city'`). Defaults to the target field name if omitted. |
 | `ignore` | `bool` | `false` | When `true`, the target field is skipped entirely. The target class must handle the missing value (e.g., with a default or nullable type). |
 | `forceNonNull` | `bool` | `false` | When `true`, force-unwraps a nullable source field. Use when you know the source will not be null at runtime. |
@@ -157,7 +157,7 @@ When a method maps to or from a `Map`, each map key plays the role of a field:
 | `ignore` | Omits the key from the produced map. |
 | `defaultValue` | Fallback for a missing key when reading (`map['k'] as String? ?? 'x'`). |
 | `forceNonNull` | A no-op for `dynamic` / `Object?` values, generates `!` for `Map<String, T?>`. |
-| Dot notation | Source paths walk nested maps; a dotted `target` builds nested maps (class to Map only). |
+| Dot notation | Source paths walk nested maps; a dotted `target` builds nested maps (class to Map) or nested objects (class to class, Map to class). |
 
 See the [Map Mapping guide](/guides/map-mapping).
 
