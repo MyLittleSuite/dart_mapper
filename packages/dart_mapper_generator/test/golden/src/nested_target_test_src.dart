@@ -769,6 +769,33 @@ abstract class NtForeignDefaultSlotMapper {
   NtvSlotContact toContact(NtFlatContact flat);
 }
 
+// A skipped positional parameter defaulting to a non-finite double is written
+// as a Dart expression, not as `Infinity` / `NaN`.
+@ShouldGenerate(
+  r"""
+  @override
+  NtvNonFiniteContact toContact(NtFlatContact flat) {
+    return NtvNonFiniteContact(
+      name: flat.name,
+      address: NtvNonFiniteAddress(
+        flat.street,
+        double.infinity,
+        double.negativeInfinity,
+        double.nan,
+        flat.zip,
+      ),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtNonFiniteDefaultSlotMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'zip', target: 'address.zip')
+  NtvNonFiniteContact toContact(NtFlatContact flat);
+}
+
 // ----- Errors -----
 
 @ShouldThrow(

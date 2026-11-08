@@ -75,8 +75,6 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
           }
         }
 
-
-
         builder.addExpression(instance.returned);
       },
     );
@@ -162,9 +160,20 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
       if (value.isNull) {
         return literalNull;
       }
+      final doubleValue = value.toDoubleValue();
+      if (doubleValue != null && !doubleValue.isFinite) {
+        // `literal()` would print `Infinity` / `NaN`, which is not Dart.
+        return refer(
+          doubleValue.isNaN
+              ? 'double.nan'
+              : doubleValue.isNegative
+                  ? 'double.negativeInfinity'
+                  : 'double.infinity',
+        );
+      }
       final literalValue = value.toBoolValue() ??
           value.toIntValue() ??
-          value.toDoubleValue() ??
+          doubleValue ??
           value.toStringValue();
       if (literalValue != null) {
         return literal(literalValue);

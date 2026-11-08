@@ -72,6 +72,30 @@ class NtvSlotContact {
   const NtvSlotContact({required this.name, required this.address});
 }
 
+/// Optional positional parameters whose defaults are non-finite doubles.
+class NtvNonFiniteAddress {
+  final String street;
+  final double max;
+  final double min;
+  final double none;
+  final String? zip;
+
+  const NtvNonFiniteAddress(
+    this.street, [
+    this.max = double.infinity,
+    this.min = double.negativeInfinity,
+    this.none = double.nan,
+    this.zip,
+  ]);
+}
+
+class NtvNonFiniteContact {
+  final String name;
+  final NtvNonFiniteAddress address;
+
+  const NtvNonFiniteContact({required this.name, required this.address});
+}
+
 class NtvTag {
   const NtvTag();
 }
