@@ -125,7 +125,5 @@ abstract class ParentMapper {
     source: 'nullableAnotherChildrenSource',
   )
   @Mapping(target: 'ignoredProperty', ignore: true)
-  @Mapping(target: 'childSource.ignoredProperty', ignore: true)
-  @Mapping(target: 'childrenSource.ignoredProperty', ignore: true)
   ParentTarget toParentTarget(ParentSource model);
 }
