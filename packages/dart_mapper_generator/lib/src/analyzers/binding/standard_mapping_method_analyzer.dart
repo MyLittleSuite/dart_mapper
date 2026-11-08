@@ -545,6 +545,36 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       return bindings;
     }
 
+    // An ignored nested property that no source property feeds still gets a
+    // binding when it can be left out (optional) or set to null (nullable).
+    for (final target in ignoredTargets) {
+      final param = targetParam[target];
+      if (!target.contains('.') ||
+          param == null ||
+          boundTargets.contains(target) ||
+          (param.isRequired && !param.type.isNullable)) {
+        continue;
+      }
+
+      bindings.add(
+        Binding(
+          source: Field.from(
+            name: target.split('.').last,
+            type: param.type,
+            nullable: true,
+          ),
+          target: Field.from(
+            name: target,
+            type: param.type,
+            required: param.isRequired,
+            nullable: param.type.isNullable,
+          ),
+          ignored: true,
+        ),
+      );
+      boundTargets.add(target);
+    }
+
     return groupNestedBindings(
       bindings,
       configuredTargets: context.configuredTargets,

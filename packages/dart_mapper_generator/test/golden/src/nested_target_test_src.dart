@@ -180,6 +180,42 @@ class NtOwnPrivateContact {
   const NtOwnPrivateContact({required this.name, required this.address});
 }
 
+/// A source with no `city`.
+class NtStreetOnly {
+  final String name;
+  final String street;
+
+  const NtStreetOnly({required this.name, required this.street});
+}
+
+class NtNullableCityAddress {
+  final String street;
+  final String? city;
+
+  const NtNullableCityAddress({required this.street, required this.city});
+}
+
+class NtNullableCityContact {
+  final String name;
+  final NtNullableCityAddress address;
+
+  const NtNullableCityContact({required this.name, required this.address});
+}
+
+class NtZipDefaultAddress {
+  final String street;
+  final String? zip;
+
+  const NtZipDefaultAddress({required this.street, this.zip = 'none'});
+}
+
+class NtZipDefaultContact {
+  final String name;
+  final NtZipDefaultAddress address;
+
+  const NtZipDefaultContact({required this.name, required this.address});
+}
+
 class NtBox<T> {
   final T value;
 
@@ -670,6 +706,69 @@ abstract class NtOwnPrivateConstructorMapper {
   NtOwnPrivateContact toContact(NtFlatContact flat);
 }
 
+// An ignored nested property that no source property feeds is set to null
+// when it is required and nullable.
+@ShouldGenerate(
+  r"""
+  @override
+  NtNullableCityContact toContact(NtStreetOnly source) {
+    return NtNullableCityContact(
+      name: source.name,
+      address: NtNullableCityAddress(street: source.street, city: null),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtIgnoredNullableMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(target: 'address.city', ignore: true)
+  NtNullableCityContact toContact(NtStreetOnly source);
+}
+
+// An ignored property with a nullable source is left out when the parameter
+// has a default value to keep.
+@ShouldGenerate(
+  r"""
+  @override
+  NtZipDefaultContact toContact(NtFlatContact flat) {
+    return NtZipDefaultContact(
+      name: flat.name,
+      address: NtZipDefaultAddress(street: flat.street),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtIgnoredDefaultMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(target: 'address.zip', ignore: true)
+  NtZipDefaultContact toContact(NtFlatContact flat);
+}
+
+// The default of a skipped positional parameter is written as a value, even
+// when it is a private constant of another library.
+@ShouldGenerate(
+  r"""
+  @override
+  NtvSlotContact toContact(NtFlatContact flat) {
+    return NtvSlotContact(
+      name: flat.name,
+      address: NtvSlotAddress(flat.street, 'n/a', flat.zip),
+    );
+  }
+""",
+  contains: true,
+)
+@Mapper()
+abstract class NtForeignDefaultSlotMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'zip', target: 'address.zip')
+  NtvSlotContact toContact(NtFlatContact flat);
+}
+
 // ----- Errors -----
 
 @ShouldThrow(
@@ -776,6 +875,19 @@ abstract class NtPrivateConstructorMapper {
 abstract class NtHiddenClassMapper {
   @Mapping(source: 'street', target: 'address.street')
   NtvHiddenContact fromMap(Map<String, dynamic> map);
+}
+
+
+// A default that is not a literal cannot be copied into the generated code.
+@ShouldThrow(
+  "Cannot skip the optional positional parameter 'address.tag' of 'NtvObjectSlotAddress' in 'NtObjectDefaultSlotMapper.toContact': a later parameter is mapped and its default value 'const NtvTag()' cannot be copied into the generated code.\n"
+  "Fix: Map 'address.tag' explicitly with @Mapping(target: 'address.tag', source: ..., constant: ... or expression: ...).",
+)
+@Mapper()
+abstract class NtObjectDefaultSlotMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'zip', target: 'address.zip')
+  NtvObjectSlotContact toContact(NtFlatContact flat);
 }
 
 // ----- built_value targets -----

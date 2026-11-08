@@ -126,17 +126,62 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
     final last = positionalArguments.lastIndexWhere((e) => e != null);
     final positional = [
       for (var i = 0; i <= last; i++)
-        positionalArguments[i] ?? _defaultValue(positionalParameters[i]),
+        positionalArguments[i] ??
+            _defaultValue(
+              context,
+              targetClass,
+              positionalParameters[i],
+              path: path,
+            ),
     ];
 
     return refer(context.resolveConstructor(targetConstructor))
         .newInstance(positional, namedArguments);
   }
 
-  Expression _defaultValue(FormalParameterElement parameter) {
+  /// The value that stands for the default of the skipped optional positional
+  /// [parameter], written in the generated code.
+  ///
+  /// The code of the default cannot be copied: it is resolved in the scope of
+  /// the library declaring the constructor, which may not be the one of the
+  /// mapper (a private constant, a class that is not imported). Its value is
+  /// written instead, when it is a literal.
+  Expression _defaultValue(
+    ProcessorMethodContext context,
+    ClassElement targetClass,
+    FormalParameterElement parameter, {
+    required String path,
+  }) {
     final code = parameter.defaultValueCode;
+    if (code == null) {
+      return literalNull;
+    }
 
-    return code == null ? literalNull : CodeExpression(Code(code));
+    final value = parameter.computeConstantValue();
+    if (value != null) {
+      if (value.isNull) {
+        return literalNull;
+      }
+      final literalValue = value.toBoolValue() ??
+          value.toIntValue() ??
+          value.toDoubleValue() ??
+          value.toStringValue();
+      if (literalValue != null) {
+        return literal(literalValue);
+      }
+    }
+
+    final fullPath = path.isEmpty ? parameter.name! : '$path.${parameter.name}';
+    throw InvalidGenerationSourceError(
+      "Cannot skip the optional positional parameter '$fullPath' of "
+      "'${targetClass.displayName}' in "
+      "'${context.mapperClass.name}.${context.currentMethod.name}': a later "
+      "parameter is mapped and its default value '$code' cannot be copied "
+      "into the generated code.\n"
+      "Fix: Map '$fullPath' explicitly with @Mapping(target: '$fullPath', "
+      "source: ..., constant: ... or expression: ...).",
+      element: targetClass,
+    );
   }
 
   /// The value passed for [parameter], `null` when it is left out.
@@ -174,14 +219,15 @@ class DefaultMappingCodeProcessor extends ComponentProcessor<Code> {
       return _instantiate(context, nestedClass, nestedBindings, path: fullPath);
     }
 
-    // An ignored optional parameter keeps its default value.
+    // An ignored optional parameter is left out when passing `null` would be
+    // wrong: it has a default value to keep (even for a nullable parameter),
+    // or its source is not nullable. Otherwise `null` is its default anyway.
     if (binding != null &&
         binding.ignored &&
-        !binding.forceNonNull &&
-        !binding.source.nullable &&
         binding.constant == null &&
         binding.expression == null &&
-        parameter.isOptional) {
+        parameter.isOptional &&
+        (parameter.defaultValueCode != null || !binding.source.nullable)) {
       return null;
     }
 

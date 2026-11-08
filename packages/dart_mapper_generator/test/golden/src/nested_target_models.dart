@@ -53,3 +53,42 @@ class NtvHiddenContact {
 
   const NtvHiddenContact({required this.name, required this.address});
 }
+
+const _ntvDefaultCity = 'n/a';
+
+/// An optional positional parameter whose default is a private constant.
+class NtvSlotAddress {
+  final String street;
+  final String city;
+  final String? zip;
+
+  const NtvSlotAddress(this.street, [this.city = _ntvDefaultCity, this.zip]);
+}
+
+class NtvSlotContact {
+  final String name;
+  final NtvSlotAddress address;
+
+  const NtvSlotContact({required this.name, required this.address});
+}
+
+class NtvTag {
+  const NtvTag();
+}
+
+/// An optional positional parameter whose default is not a literal.
+class NtvObjectSlotAddress {
+  final String street;
+  final NtvTag tag;
+  final String? zip;
+
+  const NtvObjectSlotAddress(this.street,
+      [this.tag = const NtvTag(), this.zip]);
+}
+
+class NtvObjectSlotContact {
+  final String name;
+  final NtvObjectSlotAddress address;
+
+  const NtvObjectSlotContact({required this.name, required this.address});
+}
