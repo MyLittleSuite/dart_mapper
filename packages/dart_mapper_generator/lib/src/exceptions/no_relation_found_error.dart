@@ -36,12 +36,13 @@ class NoRelationFoundError extends InvalidGenerationSourceError {
     required MapperClass mapperClass,
     required MappingMethod method,
     required ClassElement targetClass,
+    String? targetPath,
   }) : super(
-          'No relation found for required field \'${parameter.name}\' '
+          'No relation found for required field \'${targetPath ?? parameter.name}\' '
           'in \'${mapperClass.name}.${method.name}\'.\n'
-          'Fix: Add @Mapping(target: \'${parameter.name}\', source: \'sourceField\') '
+          'Fix: Add @Mapping(target: \'${targetPath ?? parameter.name}\', source: \'sourceField\') '
           'to map from a differently named source field, or '
-          '@Mapping(target: \'${parameter.name}\', ignore: true) to skip it.',
+          '@Mapping(target: \'${targetPath ?? parameter.name}\', ignore: true) to skip it.',
           element: targetClass,
         );
 }

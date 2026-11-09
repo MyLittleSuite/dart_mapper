@@ -32,6 +32,23 @@ class Contact {
   const Contact({required this.name, required this.street, required this.city});
 }
 
+/// The address nested in a [StructuredContact].
+class Address {
+  final String street;
+  final String city;
+
+  const Address({required this.street, required this.city});
+}
+
+/// A contact with a nested [Address], built from the flat fields of a
+/// [Contact] or from the flat keys of a map.
+class StructuredContact {
+  final String name;
+  final Address address;
+
+  const StructuredContact({required this.name, required this.address});
+}
+
 /// A plain class used for a standard class <-> Map mapping.
 class Product {
   final String sku;

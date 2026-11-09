@@ -35,7 +35,7 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_con
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/from_map_target_not_instantiable_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/incompatible_map_value_type_error.dart';
-import 'package:dart_mapper_generator/src/exceptions/map_target_dot_notation_unsupported_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/invalid_nested_target_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/target_field_requires_non_optional_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_target_class_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
@@ -43,6 +43,7 @@ import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/extensions/mapping_method.dart';
 import 'package:dart_mapper_generator/src/factories/from_map_expression_factory.dart';
+import 'package:dart_mapper_generator/src/misc/nested_targets.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_entry_field.dart';
@@ -79,13 +80,23 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
 
     final config = _Config.from(context);
     final method = context.method;
-    for (final target in config.targets) {
-      if (target.contains('.')) {
-        throw MapTargetDotNotationUnsupportedError(
-          target: target,
+    if (config.nestedRoots.isNotEmpty) {
+      if (method.returnType.isBuiltValue) {
+        throw InvalidNestedTargetError(
+          target: config.targets.firstWhere((target) => target.contains('.')),
+          description: 'nested targets cannot build a built_value class',
           element: method,
         );
       }
+
+      // Validates the paths and the classes they go through.
+      resolveTargetParams(
+        method.returnType,
+        config.targets,
+        element: method,
+        library: context.mapperClass.library,
+        importAliases: context.importAliases,
+      );
     }
 
     final run = _Run(
@@ -133,10 +144,17 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
 
     final isBuilt = targetType.isBuiltValue;
     final substituted = targetType.substitutedGetterTypes;
+    // Parameters that are not stored in a field of the same name have no
+    // getter type to substitute.
+    final parameterTypes = isBuilt
+        ? const <String, DartType>{}
+        : constructorParameterTypes(targetType, targetClass);
     final bindings = <Binding>[];
 
     for (final target in _targets(targetClass, isBuilt)) {
-      final type = substituted?[target.name] ?? target.type;
+      final type = substituted?[target.name] ??
+          parameterTypes[target.name] ??
+          target.type;
       final binding = _bind(
         run,
         targetClass: targetClass,
@@ -146,6 +164,46 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
         config: config,
         visiting: visiting,
         isBuilt: isBuilt,
+      );
+      if (binding != null) {
+        bindings.add(binding);
+      }
+    }
+
+    return bindings;
+  }
+
+  /// The bindings of the properties of the nested object of type [type],
+  /// configured by [config] (the dotted targets under its name). Only the
+  /// properties named by the configuration are bound.
+  List<Binding> _bindNested(
+    _Run run, {
+    required DartType type,
+    required List<_Param> params,
+    required _Config config,
+    required Set<String> visiting,
+  }) {
+    final nestedClass = type.element!.classElementOrNull!;
+    _validateInstantiable(run, nestedClass);
+
+    final substituted = type.substitutedGetterTypes;
+    final types = constructorParameterTypes(type, nestedClass);
+    final bindings = <Binding>[];
+
+    for (final target in _targets(nestedClass, false)) {
+      if (!config.mentions(target.name)) {
+        continue;
+      }
+
+      final binding = _bind(
+        run,
+        targetClass: nestedClass,
+        target: target,
+        type: substituted?[target.name] ?? types[target.name] ?? target.type,
+        params: params,
+        config: config,
+        visiting: visiting,
+        isBuilt: false,
       );
       if (binding != null) {
         bindings.add(binding);
@@ -205,6 +263,21 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       required: false,
       nullable: true,
     );
+
+    // Dotted targets (`address.street`) build the nested object field by field.
+    if (config.nestedRoots.contains(name)) {
+      return Binding(
+        source: placeholder,
+        target: targetField,
+        nestedBindings: _bindNested(
+          run,
+          type: type,
+          params: params,
+          config: config.scoped(name),
+          visiting: visiting,
+        ),
+      );
+    }
 
     if (config.ignored.contains(name)) {
       // Built values and optional parameters just omit the property.
@@ -748,6 +821,10 @@ class _Config {
   final Map<String, String> expressions;
   final Map<String, String> conditionExpressions;
 
+  /// Every target named by a `@Mapping`, even one with no other setting
+  /// (`@Mapping(target: 'address.street')`).
+  final Set<String> mentioned;
+
   const _Config({
     this.sources = const {},
     this.ignored = const {},
@@ -757,6 +834,7 @@ class _Config {
     this.constants = const {},
     this.expressions = const {},
     this.conditionExpressions = const {},
+    this.mentioned = const {},
   });
 
   static const empty = _Config();
@@ -770,9 +848,46 @@ class _Config {
         constants: context.constantMap,
         expressions: context.expressionMap,
         conditionExpressions: context.conditionExpressionMap,
+        mentioned: context.configuredTargets,
       );
 
+  /// The first segment of every dotted target.
+  Set<String> get nestedRoots => nestedTargetRoots(targets);
+
+  /// Whether the property [name] is configured, or is the prefix of dotted
+  /// targets.
+  bool mentions(String name) =>
+      targets.contains(name) || nestedRoots.contains(name);
+
+  /// The configuration of the dotted targets under [prefix], named after the
+  /// rest of their path (`address.street` -> `street` under `address`).
+  _Config scoped(String prefix) {
+    Map<String, T> map<T>(Map<String, T> source) => {
+          for (final entry in source.entries)
+            if (entry.key.startsWith('$prefix.'))
+              entry.key.substring(prefix.length + 1): entry.value,
+        };
+    Set<String> set(Set<String> source) => {
+          for (final entry in source)
+            if (entry.startsWith('$prefix.'))
+              entry.substring(prefix.length + 1),
+        };
+
+    return _Config(
+      sources: map(sources),
+      ignored: set(ignored),
+      forceNonNull: set(forceNonNull),
+      callables: map(callables),
+      defaultValues: map(defaultValues),
+      constants: map(constants),
+      expressions: map(expressions),
+      conditionExpressions: map(conditionExpressions),
+      mentioned: set(mentioned),
+    );
+  }
+
   Set<String> get targets => {
+        ...mentioned,
         ...sources.keys,
         ...ignored,
         ...forceNonNull,

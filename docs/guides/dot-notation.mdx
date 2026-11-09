@@ -155,7 +155,105 @@ Map<String, dynamic> toMap(Contact contact) {
 }
 ```
 
-Target dot notation is not supported for Map to class methods (build error `MapTargetDotNotationUnsupportedError`, tracked in issue #118). See the [Map Mapping guide](/guides/map-mapping) for details.
+## Target Dot Notation (Nested Target Objects)
+
+When the **target** is a class, a dotted `target` builds the nested object of that class from flat source fields (or flat map keys). It works for class to class and Map to class methods:
+
+```dart
+class Contact {
+  final String name;
+  final String street;
+  final String city;
+  const Contact({required this.name, required this.street, required this.city});
+}
+
+class Address {
+  final String street;
+  final String city;
+  const Address({required this.street, required this.city});
+}
+
+class StructuredContact {
+  final String name;
+  final Address address;
+  const StructuredContact({required this.name, required this.address});
+}
+
+@Mapper()
+abstract class ContactMapper {
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'city', target: 'address.city')
+  StructuredContact fromContact(Contact contact);
+
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'city', target: 'address.city')
+  StructuredContact fromMap(Map<String, dynamic> map);
+}
+```
+
+Generated:
+
+```dart
+@override
+StructuredContact fromContact(Contact contact) {
+  return StructuredContact(
+    name: contact.name,
+    address: Address(
+      street: contact.street,
+      city: contact.city,
+    ),
+  );
+}
+
+@override
+StructuredContact fromMap(Map<String, dynamic> map) {
+  return StructuredContact(
+    name: map['name'] as String,
+    address: Address(
+      street: map['street'] as String,
+      city: map['city'] as String,
+    ),
+  );
+}
+```
+
+Rules:
+
+- A dotted target without a `source` reads the source property (or map key) named like its last segment: `@Mapping(target: 'address.zip', defaultValue: '0000')` reads `zip`.
+- The nested object is built only from the targets you list. Its optional constructor parameters that are not mapped are left out, a required one that is not mapped fails with `NoRelationFoundError`.
+- The nested object is always instantiated, even when its type is nullable.
+- Paths can be nested more than one level (`location.geo.lat`).
+- Every `@Mapping` option works on a dotted target: `source` (including dotted sources), `constant`, `expression`, `defaultValue`, `callable`, `forceNonNull`, `ignore` and `conditionExpression`.
+- The classes along the path must be instantiable (not abstract without a factory, not sealed), and the mapper must be able to call their constructor: a private constructor of another library, or a class the mapper's file does not import, is a build error. Built Value classes, as root target or nested object, are not supported.
+- Mapping both a whole property (`address`) and one of its sub-properties (`address.street`) is a build error (`InvalidNestedTargetError`), and so is an unknown property or an empty segment.
+- `@InheritInverseConfiguration` of a flattening method (`source: 'address.street', target: 'street'`) generates the dotted target, so the inverse builds the nested object.
+
+## Target Dot Notation (Class to Map)
+
+When the **target** is a map, a dotted `target` builds nested maps and groups targets that share a prefix:
+
+```dart
+@Mapping(source: 'street', target: 'address.street')
+@Mapping(source: 'city', target: 'address.city')
+Map<String, dynamic> toMap(Contact contact);
+```
+
+Generated:
+
+```dart
+@override
+Map<String, dynamic> toMap(Contact contact) {
+  return {
+    'name': contact.name,
+    'address': {
+      'street': contact.street,
+      'city': contact.city,
+    },
+  };
+}
+```
+
+See the [Map Mapping guide](/guides/map-mapping) for details.
 
 ## See Also
 

@@ -95,6 +95,13 @@ void main() async {
   );
   testAnnotatedElements<Mapper>(multipleInitReader, generator);
 
+  // Group: Target dot notation (nested target objects)
+  final nestedTargetReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'nested_target_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(nestedTargetReader, generator);
+
   // Group: Mixed
   final mixedReader = await initializeLibraryReaderForDirectory(
     'test/golden/src',

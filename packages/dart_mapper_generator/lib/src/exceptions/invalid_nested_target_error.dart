@@ -26,17 +26,20 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:source_gen/source_gen.dart';
 
-/// Thrown when `@Mapping(target: 'a.b')` is used in a Map -> class mapping.
-class MapTargetDotNotationUnsupportedError
-    extends InvalidGenerationSourceError {
-  MapTargetDotNotationUnsupportedError({
+/// Thrown when a dotted `@Mapping(target: 'address.street')`, used to build a
+/// nested target object, is invalid, conflicting or unsupported.
+class InvalidNestedTargetError extends InvalidGenerationSourceError {
+  InvalidNestedTargetError({
     required String target,
-    required Element element,
+    required String description,
+    String? fix,
+    Element? element,
   }) : super(
-          "Target dot notation '$target' is not supported when mapping a Map "
-          "to a class (tracked in issue #118).\n"
-          "Fix: Map the key to a flat target field, or use callable to build "
-          "the value yourself.",
+          "Invalid @Mapping target '$target': $description.\n"
+          "Fix: ${fix ?? 'A dotted target builds a nested object of the target class: '
+              'every segment must be non-empty, name a constructor parameter of a '
+              'class that can be instantiated, and the nested object cannot also '
+              'be mapped as a whole value.'}",
           element: element,
         );
 }

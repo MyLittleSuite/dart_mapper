@@ -89,6 +89,23 @@ abstract class ContactMapMapper {
   Contact fromMap(Map<String, dynamic> map);
 }
 
+/// Target dot notation also builds nested objects: the flat `street` and
+/// `city` are used to instantiate the `address` of the target.
+@Mapper()
+abstract class StructuredContactMapper {
+  const StructuredContactMapper();
+
+  /// class -> class
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'city', target: 'address.city')
+  StructuredContact fromContact(Contact contact);
+
+  /// Map -> class: the keys of the map are flat.
+  @Mapping(source: 'street', target: 'address.street')
+  @Mapping(source: 'city', target: 'address.city')
+  StructuredContact fromMap(Map<String, dynamic> map);
+}
+
 /// A built_value model mapped to and from a map.
 @Mapper()
 abstract class ProfileMapMapper {

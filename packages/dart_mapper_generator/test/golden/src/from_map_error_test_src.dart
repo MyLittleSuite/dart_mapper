@@ -183,16 +183,6 @@ abstract class FmAmbiguousConverterMapper {
 }
 
 @ShouldThrow(
-  "Target dot notation 'address.street' is not supported when mapping a Map to a class (tracked in issue #118).\n"
-  "Fix: Map the key to a flat target field, or use callable to build the value yourself.",
-)
-@Mapper()
-abstract class FmTargetDotNotationMapper {
-  @Mapping(source: 'street', target: 'address.street')
-  FmPerson fromMap(Map<String, dynamic> map);
-}
-
-@ShouldThrow(
   "Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.\n"
   "Mapping to sealed classes or to classes selected by a discriminator key is not supported yet (tracked in issue #119).\n"
   "Fix: Map to a concrete class.",
