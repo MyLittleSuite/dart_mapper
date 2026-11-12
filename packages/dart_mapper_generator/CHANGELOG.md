@@ -1,3 +1,12 @@
+## 1.3.0
+
+- Feature: support for the collections of [fast_immutable_collections](https://pub.dev/packages/fast_immutable_collections): `IList`, `ISet`, `IMap`, `IMapOfSets`, `ListSet` and `ListMap` fields are mapped to and from `dart:core` and built collections, in standard, Freezed and Built Value classes, and in class ↔ `Map` mappings (`IList`, `ISet`, `IMap`). Immutable collections of the same type are shared instead of being copied (#93)
+- Feature: a hand-written method converting a whole map (`IMap<K, B> convert(Map<K, A> map)`) is called as it is, as for iterables
+- Fix: `BuiltList`, `BuiltSet` and `BuiltMap` targets whose items are converted by a generated method received the builders of the items instead of the items
+- Fix: a `BuiltMap` source mapped to a `Map` target is converted with `toMap()`
+- Fix: a `BuiltList` / `BuiltSet` target is built according to its own type, not the one of the source (`List` → `BuiltSet`), and the dead `?? []` fallback is no longer generated for non-nullable sources
+- Fix: import prefixes are applied in the mappings of Built Value targets
+
 ## 1.2.1
 
 - Fix: the constructor that builds the target no longer depends on the order of declaration. Public constructors are preferred over private ones (a Freezed class without fields, with `const Foo._()` next to `const factory Foo()`, is built with `Foo()`), factories over generative constructors of abstract classes, then the most parameters and the unnamed constructor. A target whose only constructors are private to another library raises `InaccessibleConstructorError` instead of generating code that does not compile (#117)

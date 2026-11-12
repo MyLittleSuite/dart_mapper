@@ -1,3 +1,7 @@
+## 1.3.0
+
+- Document fast_immutable_collections support (implemented in dart_mapper_generator 1.3.0); no annotation changes
+
 ## 1.2.0
 
 - Document target dot notation for nested target objects (implemented in dart_mapper_generator 1.2.0); no annotation changes

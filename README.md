@@ -20,6 +20,7 @@ MapStruct-style object mapping for Dart. Define type-safe mappings declaratively
 - Callable functions for custom mapping logic
 - Class ↔ `Map<String, dynamic>` mapping (Firestore, Realtime Database, JSON-like payloads)
 - Collection support (`List`, `Set`, `Map`, `BuiltList`, `BuiltSet`, `BuiltMap`)
+- [fast_immutable_collections](https://pub.dev/packages/fast_immutable_collections) support (`IList`, `ISet`, `IMap`, `IMapOfSets`, `ListSet`, `ListMap`)
 - Configuration inheritance (`@InheritConfiguration`, `@InheritInverseConfiguration`)
 - External mapper injection via `uses`
 

@@ -127,6 +127,10 @@ TeamDTO toDto(Team team) {
 }
 ```
 
+## Fast Immutable Collections
+
+The collections of [fast_immutable_collections](https://pub.dev/packages/fast_immutable_collections) (`IList`, `ISet`, `IMap`, ...) convert to and from `BuiltList`, `BuiltSet`, and `BuiltMap`, and a built_value class can hold them directly. See the [Fast Immutable Collections support guide](/guides/fast-immutable-collections#built-value-classes).
+
 ## External Mapper with `uses:`
 
 When a BuiltValue mapper method needs an enum-to-int converter (or another secondary mapper), use `@Mapper(uses: {...})`:
@@ -167,4 +171,5 @@ dart run build_runner build
 ## See Also
 
 - [Freezed Support guide](/guides/freezed-support)
+- [Fast Immutable Collections support guide](/guides/fast-immutable-collections)
 - [Collections guide](/guides/collections)

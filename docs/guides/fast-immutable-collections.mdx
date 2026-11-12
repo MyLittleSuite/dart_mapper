@@ -1,0 +1,471 @@
+---
+title: "Fast Immutable Collections Support"
+description: Map IList, ISet, IMap, IMapOfSets, ListSet and ListMap fields to and from standard, freezed and built_value classes.
+---
+
+# Fast Immutable Collections Support
+
+`dart_mapper` maps the collections of [fast_immutable_collections](https://pub.dev/packages/fast_immutable_collections) like any other collection field. They can be held by standard classes, [freezed](/guides/freezed-support) classes and [built_value](/guides/built-value-support) classes, and they convert to and from `dart:core` collections and built collections.
+
+| Collection | Handled as |
+|------------|------------|
+| `IList<T>` | a list |
+| `ISet<T>` | a set |
+| `IMap<K, V>` | a map |
+| `IMapOfSets<K, V>` | a map whose values are sets of `V` |
+| `ListSet<T>` | a set (it is also a list) |
+| `ListMap<K, V>` | a map |
+
+## Setup
+
+### 1. Add Dependencies
+
+```yaml
+# pubspec.yaml
+dependencies:
+  fast_immutable_collections: ^12.0.0
+  dart_mapper: ^1.3.0
+
+dev_dependencies:
+  dart_mapper_generator: ^1.3.0
+  build_runner: ^2.4.0
+```
+
+No builder option and no `build.yaml` entry is needed: the collections are detected from the types of the fields.
+
+### 2. Import the Package in the Mapper File
+
+The generated code calls the extension methods of the package (`toIList()`, `toISet()`, `toIMap()`) and names its classes (`ListSet`, `ListMap`, `IMapOfSets`). It is a `part` of the mapper file, so the mapper file must import the package, even when only the models use it:
+
+```dart
+import 'package:dart_mapper/dart_mapper.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+
+part 'playlist_mapper.g.dart';
+```
+
+An import prefix is supported (`import '...' as fic;` generates `fic.ListSet.of(...)`).
+
+## Standard Classes
+
+```dart
+class TrackDto {
+  final String id;
+  final String title;
+  const TrackDto({required this.id, required this.title});
+}
+
+class PlaylistDto {
+  final String name;
+  final List<TrackDto> tracks;
+  final Set<String> tags;
+  final Map<String, int> plays;
+  final Map<String, TrackDto> featured;
+  final List<String>? notes;
+  const PlaylistDto({
+    required this.name,
+    required this.tracks,
+    required this.tags,
+    required this.plays,
+    required this.featured,
+    this.notes,
+  });
+}
+
+class Track {
+  final String id;
+  final String title;
+  const Track({required this.id, required this.title});
+}
+
+class Playlist {
+  final String name;
+  final IList<Track> tracks;
+  final ISet<String> tags;
+  final IMap<String, int> plays;
+  final IMap<String, Track> featured;
+  final IList<String>? notes;
+  const Playlist({
+    required this.name,
+    required this.tracks,
+    required this.tags,
+    required this.plays,
+    required this.featured,
+    this.notes,
+  });
+}
+
+@Mapper()
+abstract class PlaylistMapper {
+  const PlaylistMapper();
+
+  Playlist toPlaylist(PlaylistDto dto);
+
+  PlaylistDto toDto(Playlist playlist);
+}
+```
+
+Generated:
+
+```dart
+@override
+Playlist toPlaylist(PlaylistDto dto) {
+  return Playlist(
+    name: dto.name,
+    tracks: dto.tracks.map((item) => _mapTrackDtoToTrack(item)).toIList(),
+    tags: dto.tags.toISet(),
+    plays: dto.plays.toIMap(),
+    featured: dto.featured
+        .map((key, value) => MapEntry(key, _mapTrackDtoToTrack(value)))
+        .toIMap(),
+    notes: dto.notes?.toIList(),
+  );
+}
+
+@override
+PlaylistDto toDto(Playlist playlist) {
+  return PlaylistDto(
+    name: playlist.name,
+    tracks: playlist.tracks
+        .map((item) => _mapTrackToTrackDto(item))
+        .toList(growable: true),
+    tags: playlist.tags.map((item) => item).toSet(),
+    plays: playlist.plays.unlock,
+    featured: playlist.featured
+        .map((key, value) => MapEntry(key, _mapTrackToTrackDto(value)))
+        .unlock,
+    notes: playlist.notes?.map((item) => item).toList(growable: true),
+  );
+}
+```
+
+Items and map values are converted as in any other collection: by a method of the mapper, by a mapper listed in `uses`, or by a generated private method. Nullable collections stay nullable (`dto.notes?.toIList()`).
+
+## Freezed Classes
+
+A freezed class declares the immutable collections as constructor parameters, and it is mapped as a standard class:
+
+```dart
+@freezed
+abstract class FreezedPlaylist with _$FreezedPlaylist {
+  const factory FreezedPlaylist({
+    required String name,
+    required IList<FreezedTrack> tracks,
+    required ISet<String> tags,
+    required IMap<String, int> plays,
+    required IMap<String, FreezedTrack> featured,
+    IList<String>? notes,
+  }) = _FreezedPlaylist;
+}
+
+@Mapper()
+abstract class FreezedPlaylistMapper {
+  const FreezedPlaylistMapper();
+
+  FreezedPlaylist fromDto(PlaylistDto dto);
+
+  FreezedPlaylist fromPlaylist(Playlist playlist);
+}
+```
+
+### Immutable Collections Are Shared
+
+When the source and the target hold the same immutable collection and no item has to be converted, the collection is assigned as it is. It cannot change, so there is nothing to copy:
+
+```dart
+@override
+FreezedPlaylist fromPlaylist(Playlist playlist) {
+  return FreezedPlaylist(
+    name: playlist.name,
+    tracks: playlist.tracks
+        .map((item) => _mapTrackToFreezedTrack(item))
+        .toIList(),
+    tags: playlist.tags,
+    plays: playlist.plays,
+    featured: playlist.featured.map(
+      (key, value) => MapEntry(key, _mapTrackToFreezedTrack(value)),
+    ),
+    notes: playlist.notes,
+  );
+}
+```
+
+This applies to `IList`, `ISet`, `IMap` and `IMapOfSets`. `ListSet` and `ListMap` are not immutable and are always copied.
+
+## Built Value Classes
+
+Immutable collections convert to and from the collections of `built_collection`:
+
+```dart
+abstract class BuiltPlaylist
+    implements Built<BuiltPlaylist, BuiltPlaylistBuilder> {
+  String get name;
+  BuiltList<BuiltTrack> get tracks;
+  BuiltSet<String> get tags;
+  BuiltMap<String, int> get plays;
+  BuiltMap<String, BuiltTrack> get featured;
+  BuiltList<String>? get notes;
+
+  BuiltPlaylist._();
+  factory BuiltPlaylist([void Function(BuiltPlaylistBuilder) updates]) =
+      _$BuiltPlaylist;
+}
+
+@Mapper()
+abstract class BuiltPlaylistMapper {
+  const BuiltPlaylistMapper();
+
+  BuiltPlaylist toBuilt(Playlist playlist);
+
+  Playlist fromBuilt(BuiltPlaylist playlist);
+}
+```
+
+Generated:
+
+```dart
+@override
+BuiltPlaylist toBuilt(Playlist playlist) {
+  return BuiltPlaylist((b) => b
+    ..name = playlist.name
+    ..tracks = ListBuilder(playlist.tracks
+        .map((item) => _mapTrackToBuiltTrack(item).build())
+        .toList(growable: true))
+    ..tags = SetBuilder(playlist.tags.map((item) => item).toSet())
+    ..plays = MapBuilder(playlist.plays.unlockView)
+    ..featured = MapBuilder(playlist.featured
+        .map((key, value) =>
+            MapEntry(key, _mapTrackToBuiltTrack(value).build()))
+        .unlockView)
+    ..notes = playlist.notes != null
+        ? ListBuilder(
+            playlist.notes?.map((item) => item).toList(growable: true) ?? [])
+        : null);
+}
+
+@override
+Playlist fromBuilt(BuiltPlaylist playlist) {
+  return Playlist(
+    name: playlist.name,
+    tracks:
+        playlist.tracks.map((item) => _mapBuiltTrackToTrack(item)).toIList(),
+    tags: playlist.tags.toISet(),
+    plays: playlist.plays.asMap().toIMap(),
+    featured: playlist.featured
+        .map((key, value) => MapEntry(key, _mapBuiltTrackToTrack(value)))
+        .asMap()
+        .toIMap(),
+    notes: playlist.notes?.toIList(),
+  );
+}
+```
+
+A built_value class can also hold the immutable collections directly. They have no builder, so the property is assigned as in any other class:
+
+```dart
+abstract class BuiltImmutablePlaylist
+    implements Built<BuiltImmutablePlaylist, BuiltImmutablePlaylistBuilder> {
+  IList<BuiltTrack> get tracks;
+  ISet<String> get tags;
+  // ...
+}
+```
+
+```dart
+return BuiltImmutablePlaylist((b) => b
+  ..tracks = dto.tracks
+      .map((item) => _mapTrackDtoToBuiltTrack(item).build())
+      .toIList()
+  ..tags = dto.tags.toISet());
+```
+
+The mapper file of a built_value mapper imports `built_collection` as well. See the [Built Value Support guide](/guides/built-value-support).
+
+## ListSet, ListMap and IMapOfSets
+
+```dart
+class LibraryDto {
+  final List<TrackDto> queue;
+  final Map<String, int> ratings;
+  final IMapOfSets<String, TrackDto> tracksByGenre;
+  final Map<String, Set<String>> genresByArtist;
+  // ...
+}
+
+class Library {
+  final ListSet<Track> queue;
+  final ListMap<String, int> ratings;
+  final IMapOfSets<String, Track> tracksByGenre;
+  final IMapOfSets<String, String> genresByArtist;
+  // ...
+}
+
+@Mapper()
+abstract class LibraryMapper {
+  const LibraryMapper();
+
+  Library toLibrary(LibraryDto dto);
+
+  LibraryDto toDto(Library library);
+}
+```
+
+Generated:
+
+```dart
+@override
+Library toLibrary(LibraryDto dto) {
+  return Library(
+    queue: ListSet.of(dto.queue.map((item) => _mapTrackDtoToTrack(item))),
+    ratings: ListMap.of(dto.ratings),
+    tracksByGenre: dto.tracksByGenre.map(
+      (key, value) => MapEntry(
+        key,
+        value.map((item) => _mapTrackDtoToTrack(item)).toISet(),
+      ),
+    ),
+    genresByArtist: IMapOfSets(dto.genresByArtist),
+  );
+}
+
+@override
+LibraryDto toDto(Library library) {
+  return LibraryDto(
+    queue: library.queue
+        .map((item) => _mapTrackToTrackDto(item))
+        .toList(growable: true),
+    ratings: library.ratings.map((key, value) => MapEntry(key, value)),
+    tracksByGenre: library.tracksByGenre.map(
+      (key, value) => MapEntry(
+        key,
+        value.map((item) => _mapTrackToTrackDto(item)).toISet(),
+      ),
+    ),
+    genresByArtist: library.genresByArtist.unlock,
+  );
+}
+```
+
+The items of the sets of an `IMapOfSets` are converted only when both sides are an `IMapOfSets`. From and to another map (`Map<K, Set<V>>`, `IMap<K, ISet<V>>`) the sets are taken as they are, so their item type must be the same on both sides.
+
+## Conversions
+
+Collections of items (`T` is converted to the item type of the target when it differs):
+
+| Source | Target | Generated conversion |
+|--------|--------|----------------------|
+| `List`, `Set`, `Iterable`, `BuiltList`, `BuiltSet`, `ISet` | `IList<T>` | `.toIList()` |
+| `List`, `Set`, `Iterable`, `BuiltList`, `BuiltSet`, `IList` | `ISet<T>` | `.toISet()` |
+| any of the above | `ListSet<T>` | `ListSet.of(...)` |
+| `IList`, `ISet`, `ListSet` | `List<T>` | `.toList()` |
+| `IList`, `ISet`, `ListSet` | `Set<T>` | `.toSet()` |
+| `IList`, `ISet`, `ListSet` | `BuiltList<T>`, `BuiltSet<T>` | `ListBuilder(...)`, `SetBuilder(...)` |
+| `IList<T>`, `ISet<T>` | the same type | shared |
+
+Maps:
+
+| Source | Target | Generated conversion |
+|--------|--------|----------------------|
+| `Map`, `ListMap` | `IMap<K, V>` | `.toIMap()` |
+| `BuiltMap` | `IMap<K, V>` | `.asMap().toIMap()` |
+| `IMap` | `Map<K, V>` | `.unlock` |
+| `IMap` | `BuiltMap<K, V>` | `MapBuilder(... .unlockView)` |
+| `Map`, `BuiltMap`, `IMap` | `ListMap<K, V>` | `ListMap.of(...)` |
+| `IMap<K, V>`, `IMapOfSets<K, V>` | the same type | shared |
+| `Map<K, Set<V>>`, `BuiltMap`, `IMap<K, ISet<V>>` | `IMapOfSets<K, V>` | `IMapOfSets(...)` |
+| `IMapOfSets<K, V>` | `Map<K, Set<V>>` | `.unlock` |
+| `IMapOfSets<K, V>` | `IMap<K, ISet<V>>` | `.asIMap()` |
+
+A hand-written method of the mapper taking and returning the whole collection, such as `IList<Track> toTracks(List<TrackDto> tracks) => ...`, is called instead of converting the items one by one. A [`callable`](/guides/callable-mapping) replaces the conversion altogether:
+
+```dart
+IList<Track> _toTracks(List<TrackDto> tracks) =>
+    tracks.map((track) => Track(id: track.id, title: track.title)).toIList();
+
+@Mapper()
+abstract class PlaylistMapper {
+  @Mapping(target: 'tracks', callable: _toTracks)
+  Playlist toPlaylist(PlaylistDto dto);
+}
+```
+
+## Mapping to and from Maps
+
+In a [class ↔ Map mapping](/guides/map-mapping), `IList`, `ISet` and `IMap` are written as plain collections and rebuilt on read:
+
+```dart
+@Mapper()
+abstract class PlaylistMapMapper {
+  const PlaylistMapMapper();
+
+  Map<String, dynamic> toMap(Playlist playlist);
+
+  Playlist fromMap(Map<String, dynamic> map);
+}
+```
+
+Generated:
+
+```dart
+@override
+Map<String, dynamic> toMap(Playlist playlist) {
+  return {
+    'name': playlist.name,
+    'tracks': playlist.tracks.map((item) => _mapTrackToMap(item)).toList(),
+    'tags': playlist.tags.toSet(),
+    'plays': playlist.plays.unlock,
+    'featured': playlist.featured.unlock.map(
+      (key, value) => MapEntry(key, _mapTrackToMap(value)),
+    ),
+    'notes': playlist.notes?.toList(),
+  };
+}
+
+@override
+Playlist fromMap(Map<String, dynamic> map) {
+  return Playlist(
+    name: map['name'] as String,
+    tracks: (map['tracks'] as Iterable)
+        .map<Track>((e) => _mapMapToTrack(Map<String, dynamic>.from(e as Map)))
+        .toIList(),
+    tags: List<String>.from(map['tags'] as Iterable).toISet(),
+    plays: Map<String, int>.from(map['plays'] as Map).toIMap(),
+    featured: (map['featured'] as Map)
+        .map<String, Track>(
+          (key, value) => MapEntry(
+            key as String,
+            _mapMapToTrack(Map<String, dynamic>.from(value as Map)),
+          ),
+        )
+        .toIMap(),
+    notes: map['notes'] != null
+        ? List<String>.from(map['notes'] as Iterable).toIList()
+        : null,
+  );
+}
+```
+
+`ListSet` and `ListMap` are already a `Set` / `List` and a `Map`: they are written as they are and rebuilt on read (`ListSet.of(...)`, `ListMap.of(...)`).
+
+## Limitations
+
+| Limitation | Workaround |
+|------------|------------|
+| An `IMapOfSets` is not converted in class ↔ Map mappings: it is written as it is and read with a cast | a [`callable`](/guides/callable-mapping) |
+| The items of the sets of an `IMapOfSets` are converted only from and to another `IMapOfSets` | a [`callable`](/guides/callable-mapping) |
+| The configuration of a collection (`ConfigList`, `ConfigSet`, `ConfigMap`) is not carried over to a collection of another type: the default one is used | a [`callable`](/guides/callable-mapping) |
+
+## Run the Generator
+
+```sh
+dart run build_runner build
+```
+
+The complete example is in [`example/lib/fast_immutable_collections`](https://github.com/MyLittleSuite/dart_mapper/tree/master/example/lib/fast_immutable_collections).
+
+## See Also
+
+- [Collections guide](/guides/collections)
+- [Freezed Support guide](/guides/freezed-support)
+- [Built Value Support guide](/guides/built-value-support)
+- [Map Mapping guide](/guides/map-mapping)

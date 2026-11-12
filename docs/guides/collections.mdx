@@ -1,6 +1,6 @@
 ---
 title: "Collections"
-description: Map List, Set, Iterable, Map, and Built Collection fields automatically.
+description: Map List, Set, Iterable, Map, Built Collection, and Fast Immutable Collections fields automatically.
 ---
 
 # Collections
@@ -131,6 +131,24 @@ ItemMapDto toDto(ItemMap source) {
 
 See [Built Value support guide](/guides/built-value-support) for full setup instructions.
 
+## Fast Immutable Collections (fast_immutable_collections)
+
+`IList<T>`, `ISet<T>`, `IMap<K, V>`, `IMapOfSets<K, V>`, `ListSet<T>`, and `ListMap<K, V>` are mapped to and from standard and built collections, in standard, freezed and built_value classes:
+
+```dart
+// Standard → immutable
+// tags: dto.tags.toISet()
+// tracks: dto.tracks.map((item) => _mapTrackDtoToTrack(item)).toIList()
+
+// Immutable → standard
+// plays: playlist.plays.unlock
+
+// Immutable → the same immutable type: shared, not copied
+// tags: playlist.tags
+```
+
+See [Fast Immutable Collections support guide](/guides/fast-immutable-collections) for the setup and the full list of conversions.
+
 ## Collection Type Coercion
 
 The generator handles mismatched but compatible collection types:
@@ -143,6 +161,12 @@ The generator handles mismatched but compatible collection types:
 | `List<T>` | `Iterable<T>` | direct assignment |
 | `List<T>` | `BuiltList<T>` | `.toBuiltList()` |
 | `BuiltList<T>` | `List<T>` | `.toList()` |
+| `List<T>` | `IList<T>` | `.toIList()` |
+| `List<T>` / `Set<T>` | `ISet<T>` | `.toISet()` |
+| `IList<T>` | `List<T>` | `.toList()` |
+| `Map<K, V>` | `IMap<K, V>` | `.toIMap()` |
+| `IMap<K, V>` | `Map<K, V>` | `.unlock` |
+| `IList<T>` / `ISet<T>` / `IMap<K, V>` | the same type | direct assignment |
 
 ## Mapping to and from Maps
 
@@ -151,4 +175,5 @@ A `Map<String, dynamic>` as the whole target or source of a method (Firestore, R
 ## See Also
 
 - [Built Value support guide](/guides/built-value-support) — `BuiltList`, `BuiltSet`, `BuiltMap` in depth
+- [Fast Immutable Collections support guide](/guides/fast-immutable-collections) — `IList`, `ISet`, `IMap`, `IMapOfSets`, `ListSet`, `ListMap`
 - [Map Mapping guide](/guides/map-mapping) — class to `Map` and `Map` to class

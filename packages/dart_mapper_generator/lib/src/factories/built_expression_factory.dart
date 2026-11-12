@@ -47,6 +47,14 @@ class BuiltExpressionFactory extends ExpressionFactory {
     }
 
     if (context.expressionMappingMethod == null) {
+      final targetType = context.counterpartField.type;
+
+      // A collection of fast_immutable_collections has no builder: the
+      // property is assigned as in any other class.
+      if (targetType.isFicCollection) {
+        return defaultFactory.create(context);
+      }
+
       if (context.field is MapField) {
         final basicExpression = super.basic(context);
         final convertedMap = defaultFactory.create(context);
@@ -63,15 +71,20 @@ class BuiltExpressionFactory extends ExpressionFactory {
             : builtMapExpression;
       } else if (context.field is IterableField) {
         final basicExpression = super.basic(context);
-        final isSet = context.field.type.isSet;
+        final isSet = targetType.isBuiltSet ||
+            (!targetType.isBuiltList && context.field.type.isSet);
 
-        if (context.field.type.isList ||
-            context.field.type.isDartCoreIterable ||
-            isSet) {
+        if (context.field.type.isIterable) {
           final cloneExpression = refer(
             isSet ? 'SetBuilder' : 'ListBuilder',
           ).call(
-            [defaultFactory.create(context).ifNullThen(literal(isSet ? {} : []))],
+            [
+              context.field.nullable
+                  ? defaultFactory
+                      .create(context)
+                      .ifNullThen(literal(isSet ? {} : []))
+                  : defaultFactory.create(context),
+            ],
           );
 
           return (context.field.nullable)

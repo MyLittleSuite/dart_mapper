@@ -262,6 +262,7 @@ Nested values are converted recursively in both directions:
 | `Map<K, X>` of classes | `Map<K, Map<String, dynamic>>`, keys preserved |
 | `List` / `Set` / `Map` of primitives | passed through on write, rebuilt as typed copies on read (`List<String>.from(map['tags'] as Iterable)`) |
 | `BuiltList`, `BuiltSet`, `BuiltMap` | plain `List` / `Set` / `Map` on write, rebuilt on read |
+| `IList`, `ISet`, `IMap` ([fast_immutable_collections](/guides/fast-immutable-collections#mapping-to-and-from-maps)) | plain `List` / `Set` / `Map` on write (`playlist.plays.unlock`), rebuilt on read (`.toIList()`, `.toISet()`, `.toIMap()`) |
 
 The conversion method is looked up in this order:
 
@@ -649,5 +650,6 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 - [Dot Notation guide](/guides/dot-notation)
 - [Multi-Source Mapping guide](/guides/multi-source)
 - [Collections guide](/guides/collections)
+- [Fast Immutable Collections support guide](/guides/fast-immutable-collections)
 - [Callable Mapping guide](/guides/callable-mapping)
 - [@InheritInverseConfiguration](/annotations/inherit-inverse-configuration)

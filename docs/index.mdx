@@ -25,6 +25,7 @@ Writing boilerplate mapping code between DTOs, domain objects, and view models i
 - **Callable mapping** — delegate a field to a custom function
 - **Map mapping** — convert classes to and from `Map<String, dynamic>` (Firestore, Realtime Database, JSON)
 - **Collections** — `List`, `Set`, `Map`, `BuiltList`, `BuiltSet`, `BuiltMap`
+- **Fast Immutable Collections** — `IList`, `ISet`, `IMap`, `IMapOfSets`, `ListSet`, `ListMap` in standard, freezed and built_value classes
 - **Configuration inheritance** — reuse or invert `@Mapping` annotations across methods
 - **External mapper injection** — compose mappers with `@Mapper(uses: {...})`
 
@@ -74,3 +75,4 @@ class UserMapperImpl extends UserMapper {
 - [Getting Started](/getting-started) — installation, setup, and your first mapper
 - [@Mapper reference](/annotations/mapper) — annotation parameters
 - [@Mapping reference](/annotations/mapping) — field-level mapping control
+- [Collections guide](/guides/collections) — `List`, `Set`, `Map`, [built collections](/guides/built-value-support) and [fast_immutable_collections](/guides/fast-immutable-collections)

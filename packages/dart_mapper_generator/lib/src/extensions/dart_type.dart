@@ -34,9 +34,10 @@ extension DartTypeExtension on DartType {
 
   bool get isSet => isDartCoreSet || isBuiltSet;
 
-  bool get isIterable => isList || isSet || isDartCoreIterable;
+  bool get isIterable =>
+      isList || isSet || isDartCoreIterable || isFicIterable;
 
-  bool get isMap => isDartCoreMap || isBuiltMap;
+  bool get isMap => isDartCoreMap || isBuiltMap || isFicMap;
 
   /// Whether this is a `dart:core` [Map] whose key type is `String`, such as
   /// `Map<String, dynamic>` or `Map<String, Object?>`.
@@ -217,4 +218,39 @@ extension DartTypeBuilt on DartType {
 
   String get builtBuilderClass =>
       [displayString, 'Builder', if (isNullable) '?'].join();
+}
+
+/// Collections of `package:fast_immutable_collections`.
+extension DartTypeFic on DartType {
+  bool get isLibraryFic =>
+      element?.library?.firstFragment.source.uri
+          .toString()
+          .startsWith('package:fast_immutable_collections/') ==
+      true;
+
+  bool get isFicIList => isLibraryFic && className == 'IList';
+
+  bool get isFicISet => isLibraryFic && className == 'ISet';
+
+  bool get isFicIMap => isLibraryFic && className == 'IMap';
+
+  bool get isFicIMapOfSets => isLibraryFic && className == 'IMapOfSets';
+
+  /// A `ListSet` is both a `Set` and a `List` of a fixed size.
+  bool get isFicListSet => isLibraryFic && className == 'ListSet';
+
+  /// A `ListMap` is a `Map` of a fixed size.
+  bool get isFicListMap => isLibraryFic && className == 'ListMap';
+
+  bool get isFicIterable => isFicIList || isFicISet || isFicListSet;
+
+  /// The maps with a key and a value type. An `IMapOfSets` is left out: its
+  /// second type argument is the type of the items of its sets.
+  bool get isFicMap => isFicIMap || isFicListMap;
+
+  /// The immutable collections: a value is shared instead of being copied.
+  bool get isFicImmutable =>
+      isFicIList || isFicISet || isFicIMap || isFicIMapOfSets;
+
+  bool get isFicCollection => isFicIterable || isFicMap || isFicIMapOfSets;
 }
