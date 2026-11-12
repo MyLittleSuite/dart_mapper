@@ -1,0 +1,82 @@
+---
+title: "@DiscriminatorKey"
+description: Declares the Map key holding the discriminator of a Map ↔ class hierarchy dispatch method.
+---
+
+# @DiscriminatorKey
+
+Declares the `Map` key that identifies the concrete subclass in a Map ↔ sealed/abstract class hierarchy mapping. It is used together with [`@SubclassMapping`](/annotations/subclass-mapping), whose `discriminatorValue` supplies the value for each subclass.
+
+## Signature
+
+```dart
+const DiscriminatorKey(String key)
+```
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `key` | `String` | The `Map` key holding the discriminator value. Required and not empty. |
+
+## Usage
+
+Apply it on a method, next to its `@SubclassMapping` annotations:
+
+```dart
+@Mapper()
+abstract class ShapeMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  @SubclassMapping(target: Rect, discriminatorValue: 'rect')
+  Shape fromMap(Map<String, dynamic> map);
+
+  @InheritInverseConfiguration()
+  Map<String, dynamic> toMap(Shape shape);
+
+  Circle toCircle(Map<String, dynamic> map);
+  Rect toRect(Map<String, dynamic> map);
+  Map<String, dynamic> fromCircle(Circle circle);
+  Map<String, dynamic> fromRect(Rect rect);
+}
+```
+
+Generated:
+
+```dart
+@override
+Shape fromMap(Map<String, dynamic> map) {
+  return switch (map['type']) {
+    'circle' => toCircle(map),
+    'rect' => toRect(map),
+    _ => throw ArgumentError('Unexpected value for discriminator key "type": ${map['type']}'),
+  };
+}
+
+@override
+Map<String, dynamic> toMap(Shape shape) {
+  return switch (shape) {
+    Circle circle => {...fromCircle(circle), 'type': 'circle'},
+    Rect rect => {...fromRect(rect), 'type': 'rect'},
+  };
+}
+```
+
+## Requirements
+
+- Mandatory on a method with a `Map` on one side (Map → class or class → Map).
+- The key must not be empty.
+- The method must have at least one `@SubclassMapping`, each with a `discriminatorValue`.
+- Not allowed on class → class methods.
+
+Violations are compile-time errors.
+
+## Inheritance
+
+`@InheritInverseConfiguration` and `@InheritConfiguration` inherit `@DiscriminatorKey` and the `@SubclassMapping`s of the referenced method, when the inheriting method declares no `@SubclassMapping` of its own. The inverse swaps `source` and `target` and keeps the discriminator values.
+
+## See Also
+
+- [@SubclassMapping](/annotations/subclass-mapping)
+- [Subclass Mapping guide](/guides/subclass-mapping#map--class-hierarchy-discriminator)
+- [Map Mapping guide](/guides/map-mapping)

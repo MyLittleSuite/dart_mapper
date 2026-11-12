@@ -271,6 +271,20 @@ void main() async {
   );
   testAnnotatedElements<Mapper>(subclassMappingErrorReader, generator);
 
+  // Group: Discriminator-based subclass mapping (Map <-> class hierarchy)
+  final discriminatorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'discriminator_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(discriminatorReader, generator);
+
+  // Group: Discriminator-based subclass mapping errors
+  final discriminatorErrorReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'discriminator_error_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(discriminatorErrorReader, generator);
+
   // Group: InheritConfiguration / InheritInverseConfiguration
   final inheritConfigReader = await initializeLibraryReaderForDirectory(
     'test/golden/src',

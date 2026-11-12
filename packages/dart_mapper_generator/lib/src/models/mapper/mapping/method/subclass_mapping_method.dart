@@ -27,8 +27,26 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
+/// How a [SubclassMappingMethod] selects the subclass to delegate to.
+enum SubclassDispatchMode {
+  /// class -> class: dispatch on the runtime type of the source.
+  type,
+
+  /// Map -> class hierarchy: dispatch on the discriminator value read from the
+  /// source `Map`.
+  fromMap,
+
+  /// class hierarchy -> Map: dispatch on the runtime type of the source and
+  /// write the discriminator value into the resulting `Map`.
+  toMap,
+}
+
 /// One (sourceSubtype, targetType, delegateMethodName) triple produced by
 /// a single @SubclassMapping annotation on the mapper class.
+///
+/// In [SubclassDispatchMode.fromMap] [sourceType] is the `Map` type of the
+/// dispatch method, in [SubclassDispatchMode.toMap] [targetType] is its `Map`
+/// return type.
 final class SubclassDispatchPair {
   /// The concrete source subtype matched in the switch arm (e.g., Dog).
   final DartType sourceType;
@@ -39,10 +57,21 @@ final class SubclassDispatchPair {
   /// The name of the existing mapping method to delegate to (e.g., 'toDogDto').
   final String delegateMethod;
 
+  /// The discriminator value of this subclass: a [String] (enum constants
+  /// included, by name), [int], [double] or [bool]. Null in
+  /// [SubclassDispatchMode.type].
+  final Object? discriminatorValue;
+
+  /// Whether the delegate may return null. Only relevant in
+  /// [SubclassDispatchMode.toMap], where its result is spread in a `Map`.
+  final bool delegateReturnsNullable;
+
   const SubclassDispatchPair({
     required this.sourceType,
     required this.targetType,
     required this.delegateMethod,
+    this.discriminatorValue,
+    this.delegateReturnsNullable = false,
   });
 }
 
@@ -71,6 +100,17 @@ final class SubclassMappingMethod extends BindableMappingMethod {
   /// this is true and a `_ => throw ArgumentError(...)` arm is emitted.
   final bool needsWildcard;
 
+  /// How the subclass is selected.
+  final SubclassDispatchMode mode;
+
+  /// The `Map` key holding the discriminator. Null in
+  /// [SubclassDispatchMode.type].
+  final String? discriminatorKey;
+
+  /// Name of the `Map` parameter the discriminator is read from. Only set in
+  /// [SubclassDispatchMode.fromMap].
+  final String? discriminatorParameter;
+
   const SubclassMappingMethod({
     required super.name,
     super.returnType,
@@ -81,5 +121,8 @@ final class SubclassMappingMethod extends BindableMappingMethod {
     super.behavior = MappingBehavior.standard,
     required this.dispatchPairs,
     required this.needsWildcard,
+    this.mode = SubclassDispatchMode.type,
+    this.discriminatorKey,
+    this.discriminatorParameter,
   });
 }

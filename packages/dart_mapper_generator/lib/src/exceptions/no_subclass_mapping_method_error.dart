@@ -37,7 +37,7 @@ class NoSubclassMappingMethodError extends InvalidGenerationSourceError {
     required DartType sourceType,
     required DartType targetType,
     required ClassElement mapperClass,
-  }) : super(
+  }) : this._(
           'No mapping method found for '
           '@SubclassMapping(source: ${sourceType.getDisplayString()}, '
           'target: ${targetType.getDisplayString()}). '
@@ -45,4 +45,38 @@ class NoSubclassMappingMethodError extends InvalidGenerationSourceError {
           '${targetType.getDisplayString()} method(${sourceType.getDisplayString()} source).',
           element: mapperClass,
         );
+
+  /// Map -> class hierarchy: no method returning [targetType] and taking the
+  /// parameters of the dispatch [method].
+  NoSubclassMappingMethodError.fromMap({
+    required DartType targetType,
+    required MethodElement method,
+  }) : this._(
+          'No mapping method found for '
+          '@SubclassMapping(target: ${targetType.getDisplayString()}) '
+          "on method '${method.name}'. "
+          'Add a method with signature: '
+          '${targetType.getDisplayString()} method('
+          '${method.formalParameters.map((p) => '${p.type.getDisplayString()} ${p.name}').join(', ')}'
+          ').',
+          element: method,
+        );
+
+  /// class hierarchy -> Map: no method taking [sourceType] and returning a
+  /// compatible Map.
+  NoSubclassMappingMethodError.toMap({
+    required DartType sourceType,
+    required MethodElement method,
+  }) : this._(
+          'No mapping method found for '
+          '@SubclassMapping(source: ${sourceType.getDisplayString()}) '
+          "on method '${method.name}'. "
+          'Add a method with signature: '
+          '${method.returnType.getDisplayString()} method('
+          '${sourceType.getDisplayString()} source).',
+          element: method,
+        );
+
+  NoSubclassMappingMethodError._(super.message, {required Element element})
+      : super(element: element);
 }

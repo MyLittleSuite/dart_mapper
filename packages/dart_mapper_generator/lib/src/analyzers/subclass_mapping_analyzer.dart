@@ -23,9 +23,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import 'package:analyzer/dart/constant/value.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
+import 'package:dart_mapper_generator/src/exceptions/ambiguous_inherit_configuration_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/duplicate_discriminator_value_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/incompatible_discriminator_value_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/invalid_subclass_mapping_side_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/map_to_map_mapping_not_supported_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/missing_discriminator_key_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/missing_discriminator_value_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/no_subclass_mapping_method_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unexpected_discriminator_key_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unexpected_discriminator_value_error.dart';
+import 'package:dart_mapper_generator/src/exceptions/unsupported_discriminator_value_error.dart';
 import 'package:dart_mapper_generator/src/extensions/annotations.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
@@ -34,63 +46,435 @@ import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_paramete
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/subclass_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
+/// The @SubclassMapping annotations and the @DiscriminatorKey of a dispatch
+/// method, own or inherited.
+typedef _DispatchConfig = ({
+  List<ResolvedSubclassMapping> mappings,
+  String? key,
+});
+
+/// A discriminator value with its comparison kind (`String`, `int`, `double`,
+/// `bool` or the name of the enum).
+typedef _DiscriminatorValue = ({String kind, Object value});
+
 /// Reads @SubclassMapping annotations from each abstract MethodElement and
 /// produces SubclassMappingMethod instances — one per annotated dispatch method.
+///
+/// Three kinds of dispatch methods are supported, told apart by signature:
+/// class -> class ([SubclassDispatchMode.type]), Map -> class hierarchy
+/// ([SubclassDispatchMode.fromMap]) and class hierarchy -> Map
+/// ([SubclassDispatchMode.toMap]). A method with @InheritInverseConfiguration
+/// or @InheritConfiguration and no own @SubclassMapping inherits the ones of
+/// the method it refers to.
 class SubclassMappingAnalyzer {
   const SubclassMappingAnalyzer();
 
   /// Returns a list of [SubclassMappingMethod]s to inject into the method list.
   /// Returns empty list when no abstract method has @SubclassMapping annotations.
   List<SubclassMappingMethod> analyze(AnalyzerContext context) {
+    if (DiscriminatorKeyAnnotation.isPresent(context.mapperClass)) {
+      throw UnexpectedDiscriminatorKeyError.onClass(
+        mapperClass: context.mapperClass,
+      );
+    }
+
     final result = <SubclassMappingMethod>[];
 
     for (final method in context.mappingMethods) {
-      final pairs = SubclassMappingAnnotation.loadAll(method).toList();
-      if (pairs.isEmpty) continue;
-
-      final dispatchPairs = <SubclassDispatchPair>[];
-      for (final pair in pairs) {
-        final delegateName = _resolveDelegateMethod(
-          context: context,
-          sourceType: pair.sourceType,
-          targetType: pair.targetType,
-        );
-        dispatchPairs.add(SubclassDispatchPair(
-          sourceType: pair.sourceType,
-          targetType: pair.targetType,
-          delegateMethod: delegateName,
-        ));
+      final config = _loadConfig(context, method);
+      if (config == null) {
+        if (DiscriminatorKeyAnnotation.isPresent(method)) {
+          throw UnexpectedDiscriminatorKeyError.withoutSubclassMapping(
+            method: method,
+          );
+        }
+        continue;
       }
 
-      final paramType = method.formalParameters.first.type;
-      final needsWildcard = _computeNeedsWildcard(
-        baseType: paramType,
-        dispatchPairs: dispatchPairs,
-      );
-
-      result.add(SubclassMappingMethod(
-        name: method.name!,
-        returnType: method.returnType,
-        optionalReturn: method.returnType.isNullable,
-        isOverride: true,
-        parameters: method.formalParameters
-            .map((p) => MappingParameter(
-                  field: Field.from(
-                    name: p.name!,
-                    type: p.type,
-                    nullable: p.isNullable,
-                  ),
-                  isNullable: p.isNullable,
-                ))
-            .toList(growable: false),
-        bindings: const [],
-        behavior: MappingBehavior.standard,
-        dispatchPairs: dispatchPairs,
-        needsWildcard: needsWildcard,
-      ));
+      result.add(_analyzeMethod(context, method, config));
     }
 
     return result;
+  }
+
+  SubclassMappingMethod _analyzeMethod(
+    AnalyzerContext context,
+    MethodElement method,
+    _DispatchConfig config,
+  ) {
+    final parameters = method.formalParameters;
+    final returnType = method.returnType;
+    final mapParameter =
+        parameters.where((p) => p.type.isMapLikeSource).firstOrNull;
+
+    final SubclassDispatchMode mode;
+    if (mapParameter != null) {
+      if (returnType.isMap) {
+        throw MapToMapMappingNotSupportedError(method: method);
+      }
+      mode = SubclassDispatchMode.fromMap;
+    } else if (parameters.length == 1 &&
+        !parameters.first.type.isMap &&
+        returnType.isStringKeyedMap) {
+      mode = SubclassDispatchMode.toMap;
+    } else {
+      mode = SubclassDispatchMode.type;
+    }
+
+    final key = _validate(method, mode, config);
+    final values = mode == SubclassDispatchMode.type
+        ? const <_DiscriminatorValue>[]
+        : _values(method, config);
+
+    final dispatchPairs = <SubclassDispatchPair>[];
+    for (final (index, mapping) in config.mappings.indexed) {
+      switch (mode) {
+        case SubclassDispatchMode.type:
+          final sourceType = mapping.sourceType!;
+          final targetType = mapping.targetType!;
+          dispatchPairs.add(SubclassDispatchPair(
+            sourceType: sourceType,
+            targetType: targetType,
+            delegateMethod: _resolveDelegateMethod(
+              context: context,
+              sourceType: sourceType,
+              targetType: targetType,
+            ),
+          ));
+        case SubclassDispatchMode.fromMap:
+          final targetType = mapping.targetType!;
+          dispatchPairs.add(SubclassDispatchPair(
+            sourceType: mapParameter!.type,
+            targetType: targetType,
+            delegateMethod: _resolveFromMapDelegate(
+              context: context,
+              method: method,
+              targetType: targetType,
+            ),
+            discriminatorValue: values[index].value,
+          ));
+        case SubclassDispatchMode.toMap:
+          final sourceType = mapping.sourceType!;
+          final delegate = _resolveToMapDelegate(
+            context: context,
+            method: method,
+            sourceType: sourceType,
+          );
+          dispatchPairs.add(SubclassDispatchPair(
+            sourceType: sourceType,
+            targetType: returnType,
+            delegateMethod: delegate.name!,
+            discriminatorValue: values[index].value,
+            delegateReturnsNullable: delegate.returnType.isNullable,
+          ));
+      }
+    }
+
+    final baseType = parameters.first.type;
+    final needsWildcard = switch (mode) {
+      SubclassDispatchMode.fromMap => true,
+      SubclassDispatchMode.type => _computeNeedsWildcard(
+          baseType: baseType,
+          dispatchPairs: dispatchPairs,
+        ),
+      // A nullable base is guarded against null only when the method may
+      // return null.
+      SubclassDispatchMode.toMap =>
+        (baseType.isNullable && !returnType.isNullable) ||
+            _computeNeedsWildcard(
+              baseType: baseType,
+              dispatchPairs: dispatchPairs,
+            ),
+    };
+
+    return SubclassMappingMethod(
+      name: method.name!,
+      returnType: method.returnType,
+      optionalReturn: method.returnType.isNullable,
+      isOverride: true,
+      parameters: method.formalParameters
+          .map((p) => MappingParameter(
+                field: Field.from(
+                  name: p.name!,
+                  type: p.type,
+                  nullable: p.isNullable,
+                ),
+                isNullable: p.isNullable,
+              ))
+          .toList(growable: false),
+      bindings: const [],
+      behavior: MappingBehavior.standard,
+      dispatchPairs: dispatchPairs,
+      needsWildcard: needsWildcard,
+      mode: mode,
+      discriminatorKey: key,
+      discriminatorParameter: mapParameter?.name,
+    );
+  }
+
+  /// Validates [config] against the signature of [method]. Returns the
+  /// discriminator key, null in [SubclassDispatchMode.type].
+  String? _validate(
+    MethodElement method,
+    SubclassDispatchMode mode,
+    _DispatchConfig config,
+  ) {
+    switch (mode) {
+      case SubclassDispatchMode.type:
+        if (config.key != null ||
+            DiscriminatorKeyAnnotation.isPresent(method)) {
+          throw UnexpectedDiscriminatorKeyError.onTypeDispatch(method: method);
+        }
+        for (final mapping in config.mappings) {
+          if (mapping.discriminatorValue != null) {
+            throw UnexpectedDiscriminatorValueError(method: method);
+          }
+          if (mapping.sourceType == null || mapping.targetType == null) {
+            throw InvalidSubclassMappingSideError.missingTypes(method: method);
+          }
+        }
+        return null;
+      case SubclassDispatchMode.fromMap:
+      case SubclassDispatchMode.toMap:
+        final key = config.key;
+        if (key == null) {
+          throw MissingDiscriminatorKeyError(method: method);
+        }
+        if (key.isEmpty) {
+          throw MissingDiscriminatorKeyError(method: method, empty: true);
+        }
+
+        final fromMap = mode == SubclassDispatchMode.fromMap;
+        for (final mapping in config.mappings) {
+          if (fromMap && mapping.sourceType != null) {
+            throw InvalidSubclassMappingSideError.sourceOnMapSource(
+              method: method,
+            );
+          }
+          if (!fromMap && mapping.targetType != null) {
+            throw InvalidSubclassMappingSideError.targetOnMapTarget(
+              method: method,
+            );
+          }
+          if (fromMap && mapping.targetType == null) {
+            throw InvalidSubclassMappingSideError.missingTarget(
+              method: method,
+            );
+          }
+          if (!fromMap && mapping.sourceType == null) {
+            throw InvalidSubclassMappingSideError.missingSource(
+              method: method,
+            );
+          }
+        }
+
+        final values = _values(method, config);
+        if (!fromMap) {
+          _validateMapValueType(method, values);
+        }
+        return key;
+    }
+  }
+
+  /// The validated discriminator values of [config], in declaration order:
+  /// all of a supported and the same type, with no duplicates.
+  List<_DiscriminatorValue> _values(
+    MethodElement method,
+    _DispatchConfig config,
+  ) {
+    final values = <_DiscriminatorValue>[];
+    for (final mapping in config.mappings) {
+      final object = mapping.discriminatorValue;
+      if (object == null) {
+        final subclass = mapping.targetType ?? mapping.sourceType;
+        throw MissingDiscriminatorValueError(
+          method: method,
+          subclass: subclass?.getDisplayString() ?? '?',
+        );
+      }
+
+      final value = _readValue(method, object);
+      final first = values.firstOrNull;
+      if (first != null && first.kind != value.kind) {
+        throw UnsupportedDiscriminatorValueError.mixed(
+          method: method,
+          first: first.kind,
+          other: value.kind,
+        );
+      }
+      if (values.any((v) => v.value == value.value)) {
+        throw DuplicateDiscriminatorValueError(
+          method: method,
+          value: value.value,
+        );
+      }
+      values.add(value);
+    }
+
+    return values;
+  }
+
+  _DiscriminatorValue _readValue(MethodElement method, DartObject object) {
+    final type = object.type;
+    if (type == null) {
+      throw UnsupportedDiscriminatorValueError.type(
+        method: method,
+        valueType: 'unknown',
+      );
+    }
+
+    if (type.isDartCoreString) {
+      return (kind: 'String', value: object.toStringValue()!);
+    }
+    if (type.isDartCoreInt) {
+      return (kind: 'int', value: object.toIntValue()!);
+    }
+    if (type.isDartCoreDouble) {
+      return (kind: 'double', value: object.toDoubleValue()!);
+    }
+    if (type.isDartCoreBool) {
+      return (kind: 'bool', value: object.toBoolValue()!);
+    }
+
+    final element = type.element;
+    if (element is EnumElement) {
+      final name = object.getField('_name')?.toStringValue() ??
+          element.constants
+              .elementAtOrNull(object.getField('index')?.toIntValue() ?? -1)
+              ?.name;
+      if (name != null) {
+        return (kind: element.name ?? 'enum', value: name);
+      }
+    }
+
+    throw UnsupportedDiscriminatorValueError.type(
+      method: method,
+      valueType: type.getDisplayString(),
+    );
+  }
+
+  /// Checks the discriminator values fit the value type of the `Map` returned
+  /// by [method].
+  void _validateMapValueType(
+    MethodElement method,
+    List<_DiscriminatorValue> values,
+  ) {
+    final first = values.firstOrNull;
+    final mapType = method.returnType;
+    if (first == null || mapType is! InterfaceType) {
+      return;
+    }
+
+    final valueType = mapType.typeArguments.elementAtOrNull(1);
+    if (valueType == null ||
+        valueType is DynamicType ||
+        valueType.isDartCoreObject) {
+      return;
+    }
+
+    final accepted = switch (first.value) {
+      String() => valueType.isDartCoreString,
+      int() => valueType.isDartCoreInt || valueType.isDartCoreNum,
+      double() => valueType.isDartCoreDouble || valueType.isDartCoreNum,
+      bool() => valueType.isDartCoreBool,
+      _ => false,
+    };
+    if (!accepted) {
+      throw IncompatibleDiscriminatorValueError(
+        method: method,
+        valueType: first.value is String ? 'String' : first.kind,
+        mapType: mapType.getDisplayString(),
+      );
+    }
+  }
+
+  /// The own @SubclassMapping annotations of [method], else the ones it
+  /// inherits through @InheritInverseConfiguration or @InheritConfiguration.
+  /// Null when [method] is not a dispatch method.
+  _DispatchConfig? _loadConfig(AnalyzerContext context, MethodElement method) {
+    final ownKey = DiscriminatorKeyAnnotation.loadFirst(method);
+    final own = SubclassMappingAnnotation.loadAll(method).toList();
+    if (own.isNotEmpty) {
+      return (mappings: own, key: ownKey);
+    }
+
+    final inverse =
+        InheritInverseConfigurationAnnotation.loadFirst(method) != null;
+    if (!inverse && InheritConfigurationAnnotation.loadFirst(method) == null) {
+      return null;
+    }
+
+    final source = _findInheritedSource(context, method, inverse: inverse);
+    if (source == null) {
+      return null;
+    }
+
+    final inherited = SubclassMappingAnnotation.loadAll(source).map(
+      (mapping) => inverse
+          ? (
+              sourceType: mapping.targetType,
+              targetType: mapping.sourceType,
+              discriminatorValue: mapping.discriminatorValue,
+            )
+          : mapping,
+    );
+
+    return (
+      mappings: inherited.toList(growable: false),
+      key: ownKey ?? DiscriminatorKeyAnnotation.loadFirst(source),
+    );
+  }
+
+  /// Finds the dispatch method [method] inherits from, matched like
+  /// `InheritConfigurationAnalyzer` does: the very same signature (swapped for
+  /// [inverse]) first, then the one differing only by the kind of `Map`.
+  MethodElement? _findInheritedSource(
+    AnalyzerContext context,
+    MethodElement method, {
+    required bool inverse,
+  }) {
+    final parameters = method.formalParameters;
+    if (inverse && parameters.length != 1) {
+      return null;
+    }
+
+    final candidates = context.mapperClass.methods
+        .where((m) => m != method)
+        .where((m) => SubclassMappingAnnotation.loadAll(m).isNotEmpty)
+        .toList(growable: false);
+
+    final expectedReturn = inverse ? parameters.first.type : method.returnType;
+    final expectedParameters =
+        inverse ? [method.returnType] : parameters.map((p) => p.type).toList();
+
+    bool matches(MethodElement m, bool Function(DartType, DartType) same) =>
+        same(m.returnType, expectedReturn) &&
+        m.formalParameters.length == expectedParameters.length &&
+        m.formalParameters.indexed
+            .every((e) => same(e.$2.type, expectedParameters[e.$1]));
+
+    bool exact(DartType a, DartType b) =>
+        a.same(b, useNullability: false, aliases: context.importAliases);
+    bool relaxed(DartType a, DartType b) =>
+        exact(a, b) || (a.isMapLikeSource && b.isMapLikeSource);
+
+    final exactMatches =
+        candidates.where((m) => matches(m, exact)).toList(growable: false);
+    if (exactMatches.isNotEmpty) {
+      return exactMatches.first;
+    }
+
+    final relaxedMatches =
+        candidates.where((m) => matches(m, relaxed)).toList(growable: false);
+    if (relaxedMatches.length > 1) {
+      throw AmbiguousInheritConfigurationError(
+        method: method.displayName,
+        candidates: relaxedMatches.map((m) => m.displayName).toList(),
+        element: method,
+      );
+    }
+
+    return relaxedMatches.firstOrNull;
   }
 
   /// Resolves the delegate method name for a given @SubclassMapping pair.
@@ -121,6 +505,93 @@ class SubclassMappingAnalyzer {
     return match.name!;
   }
 
+  /// Resolves the method turning the parameters of the dispatch [method] into
+  /// [targetType]: the very same parameter types first, then Map-like
+  /// parameters interchangeably.
+  String _resolveFromMapDelegate({
+    required AnalyzerContext context,
+    required MethodElement method,
+    required DartType targetType,
+  }) {
+    final candidates = context.mapperClass.methods
+        .where((m) => m != method)
+        .where((m) => m.returnType.same(targetType, useNullability: false))
+        .where(
+            (m) => m.formalParameters.length == method.formalParameters.length)
+        .toList(growable: false);
+
+    bool matches(MethodElement m, bool Function(DartType, DartType) same) =>
+        m.formalParameters.indexed.every(
+          (e) => same(e.$2.type, method.formalParameters[e.$1].type),
+        );
+
+    bool exact(DartType a, DartType b) => a.same(b, useNullability: false);
+    bool relaxed(DartType a, DartType b) =>
+        exact(a, b) || (a.isMapLikeSource && b.isMapLikeSource);
+
+    final match = candidates.where((m) => matches(m, exact)).firstOrNull ??
+        candidates.where((m) => matches(m, relaxed)).firstOrNull;
+    if (match == null) {
+      throw NoSubclassMappingMethodError.fromMap(
+        targetType: targetType,
+        method: method,
+      );
+    }
+
+    return match.name!;
+  }
+
+  /// Resolves the method turning [sourceType] into a `Map` assignable to the
+  /// return type of the dispatch [method].
+  MethodElement _resolveToMapDelegate({
+    required AnalyzerContext context,
+    required MethodElement method,
+    required DartType sourceType,
+  }) {
+    final candidates = context.mapperClass.methods
+        .where((m) => m != method)
+        .where((m) => m.formalParameters.length == 1)
+        .where((m) => m.formalParameters.first.type.same(
+              sourceType,
+              useNullability: false,
+            ))
+        .toList(growable: false);
+
+    final returnType = method.returnType;
+    final returnValue = returnType is InterfaceType
+        ? returnType.typeArguments.elementAtOrNull(1)
+        : null;
+
+    bool assignable(DartType type) {
+      if (type.same(returnType, useNullability: false)) {
+        return true;
+      }
+      if (!type.isStringKeyedMap || type is! InterfaceType) {
+        return false;
+      }
+
+      final value = type.typeArguments.elementAtOrNull(1);
+      return returnValue == null ||
+          returnValue is DynamicType ||
+          returnValue.isDartCoreObject ||
+          value is DynamicType ||
+          (value != null && value.same(returnValue, useNullability: false));
+    }
+
+    final match = candidates
+            .where((m) => m.returnType.same(returnType, useNullability: false))
+            .firstOrNull ??
+        candidates.where((m) => assignable(m.returnType)).firstOrNull;
+    if (match == null) {
+      throw NoSubclassMappingMethodError.toMap(
+        sourceType: sourceType,
+        method: method,
+      );
+    }
+
+    return match;
+  }
+
   /// Computes whether a wildcard fallthrough arm must be emitted (D-04).
   ///
   /// Returns false only when [baseType] is sealed AND every direct subtype
@@ -143,7 +614,7 @@ class SubclassMappingAnalyzer {
     if (directSubtypes.isEmpty) return true;
 
     // All direct subtypes must be in dispatchPairs.
-    return !directSubtypes.every((subtype) =>
-        dispatchPairs.any((p) => p.sourceType.element == subtype));
+    return !directSubtypes.every(
+        (subtype) => dispatchPairs.any((p) => p.sourceType.element == subtype));
   }
 }

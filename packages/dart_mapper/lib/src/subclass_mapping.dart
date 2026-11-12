@@ -23,14 +23,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/// Instructs the generator to produce a runtime-type dispatch body for the
-/// annotated dispatch method. Stacked on the method (not the mapper class).
+/// Instructs the generator to produce a dispatch body for the annotated
+/// method. Stacked on the method (not the mapper class).
 ///
 /// For each [SubclassMapping] annotation, the generator locates the existing
 /// mapping method on the mapper whose signature is `target method(source)` and
-/// emits a switch arm `SourceType var => delegateMethod(var)`.
+/// emits a switch arm delegating to it.
 ///
-/// Example:
+/// ## Class → class
+///
+/// Dispatches on the runtime type of the source:
+///
 /// ```dart
 /// @Mapper()
 /// abstract class AnimalMapper {
@@ -41,12 +44,56 @@
 ///   CatDto toCatDto(Cat source);
 /// }
 /// ```
+///
+/// ## Map ↔ class hierarchy
+///
+/// When one side of the method is a `Map`, the concrete subclass is selected
+/// by a discriminator: the key is declared once on the method with
+/// [DiscriminatorKey], the value per subclass with [discriminatorValue].
+/// The side that is a `Map` is omitted: it is the `Map` type of the method.
+///
+/// ```dart
+/// @Mapper()
+/// abstract class ShapeMapper {
+///   @DiscriminatorKey('type')
+///   @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+///   @SubclassMapping(target: Rect, discriminatorValue: 'rect')
+///   Shape fromMap(Map<String, dynamic> map);
+///
+///   @DiscriminatorKey('type')
+///   @SubclassMapping(source: Circle, discriminatorValue: 'circle')
+///   @SubclassMapping(source: Rect, discriminatorValue: 'rect')
+///   Map<String, dynamic> toMap(Shape shape);
+///
+///   Circle toCircle(Map<String, dynamic> map);
+///   Rect toRect(Map<String, dynamic> map);
+///   Map<String, dynamic> fromCircle(Circle circle);
+///   Map<String, dynamic> fromRect(Rect rect);
+/// }
+/// ```
 class SubclassMapping {
   /// The source subtype to match at runtime.
-  final Type source;
+  ///
+  /// Omitted when the source of the method is a `Map`.
+  final Type? source;
 
   /// The target type to produce for this subtype.
-  final Type target;
+  ///
+  /// Omitted when the target of the method is a `Map`.
+  final Type? target;
 
-  const SubclassMapping({required this.source, required this.target});
+  /// The value of the [DiscriminatorKey] entry identifying this subclass in
+  /// the `Map`. Required when one side of the method is a `Map`, forbidden
+  /// otherwise.
+  ///
+  /// Supported values: `String`, `int`, `double`, `num`, `bool` and Dart
+  /// enum constants (stored by name). All the [SubclassMapping]s of a method
+  /// must use values of the same type.
+  final Object? discriminatorValue;
+
+  const SubclassMapping({
+    this.source,
+    this.target,
+    this.discriminatorValue,
+  });
 }

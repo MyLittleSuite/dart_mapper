@@ -124,6 +124,131 @@ abstract class MediaMapper {
 }
 ```
 
+## Map ↔ class hierarchy (discriminator)
+
+A `Map` (Firestore document, JSON payload) holding one of several subclasses of a sealed or abstract class is mapped with `@DiscriminatorKey` and `@SubclassMapping(discriminatorValue: ...)`. The side that is a `Map` is omitted in `@SubclassMapping`: Map → class takes only `target`, class → Map takes only `source`. Class → class keeps both and uses no discriminator.
+
+```dart
+sealed class Shape {}
+class Circle extends Shape { final double radius; Circle(this.radius); }
+class Rect extends Shape { final double w, h; Rect(this.w, this.h); }
+
+@Mapper()
+abstract class ShapeMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  @SubclassMapping(target: Rect, discriminatorValue: 'rect')
+  Shape fromMap(Map<String, dynamic> map);
+
+  @InheritInverseConfiguration()
+  Map<String, dynamic> toMap(Shape shape);
+
+  Circle toCircle(Map<String, dynamic> map);
+  Rect toRect(Map<String, dynamic> map);
+  Map<String, dynamic> fromCircle(Circle circle);
+  Map<String, dynamic> fromRect(Rect rect);
+}
+```
+
+Generated:
+
+```dart
+@override
+Shape fromMap(Map<String, dynamic> map) {
+  return switch (map['type']) {
+    'circle' => toCircle(map),
+    'rect' => toRect(map),
+    _ => throw ArgumentError('Unexpected value for discriminator key "type": ${map['type']}'),
+  };
+}
+
+@override
+Map<String, dynamic> toMap(Shape shape) {
+  return switch (shape) {
+    Circle circle => {...fromCircle(circle), 'type': 'circle'},
+    Rect rect => {...fromRect(rect), 'type': 'rect'},
+  };
+}
+```
+
+### Rules
+
+- `@DiscriminatorKey` is mandatory when one side is a `Map`, and `discriminatorValue` is mandatory on every `@SubclassMapping` of such a method. Both are forbidden on class → class methods.
+- Map → class always has a wildcard arm that throws an `ArgumentError` on an unknown value. Class → Map follows the sealed exhaustiveness rule described above: no wildcard for a sealed base class.
+- The discriminator is written last, so it overrides a key with the same name produced by the delegate.
+- Delegates are normal mapper methods. A Map → class delegate has the same parameters as the dispatch method (a multi-source method such as `fromRealtime(Map map, String id)` forwards all arguments); a class → Map delegate takes the subclass and returns a `Map`.
+
+### Discriminator values
+
+Supported values are `String`, `int`, `double`, `num`, `bool` and Dart enum constants. All values of a method must be of the same type and unique, and must be assignable to the map value type.
+
+Enum constants are stored by name, consistent with enums in [Map mapping](/guides/map-mapping):
+
+```dart
+enum ShapeKind { circle, rect }
+
+@DiscriminatorKey('kind')
+@SubclassMapping(target: Circle, discriminatorValue: ShapeKind.circle)
+@SubclassMapping(target: Rect, discriminatorValue: ShapeKind.rect)
+Shape fromMap(Map<String, dynamic> map);
+```
+
+The map contains `'kind': 'rect'` for `ShapeKind.rect`.
+
+### Inheriting the configuration
+
+`@InheritInverseConfiguration` and `@InheritConfiguration` inherit `@DiscriminatorKey` and the `@SubclassMapping`s of the referenced method, as long as the inheriting method has no `@SubclassMapping` of its own. The inverse swaps source and target and keeps the same values, as `toMap` does in the example above. It also works for class ↔ class mappings.
+
+### Nested sealed fields
+
+A field typed with the sealed class inside another Map ↔ class mapping is converted through the declared dispatch method:
+
+```dart
+class Drawing {
+  final List<Shape> shapes;
+  const Drawing(this.shapes);
+}
+
+@Mapper()
+abstract class DrawingMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  @SubclassMapping(target: Rect, discriminatorValue: 'rect')
+  Shape shapeFromMap(Map<String, dynamic> map);
+
+  @InheritInverseConfiguration()
+  Map<String, dynamic> shapeToMap(Shape shape);
+
+  Drawing fromMap(Map<String, dynamic> map);
+  Map<String, dynamic> toMap(Drawing drawing);
+
+  Circle toCircle(Map<String, dynamic> map);
+  Rect toRect(Map<String, dynamic> map);
+  Map<String, dynamic> fromCircle(Circle circle);
+  Map<String, dynamic> fromRect(Rect rect);
+}
+```
+
+### Compile-time errors
+
+Every misconfiguration fails the build with a dedicated error:
+
+| Condition | Error |
+|---|---|
+| One side is a `Map` and the method has no `@DiscriminatorKey`, or the key is empty | `MissingDiscriminatorKeyError` |
+| `@DiscriminatorKey` without `@SubclassMapping`, on a class → class method, or on the mapper class | `UnexpectedDiscriminatorKeyError` |
+| A `@SubclassMapping` of a Map method has no `discriminatorValue` | `MissingDiscriminatorValueError` |
+| `discriminatorValue` on a class → class method | `UnexpectedDiscriminatorValueError` |
+| `source` given when the source is a `Map`, `target` given when the target is a `Map`, or a required side missing | `InvalidSubclassMappingSideError` |
+| A value that is not a `String`, `int`, `double`, `num`, `bool` or enum constant, or values of different types | `UnsupportedDiscriminatorValueError` |
+| The same value used twice on one method | `DuplicateDiscriminatorValueError` |
+| class → Map: the value cannot be stored in the returned `Map` (e.g. a `String` value in a `Map<String, int>`) | `IncompatibleDiscriminatorValueError` |
+| No delegate method for a subclass | `NoSubclassMappingMethodError` |
+
+A sealed or abstract target of a Map → class method without this configuration raises `FromMapTargetNotInstantiableError`.
+
 ## See Also
 
 - [@SubclassMapping annotation reference](/annotations/subclass-mapping)
+- [@DiscriminatorKey annotation reference](/annotations/discriminator-key)
+- [Map Mapping guide](/guides/map-mapping)
