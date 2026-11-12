@@ -1,3 +1,7 @@
+## 1.2.1
+
+- Fix: the constructor that builds the target no longer depends on the order of declaration. Public constructors are preferred over private ones (a Freezed class without fields, with `const Foo._()` next to `const factory Foo()`, is built with `Foo()`), factories over generative constructors of abstract classes, then the most parameters and the unnamed constructor. A target whose only constructors are private to another library raises `InaccessibleConstructorError` instead of generating code that does not compile (#117)
+
 ## 1.2.0
 
 - Feature: target dot notation builds nested target objects in class → class and Map → class mappings (`@Mapping(source: 'street', target: 'address.street')` generates `address: Address(street: ...)`), at any depth and with every `@Mapping` option. `@InheritInverseConfiguration` of a class → Map method flattening a nested source now builds the nested object (#118)
