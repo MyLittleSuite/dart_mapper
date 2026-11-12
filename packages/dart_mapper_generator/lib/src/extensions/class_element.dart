@@ -37,10 +37,10 @@ extension ClassElementExtension on ClassElement {
   /// The constructor the generated code calls to build this class.
   ///
   /// In order of priority:
-  /// 1. public constructors before private ones, so a private constructor
-  ///    (`Foo._()`) is picked only when the class has no public one;
-  /// 2. for an abstract class, factories before generative constructors,
+  /// 1. for an abstract class, factories before generative constructors,
   ///    which cannot be called on it;
+  /// 2. public constructors before private ones, so a private constructor
+  ///    (`Foo._()`) is picked only when the class has no public one;
   /// 3. the constructor with the most parameters;
   /// 4. the unnamed constructor before the named ones;
   /// 5. the name, so that the choice never depends on the order in which the
@@ -62,16 +62,16 @@ extension ClassElementExtension on ClassElement {
     int rank(bool preferA, bool preferB) =>
         preferA == preferB ? 0 : (preferA ? -1 : 1);
 
-    final byVisibility = rank(!a.isPrivate, !b.isPrivate);
-    if (byVisibility != 0) {
-      return byVisibility;
-    }
-
     if (isAbstract) {
       final byFactory = rank(a.isFactory, b.isFactory);
       if (byFactory != 0) {
         return byFactory;
       }
+    }
+
+    final byVisibility = rank(!a.isPrivate, !b.isPrivate);
+    if (byVisibility != 0) {
+      return byVisibility;
     }
 
     final byArity =
@@ -123,7 +123,8 @@ extension ClassElementExtension on ClassElement {
       return field;
     }
 
-    final getter = getterElements.where((element) => element.name == name).firstOrNull;
+    final getter =
+        getterElements.where((element) => element.name == name).firstOrNull;
     if (getter != null) {
       return getter;
     }

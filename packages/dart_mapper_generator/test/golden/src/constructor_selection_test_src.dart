@@ -38,6 +38,20 @@ class CsSource {
   const CsSource({required this.name});
 }
 
+abstract class CsOwnPrivateFactoryTarget {
+  final String name;
+
+  const CsOwnPrivateFactoryTarget(this.name);
+
+  // ignore: unused_element
+  const factory CsOwnPrivateFactoryTarget._(String name) =
+      _CsOwnPrivateFactoryTarget;
+}
+
+class _CsOwnPrivateFactoryTarget extends CsOwnPrivateFactoryTarget {
+  const _CsOwnPrivateFactoryTarget(super.name);
+}
+
 class CsFlatContact {
   final String name;
   final String street;
@@ -197,4 +211,18 @@ abstract class CsPrivateOnlyMapper {
 @Mapper()
 abstract class CsFromMapPrivateOnlyMapper {
   CsvPrivateOnlyTarget fromMap(Map<String, dynamic> map);
+}
+
+@ShouldGenerate(
+  r'''
+  @override
+  CsOwnPrivateFactoryTarget toTarget(CsSource source) {
+    return CsOwnPrivateFactoryTarget._(source.name);
+  }
+''',
+  contains: true,
+)
+@Mapper()
+abstract class CsOwnPrivateFactoryMapper {
+  CsOwnPrivateFactoryTarget toTarget(CsSource source);
 }
