@@ -85,7 +85,9 @@ class SubclassMappingCodeProcessor extends ComponentProcessor<Code> {
       final varName = _sanitizeVarName(pair.sourceType.parameterName);
 
       final typePattern = CodeExpression(Code('$resolvedTypeName $varName'));
-      final delegateCall = refer(pair.delegateMethod).call([refer(varName)]);
+      final delegateCall = _delegate(pair.delegateMethod, varName).call([
+        refer(varName),
+      ]);
       return (typePattern, delegateCall);
     });
 
@@ -167,7 +169,7 @@ class SubclassMappingCodeProcessor extends ComponentProcessor<Code> {
       final varName = _sanitizeVarName(pair.sourceType.parameterName);
       final typePattern = CodeExpression(Code('$resolvedTypeName $varName'));
       final delegateCall = _emit(
-        refer(pair.delegateMethod).call([refer(varName)]),
+        _delegate(pair.delegateMethod, varName).call([refer(varName)]),
       );
       final spread = pair.delegateReturnsNullable ? '...?' : '...';
       final value = _emit(_literal(pair.discriminatorValue));
@@ -199,6 +201,12 @@ class SubclassMappingCodeProcessor extends ComponentProcessor<Code> {
       );
     });
   }
+
+  /// A reference to the mapper method [name], called within a switch arm
+  /// binding [variable]. Qualified with `this` when the variable would shadow
+  /// the method.
+  Expression _delegate(String name, String variable) =>
+      name == variable ? refer('this').property(name) : refer(name);
 
   /// `if (map == null) ...` guard of a nullable Map parameter.
   Code _nullGuard(SubclassMappingMethod method, String name) =>

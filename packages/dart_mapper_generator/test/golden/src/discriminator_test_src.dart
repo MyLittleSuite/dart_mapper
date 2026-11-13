@@ -598,3 +598,101 @@ abstract class NestedSealedFieldMapper {
   Map<String, dynamic> fromCircle(Circle circle);
   Map<String, dynamic> fromRect(Rect rect);
 }
+
+// ---- Case 15: delegates named like the variable bound by the switch arm ----
+// The call is qualified with `this`, otherwise the variable shadows the method.
+
+@ShouldGenerate(
+  r"""Map<String, dynamic> toMap(Shape shape) {
+    return switch (shape) {
+      Circle circle => {...this.circle(circle), 'type': 'circle'},
+      Rect rect => {...this.rect(rect), 'type': 'rect'},
+    };
+  }""",
+  contains: true,
+)
+@Mapper()
+abstract class ShadowingToMapShapeMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(source: Circle, discriminatorValue: 'circle')
+  @SubclassMapping(source: Rect, discriminatorValue: 'rect')
+  Map<String, dynamic> toMap(Shape shape);
+
+  Map<String, dynamic> circle(Circle circle);
+  Map<String, dynamic> rect(Rect rect);
+}
+
+class ShadowingShapeDto {}
+
+class ShadowingCircleDto extends ShadowingShapeDto {}
+
+@ShouldGenerate(
+  r"""Circle circle => this.circle(circle),""",
+  contains: true,
+)
+@Mapper()
+abstract class ShadowingTypeShapeMapper {
+  @SubclassMapping(source: Circle, target: ShadowingCircleDto)
+  ShadowingShapeDto toDto(Shape shape);
+
+  ShadowingCircleDto circle(Circle circle);
+}
+
+// ---- Case 16: delegate returning narrower Map values than the dispatch ----
+// Map<String, int> is assignable to Map<String, num>.
+
+sealed class Counter {
+  const Counter();
+}
+
+class SmallCounter extends Counter {
+  final int count;
+  const SmallCounter({required this.count});
+}
+
+class LargeCounter extends Counter {
+  final int count;
+  const LargeCounter({required this.count});
+}
+
+@ShouldGenerate(
+  r"""Map<String, num> toMap(Counter counter) {
+    return switch (counter) {
+      SmallCounter smallCounter => {...fromSmall(smallCounter), 'kind': 1},
+      LargeCounter largeCounter => {...fromLarge(largeCounter), 'kind': 2},
+    };
+  }""",
+  contains: true,
+)
+@Mapper()
+abstract class NarrowerValueCounterMapper {
+  @DiscriminatorKey('kind')
+  @SubclassMapping(source: SmallCounter, discriminatorValue: 1)
+  @SubclassMapping(source: LargeCounter, discriminatorValue: 2)
+  Map<String, num> toMap(Counter counter);
+
+  Map<String, int> fromSmall(SmallCounter counter);
+  Map<String, int> fromLarge(LargeCounter counter);
+}
+
+// ---- Case 17: nullable delegate with a nullable dispatch ----
+
+@ShouldGenerate(
+  r"""Shape? fromMap(Map<String, dynamic> map) {
+    return switch (map['type']) {
+      'circle' => toCircle(map),
+      _ => throw ArgumentError(
+        'Unexpected value for discriminator key "type": ${map['type']}',
+      ),
+    };
+  }""",
+  contains: true,
+)
+@Mapper()
+abstract class NullableDelegateShapeMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  Shape? fromMap(Map<String, dynamic> map);
+
+  Circle? toCircle(Map<String, dynamic> map);
+}

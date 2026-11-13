@@ -381,6 +381,54 @@ abstract class MissingMultiSourceDelegateMapper {
 }
 
 @ShouldThrow(
+  "No mapping method found for @SubclassMapping(target: Circle) on method 'fromMap'. "
+  "Add a method with signature: Circle method(Map<String, dynamic> map).",
+)
+@Mapper()
+abstract class NullableFromMapDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  Shape fromMap(Map<String, dynamic> map);
+  Circle? toCircle(Map<String, dynamic> map);
+}
+
+@ShouldThrow(
+  "No mapping method found for @SubclassMapping(target: Circle) on method 'fromMap'. "
+  "Add a method with signature: Circle method(Map<String, Object?> map).",
+)
+@Mapper()
+abstract class NotAssignableMapDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  Shape fromMap(Map<String, Object?> map);
+  Circle toCircle(Map<String, String> map);
+}
+
+@ShouldThrow(
+  "No mapping method found for @SubclassMapping(target: Circle) on method 'fromRealtime'. "
+  "Add a method with signature: Circle method(Map<String, dynamic> map, String id).",
+)
+@Mapper()
+abstract class NamedParameterDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  Shape fromRealtime(Map<String, dynamic> map, String id);
+  Circle toCircle(Map<String, dynamic> map, {required String id});
+}
+
+@ShouldThrow(
+  "No mapping method found for @SubclassMapping(source: Circle) on method 'toMap'. "
+  "Add a method with signature: Map<String, num> method(Circle source).",
+)
+@Mapper()
+abstract class NotAssignableToMapDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(source: Circle, discriminatorValue: 1)
+  Map<String, num> toMap(Shape shape);
+  Map<String, String> fromCircle(Circle circle);
+}
+
+@ShouldThrow(
   "No mapping method found for @SubclassMapping(source: Circle) on method 'toMap'. "
   "Add a method with signature: Map<String, dynamic> method(Circle source).",
 )
@@ -411,5 +459,6 @@ abstract class AmbiguousInverseMapper {
   Map<String, dynamic> toMap(Shape shape);
 
   Circle toCircle(Map<String, Object?> map);
+  Circle toObjectKeyedCircle(Map<Object, Object?> map);
   Map<String, dynamic> fromCircle(Circle circle);
 }

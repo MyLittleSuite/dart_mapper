@@ -176,7 +176,8 @@ Map<String, dynamic> toMap(Shape shape) {
 - `@DiscriminatorKey` is mandatory when one side is a `Map`, and `discriminatorValue` is mandatory on every `@SubclassMapping` of such a method. Both are forbidden on class → class methods.
 - Map → class always has a wildcard arm that throws an `ArgumentError` on an unknown value. Class → Map follows the sealed exhaustiveness rule described above: no wildcard for a sealed base class.
 - The discriminator is written last, so it overrides a key with the same name produced by the delegate.
-- Delegates are normal mapper methods. A Map → class delegate has the same parameters as the dispatch method (a multi-source method such as `fromRealtime(Map map, String id)` forwards all arguments); a class → Map delegate takes the subclass and returns a `Map`.
+- Delegates are normal mapper methods and must be declared, one per subclass: they are not generated, and a missing one is a `NoSubclassMappingMethodError`. A Map → class delegate has the same positional parameters as the dispatch method (a multi-source method such as `fromRealtime(Map map, String id)` forwards all arguments; named parameters are not matched), returns a non-nullable subclass unless the dispatch method returns a nullable type, and takes a `Map` the dispatch `Map` is assignable to. A class → Map delegate takes the subclass and returns a `Map` assignable to the return type of the dispatch method (e.g. `Map<String, int>` for `Map<String, num>`).
+- When a delegate is named like the variable bound by the switch arm (`Map<String, dynamic> circle(Circle circle)`), the generated call is qualified with `this`.
 
 ### Discriminator values
 

@@ -507,27 +507,54 @@ class SubclassMappingAnalyzer {
 
   /// Resolves the method turning the parameters of the dispatch [method] into
   /// [targetType]: the very same parameter types first, then Map-like
-  /// parameters interchangeably.
+  /// parameters the dispatch one is assignable to.
+  ///
+  /// Only positional delegates are considered, as the dispatch forwards its
+  /// parameters positionally, and a delegate returning a nullable value is
+  /// skipped unless the dispatch [method] returns a nullable value as well.
   String _resolveFromMapDelegate({
     required AnalyzerContext context,
     required MethodElement method,
     required DartType targetType,
   }) {
+    final system = context.mapperClass.library.typeSystem;
     final candidates = context.mapperClass.methods
         .where((m) => m != method)
         .where((m) => m.returnType.same(targetType, useNullability: false))
+        .where((m) => method.returnType.isNullable || !m.returnType.isNullable)
         .where(
             (m) => m.formalParameters.length == method.formalParameters.length)
         .toList(growable: false);
 
-    bool matches(MethodElement m, bool Function(DartType, DartType) same) =>
+    // The Map parameter the discriminator is read from is null-checked before
+    // the dispatch, so a delegate taking a non-nullable Map accepts it.
+    final mapParameter =
+        method.formalParameters.where((p) => p.type.isMapLikeSource).first;
+
+    bool matches(
+      MethodElement m,
+      bool Function(DartType delegate, FormalParameterElement dispatch) same,
+    ) =>
         m.formalParameters.indexed.every(
-          (e) => same(e.$2.type, method.formalParameters[e.$1].type),
+          (e) =>
+              e.$2.isPositional &&
+              same(e.$2.type, method.formalParameters[e.$1]),
         );
 
-    bool exact(DartType a, DartType b) => a.same(b, useNullability: false);
-    bool relaxed(DartType a, DartType b) =>
-        exact(a, b) || (a.isMapLikeSource && b.isMapLikeSource);
+    bool exact(DartType delegate, FormalParameterElement dispatch) =>
+        delegate.same(dispatch.type, useNullability: false);
+    bool relaxed(DartType delegate, FormalParameterElement dispatch) {
+      if (exact(delegate, dispatch)) {
+        return true;
+      }
+
+      final type = dispatch == mapParameter
+          ? system.promoteToNonNull(dispatch.type)
+          : dispatch.type;
+      return delegate.isMapLikeSource &&
+          dispatch.type.isMapLikeSource &&
+          system.isAssignableTo(type, delegate);
+    }
 
     final match = candidates.where((m) => matches(m, exact)).firstOrNull ??
         candidates.where((m) => matches(m, relaxed)).firstOrNull;
@@ -557,6 +584,7 @@ class SubclassMappingAnalyzer {
             ))
         .toList(growable: false);
 
+    final system = context.mapperClass.library.typeSystem;
     final returnType = method.returnType;
     final returnValue = returnType is InterfaceType
         ? returnType.typeArguments.elementAtOrNull(1)
@@ -575,7 +603,7 @@ class SubclassMappingAnalyzer {
           returnValue is DynamicType ||
           returnValue.isDartCoreObject ||
           value is DynamicType ||
-          (value != null && value.same(returnValue, useNullability: false));
+          (value != null && system.isAssignableTo(value, returnValue));
     }
 
     final match = candidates

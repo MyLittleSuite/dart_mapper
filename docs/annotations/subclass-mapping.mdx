@@ -65,7 +65,7 @@ ShapeDto toDto(Shape shape) {
 
 - Each `source` type listed must be a concrete subtype of the method's source parameter type.
 - Each `target` type listed must be a concrete subtype of the method's return type.
-- Additional mapping methods for the subclass pairs are generated automatically by the mapper. You do not have to declare them.
+- For class → class dispatch, the mapping methods for the subclass pairs are generated automatically by the mapper. You do not have to declare them. [Map dispatch](#map--class-hierarchy) is different: its delegates must be declared.
 - The parent mapping method (`toDto(Shape shape)`) must be **abstract** — the generator overwrites it completely.
 
 ## Field-Level Customization
@@ -104,7 +104,15 @@ Shape fromMap(Map<String, dynamic> map);
 
 @InheritInverseConfiguration()
 Map<String, dynamic> toMap(Shape shape);
+
+// Delegates, required for Map dispatch
+Circle toCircle(Map<String, dynamic> map);
+Rect toRect(Map<String, dynamic> map);
+Map<String, dynamic> fromCircle(Circle circle);
+Map<String, dynamic> fromRect(Rect rect);
 ```
+
+Unlike class → class, Map dispatch does not generate the per-subclass methods: you must declare one delegate for each subclass, otherwise generation fails with `NoSubclassMappingMethodError`.
 
 Supported values are `String`, `int`, `double`, `num`, `bool` and Dart enum constants (stored by name). All values of a method must have the same type and be unique. A missing, misplaced or invalid parameter is a compile-time error.
 
