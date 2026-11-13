@@ -27,6 +27,7 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/field_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/mapping_parameter.dart';
@@ -53,8 +54,8 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     final source = context.source;
     final target = context.target;
 
-    final sourceField = _extractGeneric(source);
-    final targetField = _extractGeneric(target);
+    final sourceField = _extractGeneric(source, counterpart: target);
+    final targetField = _extractGeneric(target, counterpart: source);
 
     final sourceFields = _getNestedFields(sourceField);
     final targetFields = _getNestedFields(targetField);
@@ -228,13 +229,24 @@ class ExtraMappingMethodAnalyzer extends Analyzer<MappingMethod?> {
     return null;
   }
 
-  static Field? _extractGeneric(Field? field) => switch (field) {
+  /// The field whose type is mapped by the extra mapping method: the field
+  /// itself or the items of its collection.
+  ///
+  /// The sets of a map are looked into only when its [counterpart] is an
+  /// `IMapOfSets`, whose second type argument is the type of the items of its
+  /// sets: `Map<String, Set<Foo>>` is mapped as `IMapOfSets<String, Foo>`.
+  static Field? _extractGeneric(Field? field, {Field? counterpart}) =>
+      switch (field) {
         NestedField() => field,
         EnumField() => field,
         IterableField(:final item) when item is NestedField => item,
         IterableField(:final item) when item is EnumField => item,
         MapField(:final value) when value is NestedField => value,
         MapField(:final value) when value is EnumField => value,
+        MapField(:final IterableField value)
+            when counterpart?.type.isFicIMapOfSets == true &&
+                (value.item is NestedField || value.item is EnumField) =>
+          value.item,
         DynamicField() => null,
         _ => null,
       };

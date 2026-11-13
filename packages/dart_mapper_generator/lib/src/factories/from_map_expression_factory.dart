@@ -531,6 +531,9 @@ class FromMapExpressionFactory extends ExpressionFactory {
         : context.resolveType(value, withNullability: value.isNullable);
     final convertsKey = key != null && key.isEnum;
     final convertsValue = extra != null || _needsConversion(value);
+    // An `IMap` is not a `Map`: its default cannot be the fallback of the
+    // source map, it is the fallback of the converted one.
+    final folded = type.isFicIMap ? null : defaultExpression;
 
     Expression result;
     if (!convertsKey && !convertsValue) {
@@ -540,7 +543,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
           ..types.addAll([refer(keyName), refer(valueName)]),
       ).newInstanceNamed(
         'from',
-        [_container(raw, 'Map', defaultExpression, parenthesized: false)],
+        [_container(raw, 'Map', folded, parenthesized: false)],
       );
     } else {
       final keyExpression = convertsKey
@@ -558,7 +561,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
               extra: extra,
             );
 
-      result = _container(raw, 'Map', defaultExpression).property('map').call(
+      result = _container(raw, 'Map', folded).property('map').call(
         [
           Method(
             (b) => b
@@ -586,7 +589,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
     }
 
     return _guard(raw, nullable, defaultExpression, result,
-        defaultFolded: true);
+        defaultFolded: !type.isFicIMap);
   }
 
   /// The class of the fast_immutable_collections collection [type], with

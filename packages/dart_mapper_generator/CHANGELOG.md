@@ -6,6 +6,9 @@
 - Fix: a `BuiltMap` source mapped to a `Map` target is converted with `toMap()`
 - Fix: a `BuiltList` / `BuiltSet` target is built according to its own type, not the one of the source (`List` → `BuiltSet`), and the dead `?? []` fallback is no longer generated for non-nullable sources
 - Fix: import prefixes are applied in the mappings of Built Value targets
+- Fix: `BuiltList`, `BuiltSet` and `BuiltMap` fields of standard and Freezed classes are built (`BuiltList.of(...)`) instead of receiving a `List` or a `Map`
+- Fix: the items of the sets of an `IMapOfSets` are converted from and to `Map<K, Set<V>>`, `IMap<K, ISet<V>>`, `ListMap` and `BuiltMap` too, and these targets are constructed instead of receiving the `IMapOfSets`
+- Fix: the default of an `IMap` field read from a `Map` is applied after the conversion of the source map
 
 ## 1.2.1
 

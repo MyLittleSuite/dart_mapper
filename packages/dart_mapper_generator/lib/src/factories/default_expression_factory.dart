@@ -121,6 +121,22 @@ class DefaultExpressionFactory extends ExpressionFactory {
 
       return sourceType.isFicIMap ? access(entries, 'unlock') : entries;
     } else if (targetType.isBuiltMap) {
+      if (!_isBuiltOwner(context)) {
+        // Only the builder of a built_value class wraps the map: the other
+        // classes hold the BuiltMap itself.
+        return _construct(
+          context,
+          targetType,
+          basicExpression,
+          nullable: nullable,
+          constructor: 'of',
+          argument: (receiver) => _plainMap(
+            mapped(receiver, nullAware: false),
+            sourceType,
+          ),
+        );
+      }
+
       // A MapBuilder is created from a Map or a BuiltMap only.
       return sourceType.isFicIMap ? access(entries, 'unlockView') : entries;
     } else if (targetType.isFicIMap) {
@@ -157,42 +173,75 @@ class DefaultExpressionFactory extends ExpressionFactory {
   ) {
     final sourceType = field.type;
     final targetType = context.counterpartField.type;
+    final nullable = field.nullable && !context.forceNonNull;
+    final converts = context.extraMappingMethod != null;
 
     Expression access(String name) => field.nullable
         ? basicExpression.nullSafeProperty(name)
         : basicExpression.property(name);
 
     if (!sourceType.isFicIMapOfSets) {
+      // The sets are given to the IMapOfSets as they are, or converted.
       return _construct(
         context,
         targetType,
         basicExpression,
-        nullable: field.nullable && !context.forceNonNull,
-        argument: (receiver) => _plainMap(receiver, sourceType),
+        nullable: nullable,
+        argument: (receiver) => _plainMap(
+          converts
+              ? receiver.property('map').call([
+                  _entryClosure(_convertSet(context, refer('value'))),
+                ])
+              : receiver,
+          sourceType,
+        ),
       );
     }
 
-    if (targetType.isFicIMapOfSets) {
-      final value = refer('value');
+    // The map of the target, whose sets hold the type of set of the target.
+    final setType = targetType.asGenerics?.elementAtOrNull(1);
+    Expression sets(Expression map, {required bool changesSets}) => converts ||
+            changesSets
+        ? map.property('map').call([
+            _entryClosure(
+              _setOf(context, setType, _convertSet(context, refer('value'))),
+            ),
+          ])
+        : map;
 
+    if (targetType.isFicIMapOfSets) {
       return access('map').call([
         _entryClosure(
-          context.extraMappingMethod == null
-              ? value
-              : value
-                  .property('map')
-                  .call([_itemClosure(context)])
-                  .property('toISet')
-                  .call([]),
+          converts
+              ? _convertSet(context, refer('value')).property('toISet').call([])
+              : refer('value'),
         ),
       ]);
     } else if (targetType.isFicIMap) {
-      return access('asIMap').call([]);
+      return sets(access('asIMap').call([]), changesSets: false);
     } else if (targetType.isDartCoreMap) {
-      return access('unlock');
+      return sets(access('unlock'), changesSets: false);
     }
 
-    return basicExpression;
+    // The other maps are created out of a plain map whose sets are of the
+    // type of the sets of the target.
+    final changesSets = setType != null && !setType.isDartCoreSet;
+    if (targetType.isFicListMap ||
+        (targetType.isBuiltMap && !_isBuiltOwner(context))) {
+      return _construct(
+        context,
+        targetType,
+        basicExpression,
+        nullable: nullable,
+        constructor: 'of',
+        argument: (receiver) => sets(
+          receiver.property('unlock'),
+          changesSets: changesSets,
+        ),
+      );
+    }
+
+    return sets(access('unlock'), changesSets: changesSets);
   }
 
   Expression _createIterable(ExpressionContext context) {
@@ -225,6 +274,23 @@ class DefaultExpressionFactory extends ExpressionFactory {
     // The collections of fast_immutable_collections are created out of the
     // source itself when its items are not converted.
     final converts = context.extraMappingMethod != null;
+
+    if ((targetType.isBuiltList || targetType.isBuiltSet) &&
+        !_isBuiltOwner(context)) {
+      // Only the builder of a built_value class wraps the items: the other
+      // classes hold the BuiltList or the BuiltSet itself.
+      return _construct(
+        context,
+        targetType,
+        basicExpression,
+        nullable: nullable,
+        constructor: 'of',
+        argument: (receiver) => converts
+            ? receiver.property('map').call([_itemClosure(context)])
+            : receiver,
+      );
+    }
+
     Expression immutable(String name) => converts
         ? cloneExpression.property(name).call([])
         : (sourceField.nullable
@@ -256,6 +322,35 @@ class DefaultExpressionFactory extends ExpressionFactory {
     }
 
     return basicExpression;
+  }
+
+  /// Whether the mapped class is a built_value one: its builder wraps the
+  /// built collections, so they are not created here.
+  bool _isBuiltOwner(ExpressionContext context) =>
+      context.currentMethod.returnType?.isBuiltValue == true;
+
+  /// The items of the [set] of an `IMapOfSets`, converted by the extra mapping
+  /// method if any.
+  Expression _convertSet(ExpressionContext context, Expression set) =>
+      context.extraMappingMethod == null
+          ? set
+          : set.property('map').call([_itemClosure(context)]);
+
+  /// The [items] as a set of the [type] given, a `Set` when it is unknown.
+  Expression _setOf(
+    ExpressionContext context,
+    DartType? type,
+    Expression items,
+  ) {
+    if (type == null || type.isDartCoreSet) {
+      return items.property('toSet').call([]);
+    } else if (type.isFicISet) {
+      return items.property('toISet').call([]);
+    }
+
+    return refer(
+      chainDot([context.resolvePrefix(type), type.element?.name]),
+    ).newInstanceNamed('of', [items]);
   }
 
   /// Whether a [source] value is assigned to the [target] as it is: an

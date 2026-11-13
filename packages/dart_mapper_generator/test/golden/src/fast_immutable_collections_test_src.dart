@@ -625,3 +625,200 @@ abstract class FicWholeCollectionMapper {
           .map((key, value) => MapEntry(key, FicTrack(id: value.id)))
           .toIMap();
 }
+
+// --- IMapOfSets items converted across the boundary ---
+
+class FicSetsDto {
+  final IMapOfSets<String, FicTrackDto> byGenre;
+  final Map<String, Set<FicTrackDto>> byArtist;
+  final IMapOfSets<String, int> counts;
+
+  const FicSetsDto({
+    required this.byGenre,
+    required this.byArtist,
+    required this.counts,
+  });
+}
+
+class FicSets {
+  final Map<String, Set<FicTrack>> byGenre;
+  final IMapOfSets<String, FicTrack> byArtist;
+  final ListMap<String, Set<int>> counts;
+
+  const FicSets({
+    required this.byGenre,
+    required this.byArtist,
+    required this.counts,
+  });
+}
+
+@ShouldGenerate(
+  r'''class FicSetsMapperImpl extends FicSetsMapper {
+  FicSetsMapperImpl();
+
+  @override
+  FicSets toSets(FicSetsDto dto) {
+    return FicSets(
+      byGenre: dto.byGenre.unlock.map(
+        (key, value) => MapEntry(
+          key,
+          value.map((item) => _mapFicTrackDtoToFicTrack(item)).toSet(),
+        ),
+      ),
+      byArtist: IMapOfSets(
+        dto.byArtist.map(
+          (key, value) => MapEntry(
+            key,
+            value.map((item) => _mapFicTrackDtoToFicTrack(item)),
+          ),
+        ),
+      ),
+      counts: ListMap.of(dto.counts.unlock),
+    );
+  }
+
+  @override
+  FicSetsDto toDto(FicSets sets) {
+    return FicSetsDto(
+      byGenre: IMapOfSets(
+        sets.byGenre.map(
+          (key, value) => MapEntry(
+            key,
+            value.map((item) => _mapFicTrackToFicTrackDto(item)),
+          ),
+        ),
+      ),
+      byArtist: sets.byArtist.unlock.map(
+        (key, value) => MapEntry(
+          key,
+          value.map((item) => _mapFicTrackToFicTrackDto(item)).toSet(),
+        ),
+      ),
+      counts: IMapOfSets(sets.counts),
+    );
+  }
+
+  FicTrack _mapFicTrackDtoToFicTrack(FicTrackDto ficTrackDto) {
+    return FicTrack(id: ficTrackDto.id);
+  }
+
+  FicTrackDto _mapFicTrackToFicTrackDto(FicTrack ficTrack) {
+    return FicTrackDto(id: ficTrack.id);
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class FicSetsMapper {
+  FicSets toSets(FicSetsDto dto);
+
+  FicSetsDto toDto(FicSets sets);
+}
+
+// --- built_collection fields of plain classes ---
+
+class FicBuiltHolder {
+  final BuiltList<int> ids;
+  final BuiltSet<FicTrack> tracks;
+  final BuiltMap<String, int> plays;
+  final BuiltList<String>? notes;
+
+  const FicBuiltHolder({
+    required this.ids,
+    required this.tracks,
+    required this.plays,
+    this.notes,
+  });
+}
+
+class FicImmutableHolder {
+  final IList<int> ids;
+  final ISet<FicTrackDto> tracks;
+  final IMap<String, int> plays;
+  final IList<String>? notes;
+
+  const FicImmutableHolder({
+    required this.ids,
+    required this.tracks,
+    required this.plays,
+    this.notes,
+  });
+}
+
+@ShouldGenerate(
+  r'''class FicBuiltHolderMapperImpl extends FicBuiltHolderMapper {
+  FicBuiltHolderMapperImpl();
+
+  @override
+  FicBuiltHolder toHolder(FicImmutableHolder holder) {
+    return FicBuiltHolder(
+      ids: BuiltList.of(holder.ids),
+      tracks: BuiltSet.of(
+        holder.tracks.map((item) => _mapFicTrackDtoToFicTrack(item)),
+      ),
+      plays: BuiltMap.of(holder.plays.unlockView),
+      notes: holder.notes != null ? BuiltList.of(holder.notes!) : null,
+    );
+  }
+
+  FicTrack _mapFicTrackDtoToFicTrack(FicTrackDto ficTrackDto) {
+    return FicTrack(id: ficTrackDto.id);
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class FicBuiltHolderMapper {
+  FicBuiltHolder toHolder(FicImmutableHolder holder);
+}
+
+// --- Defaults of an IMap read out of a Map ---
+
+class FicDefaultsHolder {
+  final IMap<String, int> plays;
+  final IMap<String, FicTrack>? featured;
+
+  const FicDefaultsHolder({required this.plays, this.featured});
+}
+
+@ShouldGenerate(
+  r'''class FicDefaultsMapperImpl extends FicDefaultsMapper {
+  FicDefaultsMapperImpl();
+
+  @override
+  FicDefaultsHolder fromMap(Map<String, dynamic> map) {
+    return FicDefaultsHolder(
+      plays: map['plays'] != null
+          ? Map<String, int>.from(map['plays'] as Map).toIMap()
+          : const IMap<String, int>.empty(),
+      featured: map['featured'] != null
+          ? (map['featured'] as Map)
+                .map<String, FicTrack>(
+                  (key, value) => MapEntry(
+                    key as String,
+                    _mapMapToFicTrack(Map<String, dynamic>.from(value as Map)),
+                  ),
+                )
+                .toIMap()
+          : const IMap<String, FicTrack>.empty(),
+    );
+  }
+
+  FicTrack _mapMapToFicTrack(Map<String, dynamic> map) {
+    return FicTrack(id: map['id'] as String);
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class FicDefaultsMapper {
+  @Mapping(
+    target: 'plays',
+    defaultValue: 'const IMap<String, int>.empty()',
+  )
+  @Mapping(
+    target: 'featured',
+    defaultValue: 'const IMap<String, FicTrack>.empty()',
+  )
+  FicDefaultsHolder fromMap(Map<String, dynamic> map);
+}

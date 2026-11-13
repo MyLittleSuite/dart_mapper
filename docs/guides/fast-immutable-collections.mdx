@@ -346,7 +346,7 @@ LibraryDto toDto(Library library) {
 }
 ```
 
-The items of the sets of an `IMapOfSets` are converted only when both sides are an `IMapOfSets`. From and to another map (`Map<K, Set<V>>`, `IMap<K, ISet<V>>`) the sets are taken as they are, so their item type must be the same on both sides.
+The items of the sets of an `IMapOfSets` are converted from and to another map too (`Map<K, Set<V>>`, `IMap<K, ISet<V>>`, `ListMap<K, Set<V>>`), by the same mapping method as any other item: `Map<String, Set<TrackDto>>` becomes `IMapOfSets<String, Track>` and the other way round.
 
 ## Conversions
 
@@ -359,7 +359,7 @@ Collections of items (`T` is converted to the item type of the target when it di
 | any of the above | `ListSet<T>` | `ListSet.of(...)` |
 | `IList`, `ISet`, `ListSet` | `List<T>` | `.toList()` |
 | `IList`, `ISet`, `ListSet` | `Set<T>` | `.toSet()` |
-| `IList`, `ISet`, `ListSet` | `BuiltList<T>`, `BuiltSet<T>` | `ListBuilder(...)`, `SetBuilder(...)` |
+| `IList`, `ISet`, `ListSet` | `BuiltList<T>`, `BuiltSet<T>` | `BuiltList.of(...)`, `BuiltSet.of(...)`, or `ListBuilder(...)`, `SetBuilder(...)` in a built_value class |
 | `IList<T>`, `ISet<T>` | the same type | shared |
 
 Maps:
@@ -369,7 +369,7 @@ Maps:
 | `Map`, `ListMap` | `IMap<K, V>` | `.toIMap()` |
 | `BuiltMap` | `IMap<K, V>` | `.asMap().toIMap()` |
 | `IMap` | `Map<K, V>` | `.unlock` |
-| `IMap` | `BuiltMap<K, V>` | `MapBuilder(... .unlockView)` |
+| `IMap` | `BuiltMap<K, V>` | `BuiltMap.of(... .unlockView)`, or `MapBuilder(... .unlockView)` in a built_value class |
 | `Map`, `BuiltMap`, `IMap` | `ListMap<K, V>` | `ListMap.of(...)` |
 | `IMap<K, V>`, `IMapOfSets<K, V>` | the same type | shared |
 | `Map<K, Set<V>>`, `BuiltMap`, `IMap<K, ISet<V>>` | `IMapOfSets<K, V>` | `IMapOfSets(...)` |
@@ -452,7 +452,6 @@ Playlist fromMap(Map<String, dynamic> map) {
 | Limitation | Workaround |
 |------------|------------|
 | An `IMapOfSets` is not converted in class ↔ Map mappings: it is written as it is and read with a cast | a [`callable`](/guides/callable-mapping) |
-| The items of the sets of an `IMapOfSets` are converted only from and to another `IMapOfSets` | a [`callable`](/guides/callable-mapping) |
 | The configuration of a collection (`ConfigList`, `ConfigSet`, `ConfigMap`) is not carried over to a collection of another type: the default one is used | a [`callable`](/guides/callable-mapping) |
 
 ## Run the Generator
