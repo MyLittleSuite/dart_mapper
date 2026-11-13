@@ -541,20 +541,24 @@ class SubclassMappingAnalyzer {
               same(e.$2.type, method.formalParameters[e.$1]),
         );
 
-    bool exact(DartType delegate, FormalParameterElement dispatch) =>
-        delegate.same(dispatch.type, useNullability: false);
-    bool relaxed(DartType delegate, FormalParameterElement dispatch) {
-      if (exact(delegate, dispatch)) {
-        return true;
-      }
+    // What the dispatch passes to the delegate: only the discriminator Map is
+    // promoted, the auxiliary parameters keep their nullability.
+    bool accepts(DartType delegate, FormalParameterElement dispatch) =>
+        system.isAssignableTo(
+          dispatch == mapParameter
+              ? system.promoteToNonNull(dispatch.type)
+              : dispatch.type,
+          delegate,
+        );
 
-      final type = dispatch == mapParameter
-          ? system.promoteToNonNull(dispatch.type)
-          : dispatch.type;
-      return delegate.isMapLikeSource &&
-          dispatch.type.isMapLikeSource &&
-          system.isAssignableTo(type, delegate);
-    }
+    bool exact(DartType delegate, FormalParameterElement dispatch) =>
+        delegate.same(dispatch.type, useNullability: false) &&
+        accepts(delegate, dispatch);
+    bool relaxed(DartType delegate, FormalParameterElement dispatch) =>
+        exact(delegate, dispatch) ||
+        (delegate.isMapLikeSource &&
+            dispatch.type.isMapLikeSource &&
+            accepts(delegate, dispatch));
 
     final match = candidates.where((m) => matches(m, exact)).firstOrNull ??
         candidates.where((m) => matches(m, relaxed)).firstOrNull;

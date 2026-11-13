@@ -696,3 +696,29 @@ abstract class NullableDelegateShapeMapper {
 
   Circle? toCircle(Map<String, dynamic> map);
 }
+
+// ---- Case 18: nullable discriminator Map and auxiliary parameter ----
+// The Map is null-checked before the dispatch, so a delegate may take it as
+// non-nullable. An auxiliary parameter is not promoted: the delegate accepts it
+// nullable.
+
+@ShouldGenerate(
+  r"""Shape? fromRealtime([Map<String, dynamic>? map, String? id]) {
+    if (map == null) return null;
+    return switch (map['type']) {
+      'circle' => toCircle(map, id),
+      _ => throw ArgumentError(
+        'Unexpected value for discriminator key "type": ${map['type']}',
+      ),
+    };
+  }""",
+  contains: true,
+)
+@Mapper()
+abstract class NullableAuxiliaryShapeMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  Shape? fromRealtime(Map<String, dynamic>? map, String? id);
+
+  Circle toCircle(Map<String, dynamic> map, String? id);
+}

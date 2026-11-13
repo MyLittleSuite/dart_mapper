@@ -417,6 +417,18 @@ abstract class NamedParameterDelegateMapper {
 }
 
 @ShouldThrow(
+  "No mapping method found for @SubclassMapping(target: Circle) on method 'fromRealtime'. "
+  "Add a method with signature: Circle method(Map<String, dynamic> map, String? id).",
+)
+@Mapper()
+abstract class NullableAuxiliaryParameterDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(target: Circle, discriminatorValue: 'circle')
+  Shape fromRealtime(Map<String, dynamic> map, String? id);
+  Circle toCircle(Map<String, dynamic> map, String id);
+}
+
+@ShouldThrow(
   "No mapping method found for @SubclassMapping(source: Circle) on method 'toMap'. "
   "Add a method with signature: Map<String, num> method(Circle source).",
 )
