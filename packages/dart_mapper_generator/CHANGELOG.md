@@ -8,6 +8,7 @@
 - Fix: import prefixes are applied in the mappings of Built Value targets
 - Fix: `BuiltList`, `BuiltSet` and `BuiltMap` fields of standard and Freezed classes are built (`BuiltList.of(...)`) instead of receiving a `List` or a `Map`
 - Fix: the items of the sets of an `IMapOfSets` are converted from and to `Map<K, Set<V>>`, `IMap<K, ISet<V>>`, `ListMap` and `BuiltMap` too, and these targets are constructed instead of receiving the `IMapOfSets`
+- Fix: the sets of an `IMapOfSets` are converted to the set type of the target map (`IMap<K, Set<V>>`, `Map<K, ISet<V>>`) and left as they are for an `Iterable` one
 - Fix: the default of an `IMap` field read from a `Map` is applied after the conversion of the source map
 
 ## 1.2.1

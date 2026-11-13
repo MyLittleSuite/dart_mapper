@@ -218,14 +218,20 @@ class DefaultExpressionFactory extends ExpressionFactory {
         ),
       ]);
     } else if (targetType.isFicIMap) {
-      return sets(access('asIMap').call([]), changesSets: false);
+      return sets(
+        access('asIMap').call([]),
+        changesSets: _changesSets(setType, immutable: true),
+      );
     } else if (targetType.isDartCoreMap) {
-      return sets(access('unlock'), changesSets: false);
+      return sets(
+        access('unlock'),
+        changesSets: _changesSets(setType, immutable: false),
+      );
     }
 
     // The other maps are created out of a plain map whose sets are of the
     // type of the sets of the target.
-    final changesSets = setType != null && !setType.isDartCoreSet;
+    final changesSets = _changesSets(setType, immutable: false);
     if (targetType.isFicListMap ||
         (targetType.isBuiltMap && !_isBuiltOwner(context))) {
       return _construct(
@@ -336,6 +342,14 @@ class DefaultExpressionFactory extends ExpressionFactory {
           ? set
           : set.property('map').call([_itemClosure(context)]);
 
+  /// Whether the sets of a map, `ISet`s when [immutable] and `Set`s
+  /// otherwise, are not of the [type] of the sets of the target. A set is
+  /// compatible with an `Iterable` target as it is.
+  bool _changesSets(DartType? type, {required bool immutable}) =>
+      type != null &&
+      !type.isDartCoreIterable &&
+      !(immutable ? type.isFicISet : type.isDartCoreSet);
+
   /// The [items] as a set of the [type] given, a `Set` when it is unknown.
   Expression _setOf(
     ExpressionContext context,
@@ -346,6 +360,10 @@ class DefaultExpressionFactory extends ExpressionFactory {
       return items.property('toSet').call([]);
     } else if (type.isFicISet) {
       return items.property('toISet').call([]);
+    } else if (type.isDartCoreIterable) {
+      return items;
+    } else if (!type.isBuiltSet && !type.isFicListSet) {
+      return items.property('toSet').call([]);
     }
 
     return refer(

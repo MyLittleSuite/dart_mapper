@@ -822,3 +822,58 @@ abstract class FicDefaultsMapper {
   )
   FicDefaultsHolder fromMap(Map<String, dynamic> map);
 }
+
+// --- IMapOfSets with the sets of another representation ---
+
+class FicSetsSourceDto {
+  final IMapOfSets<String, int> immutable;
+  final IMapOfSets<String, int> plain;
+  final IMapOfSets<String, int> widened;
+  final IMapOfSets<String, int> listMap;
+
+  const FicSetsSourceDto({
+    required this.immutable,
+    required this.plain,
+    required this.widened,
+    required this.listMap,
+  });
+}
+
+class FicSetsTargetDto {
+  final IMap<String, Set<int>> immutable;
+  final Map<String, ISet<int>> plain;
+  final Map<String, Iterable<int>> widened;
+  final ListMap<String, Iterable<int>> listMap;
+
+  const FicSetsTargetDto({
+    required this.immutable,
+    required this.plain,
+    required this.widened,
+    required this.listMap,
+  });
+}
+
+@ShouldGenerate(
+  r'''class FicSetsRepresentationMapperImpl extends FicSetsRepresentationMapper {
+  FicSetsRepresentationMapperImpl();
+
+  @override
+  FicSetsTargetDto toTarget(FicSetsSourceDto dto) {
+    return FicSetsTargetDto(
+      immutable: dto.immutable.asIMap().map(
+        (key, value) => MapEntry(key, value.toSet()),
+      ),
+      plain: dto.plain.unlock.map(
+        (key, value) => MapEntry(key, value.toISet()),
+      ),
+      widened: dto.widened.unlock,
+      listMap: ListMap.of(dto.listMap.unlock),
+    );
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class FicSetsRepresentationMapper {
+  FicSetsTargetDto toTarget(FicSetsSourceDto dto);
+}
