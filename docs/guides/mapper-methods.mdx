@@ -106,17 +106,28 @@ A parameter of the mapper method is a source too. It binds to the target propert
 It also removes the need for an `expression` to forward a plain parameter:
 
 ```dart
+class CreateSettings {
+  final String title;
+  const CreateSettings(this.title);
+}
+
+class SettingsEntity {
+  final String id;
+  final String title;
+  const SettingsEntity({required this.id, required this.title});
+}
+
 @Mapper()
-abstract class SettingsMapper {
+abstract class SettingsEntityMapper {
   // before: @Mapping(target: 'id', expression: 'id')
-  SettingsDTO fromCreate(CreateSettings from, String id);
+  SettingsEntity fromCreate(CreateSettings from, String id);
 }
 ```
 
 Generated:
 
 ```dart
-return SettingsDTO(
+return SettingsEntity(
   id: id,
   title: from.title,
 );

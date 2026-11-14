@@ -38,11 +38,14 @@ import 'package:dart_mapper_generator/src/exceptions/unknown_target_class_error.
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/extensions/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/internal_mapping_method.dart';
 import 'package:source_gen/source_gen.dart';
 
 class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
@@ -71,6 +74,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
     final forceNonNullTargets = context.forceNonNullTargets;
     final callableMap = context.callableMap;
     final defaultValueMap = context.defaultValueMap;
+    final conditionExpressionMap = context.conditionExpressionMap;
     final constantMap = context.constantMap;
     final qualifiedByMap = context.qualifiedByMap;
     final lookup = MethodSignatureLookup(context);
@@ -211,12 +215,15 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
             target: targetName,
           );
           if (matchedGetter != null) {
+            final getterType = matchedParam
+                    .type.substitutedGetterTypes?[matchedGetter.name!] ??
+                matchedGetter.type;
             resolvedSources.add(
               Field.from(
                 name: matchedGetter.name!,
-                type: matchedGetter.type,
+                type: getterType,
                 required: matchedGetter.isRequired,
-                nullable: matchedGetter.type.isNullable,
+                nullable: getterType.isNullable,
                 instance: Instance(name: matchedParam.name!),
               ),
             );
@@ -247,7 +254,9 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
 
       final callableMappingMethod = callableMap[targetName];
       MappingMethod? sourcesMappingMethod;
-      if (callableMappingMethod == null) {
+      // An ignored target is never emitted: its method is not looked up.
+      if (callableMappingMethod == null &&
+          !ignoredTargets.contains(targetName)) {
         sourcesMappingMethod = lookup.find(
           target: targetName,
           arguments: [
@@ -260,6 +269,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
           ],
           targetType: targetField.type,
           qualifiedBy: qualifiedByMap[targetName],
+          hasDefaultValue: defaultValueMap[targetName] != null,
         );
       }
 
@@ -273,6 +283,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
           sourcesMappingMethod: sourcesMappingMethod,
           sourceAccessChains: resolvedChains,
           defaultValue: defaultValueMap[targetName],
+          conditionExpression: conditionExpressionMap[targetName],
         ),
       );
       boundTargets.add(targetName);
@@ -331,23 +342,10 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
         nullable: targetGetter.type.isNullable,
       );
 
-      // Per D-07: nullable chain to non-null target validation.
-      final chainHasNullable = accessChain.any((e) => e.$2);
-      final resolvedIsNullable = resolvedField.nullable || chainHasNullable;
-      if (resolvedIsNullable &&
-          !targetField.nullable &&
-          !forceNonNullTargets.contains(targetName) &&
-          defaultValueMap[targetName] == null) {
-        throw InvalidGenerationSourceError(
-          "Target field '$targetName' is non-nullable but the dot notation source "
-          "'$sourceExpression' may be null (nullable intermediate in chain).\n"
-          "Fix: Add forceNonNull: true or provide a defaultValue to handle the null case.",
-          element: method,
-        );
-      }
-
       final isIgnored = ignoredTargets.contains(targetName);
       final callableMappingMethod = callableMap[targetName];
+      final chainHasNullable = accessChain.any((e) => e.$2);
+      final resolvedIsNullable = resolvedField.nullable || chainHasNullable;
       // Ignored targets must not synthesize a nested converter: analyzing
       // it would surface binding errors for a mapping that is never emitted.
       final extraMappingMethod = extraMethodFor(
@@ -358,6 +356,28 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
         description: '${sourceMethodParam.name}.${traversalSegments.join('.')}',
       );
 
+      // A `qualifiedBy` method has been checked against the nullability of the
+      // source: it takes null, and is called with the source as is.
+      final callsNullSafely = qualifiedByMap[targetName] != null &&
+          resolvedIsNullable &&
+          (extraMappingMethod is ExternalMappingMethod ||
+              extraMappingMethod is InternalMappingMethod) &&
+          extraMappingMethod!.parameterTypeAt(0)?.isNullable == true;
+
+      // Per D-07: nullable chain to non-null target validation.
+      if (resolvedIsNullable &&
+          !targetField.nullable &&
+          !forceNonNullTargets.contains(targetName) &&
+          defaultValueMap[targetName] == null &&
+          !callsNullSafely) {
+        throw InvalidGenerationSourceError(
+          "Target field '$targetName' is non-nullable but the dot notation source "
+          "'$sourceExpression' may be null (nullable intermediate in chain).\n"
+          "Fix: Add forceNonNull: true or provide a defaultValue to handle the null case.",
+          element: method,
+        );
+      }
+
       bindings.add(
         Binding(
           source: resolvedField,
@@ -365,9 +385,13 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
           ignored: isIgnored,
           forceNonNull: forceNonNullTargets.contains(targetName),
           callableMappingMethod: callableMappingMethod,
-          extraMappingMethod: extraMappingMethod,
+          extraMappingMethod: callsNullSafely ? null : extraMappingMethod,
+          sourcesMappingMethod: callsNullSafely ? extraMappingMethod : null,
+          sources: callsNullSafely ? [resolvedField] : null,
+          sourceAccessChains: callsNullSafely ? [accessChain] : null,
           defaultValue: defaultValueMap[targetName],
           accessChain: accessChain,
+          conditionExpression: conditionExpressionMap[targetName],
         ),
       );
       boundTargets.add(targetName);
@@ -459,6 +483,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
             description: sourceName,
           ),
           defaultValue: defaultValueMap[targetName],
+          conditionExpression: conditionExpressionMap[targetName],
         ),
       );
       boundTargets.add(targetName);
@@ -526,6 +551,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
                 callableMappingMethod: callableMappingMethod,
                 extraMappingMethod: extraMappingMethod,
                 defaultValue: defaultValueMap[targetName],
+                conditionExpression: conditionExpressionMap[targetName],
               ),
             );
             boundTargets.add(targetName);
@@ -574,6 +600,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
             description: parameter.name!,
           ),
           defaultValue: defaultValueMap[targetName],
+          conditionExpression: conditionExpressionMap[targetName],
         ),
       );
       boundTargets.add(targetName);
@@ -590,6 +617,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
     required CallableMappingMethod? callable,
     required MappingMethod? extra,
     required String? defaultValue,
+    required String? conditionExpression,
   }) =>
       Binding(
         source: source,
@@ -599,6 +627,7 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
         callableMappingMethod: callable,
         extraMappingMethod: extra,
         defaultValue: defaultValue,
+        conditionExpression: conditionExpression,
       );
 
   /// Resolves the bare source [part] to the source parameter that has a getter

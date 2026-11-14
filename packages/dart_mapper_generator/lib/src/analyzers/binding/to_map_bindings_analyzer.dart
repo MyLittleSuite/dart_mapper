@@ -683,6 +683,7 @@ class _ToMapBuilder {
       ],
       targetType: _isFree ? null : valueType,
       qualifiedBy: config.qualifiedBy[key],
+      hasDefaultValue: defaultValue != null,
     );
 
     if (condition != null && !_acceptsNull && defaultValue == null) {

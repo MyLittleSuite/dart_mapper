@@ -204,3 +204,34 @@ abstract class PsAmbiguousNameMapper {
   @Mapping(source: 'name', target: 'id')
   PsEntity from(PsCreate from, String name);
 }
+
+class PsKeyed {
+  final String key;
+
+  const PsKeyed(this.key);
+}
+
+class PsKeyedTarget {
+  final String key;
+
+  const PsKeyedTarget({required this.key});
+}
+
+// An explicit @Mapping naming a parameter wins over a getter of a source
+// parameter named like the target.
+@ShouldGenerate(
+  r'''class PsExplicitBeforeGetterMapperImpl extends PsExplicitBeforeGetterMapper {
+  PsExplicitBeforeGetterMapperImpl();
+
+  @override
+  PsKeyedTarget from(PsKeyed dto, String id) {
+    return PsKeyedTarget(key: id);
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class PsExplicitBeforeGetterMapper {
+  @Mapping(source: 'id', target: 'key')
+  PsKeyedTarget from(PsKeyed dto, String id);
+}

@@ -249,12 +249,15 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
             continue;
           }
 
+          final getterType =
+              matchedParam.type.substitutedGetterTypes?[matchedGetter.name!] ??
+                  matchedGetter.type;
           resolvedSources.add(
             Field.from(
               name: matchedGetter.name!,
-              type: matchedGetter.type,
+              type: getterType,
               required: matchedGetter.isRequired,
-              nullable: matchedGetter.type.isNullable,
+              nullable: getterType.isNullable,
               instance: Instance(name: matchedParam.name!),
             ),
           );
@@ -265,17 +268,20 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       if (resolvedSources.isEmpty) continue;
 
       // Without a callable, the mapper method taking the sources is looked up.
-      final sourcesMappingMethod = callableMappingMethod == null
-          ? lookup.find(
-              target: targetName,
-              arguments: [
-                for (var i = 0; i < resolvedSources.length; i++)
-                  _argument(resolvedSources[i], resolvedChains[i]),
-              ],
-              targetType: resolvedTargetParam.type,
-              qualifiedBy: qualifiedByMap[targetName],
-            )
-          : null;
+      // An ignored target is never emitted: its method is not looked up.
+      final sourcesMappingMethod =
+          callableMappingMethod == null && !ignoredTargets.contains(targetName)
+              ? lookup.find(
+                  target: targetName,
+                  arguments: [
+                    for (var i = 0; i < resolvedSources.length; i++)
+                      _argument(resolvedSources[i], resolvedChains[i]),
+                  ],
+                  targetType: resolvedTargetParam.type,
+                  qualifiedBy: qualifiedByMap[targetName],
+                  hasDefaultValue: defaultValueMap[targetName] != null,
+                )
+              : null;
 
       bindings.add(
         Binding(
@@ -515,8 +521,69 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       }
     }
 
-    // --- Step 3: Auto-resolve fields from source parameters ---
+    // --- Step 2.9: method parameters named as the source of a target ---
+    // `@Mapping(source: 'id', target: 'key')` where `id` is a parameter binds
+    // before the getters of the source parameters: an explicit @Mapping wins
+    // over a getter named like its target.
     final targetSubstituted = method.returnType.substitutedGetterTypes;
+
+    void bindParameter(FormalParameterElement parameter, String targetName) {
+      if (boundTargets.contains(targetName)) return;
+      if (ignoredTargets.contains(targetName)) return;
+
+      final resolvedTargetParam = targetParam[targetName];
+      if (resolvedTargetParam == null) return;
+
+      final sourceField = _parameterField(parameter);
+      final targetField = Field.from(
+        name: targetName,
+        type: targetSubstituted?[targetName] ?? resolvedTargetParam.type,
+        required: resolvedTargetParam.isRequired,
+        nullable: (targetSubstituted?[targetName] ?? resolvedTargetParam.type)
+            .isNullable,
+      );
+
+      final callableMappingMethod = callableMap[targetName];
+      final (extraMappingMethod, sourcesMappingMethod) =
+          callableMappingMethod == null
+              ? _converter(
+                  context: context,
+                  lookup: lookup,
+                  source: sourceField,
+                  target: targetField,
+                  acceptNullableParameter: true,
+                )
+              : (null, null);
+
+      bindings.add(
+        Binding(
+          source: sourceField,
+          target: targetField,
+          forceNonNull: forceNonNullTargets.contains(targetName),
+          callableMappingMethod: callableMappingMethod,
+          extraMappingMethod: extraMappingMethod,
+          sourcesMappingMethod: sourcesMappingMethod,
+          sources: sourcesMappingMethod == null ? null : [sourceField],
+          sourceAccessChains: sourcesMappingMethod == null ? null : [null],
+          defaultValue: defaultValueMap[targetName],
+          conditionExpression: conditionExpressionMap[targetName],
+        ),
+      );
+      boundTargets.add(targetName);
+    }
+
+    for (final parameter in method.formalParameters) {
+      final parameterName = parameter.name;
+      final targetNames =
+          parameterName == null ? null : renamingMap[parameterName];
+      if (targetNames == null) continue;
+
+      for (final targetName in targetNames) {
+        bindParameter(parameter, targetName);
+      }
+    }
+
+    // --- Step 3: Auto-resolve fields from source parameters ---
     for (final sourceMethodParam in method.formalParameters) {
       final sourceClass = sourceMethodParam.type.element?.classElementOrNull;
       final sourceGetters = sourceClass?.getterElements ?? <VariableElement>[];
@@ -627,53 +694,12 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       if (parameterName == null) continue;
 
       final targetNames = [
-        ...renamingMap[parameterName] ?? [parameterName],
+        if (!renamingMap.containsKey(parameterName)) parameterName,
         ...?implicitNestedSources[parameterName],
       ];
 
       for (final targetName in targetNames) {
-        if (boundTargets.contains(targetName)) continue;
-        if (ignoredTargets.contains(targetName)) continue;
-
-        final resolvedTargetParam = targetParam[targetName];
-        if (resolvedTargetParam == null) continue;
-
-        final sourceField = _parameterField(parameter);
-        final targetField = Field.from(
-          name: targetName,
-          type: targetSubstituted?[targetName] ?? resolvedTargetParam.type,
-          required: resolvedTargetParam.isRequired,
-          nullable: (targetSubstituted?[targetName] ?? resolvedTargetParam.type)
-              .isNullable,
-        );
-
-        final callableMappingMethod = callableMap[targetName];
-        final (extraMappingMethod, sourcesMappingMethod) =
-            callableMappingMethod == null
-                ? _converter(
-                    context: context,
-                    lookup: lookup,
-                    source: sourceField,
-                    target: targetField,
-                    acceptNullableParameter: true,
-                  )
-                : (null, null);
-
-        bindings.add(
-          Binding(
-            source: sourceField,
-            target: targetField,
-            forceNonNull: forceNonNullTargets.contains(targetName),
-            callableMappingMethod: callableMappingMethod,
-            extraMappingMethod: extraMappingMethod,
-            sourcesMappingMethod: sourcesMappingMethod,
-            sources: sourcesMappingMethod == null ? null : [sourceField],
-            sourceAccessChains: sourcesMappingMethod == null ? null : [null],
-            defaultValue: defaultValueMap[targetName],
-            conditionExpression: conditionExpressionMap[targetName],
-          ),
-        );
-        boundTargets.add(targetName);
+        bindParameter(parameter, targetName);
       }
     }
 

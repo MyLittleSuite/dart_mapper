@@ -70,7 +70,8 @@ class SourceArgument {
 ///  - each argument is assignable to the parameter at the same position, with
 ///    strict nullability (a nullable argument needs a nullable parameter);
 ///  - its return type is assignable to the target type (any return type when
-///    the target type is null or `dynamic`).
+///    the target type is null or `dynamic`); a nullable return type is accepted
+///    for a non-null target when a `defaultValue` replaces the null.
 ///
 /// ```dart
 /// final method = MethodSignatureLookup(context).find(
@@ -100,11 +101,15 @@ class MethodSignatureLookup with AliasesMixin {
   /// Throws [UnknownQualifiedMethodError] when [qualifiedBy] names no method,
   /// [NoMatchingMappingMethodError] when no candidate (or the qualified one)
   /// fits the signature and [AmbiguousMappingMethodError] when several do.
+  ///
+  /// [hasDefaultValue] tells that a `defaultValue` is applied to the result of
+  /// the call, which then may return null for a non-null target.
   MappingMethod find({
     required String target,
     required List<SourceArgument> arguments,
     DartType? targetType,
     String? qualifiedBy,
+    bool hasDefaultValue = false,
   }) {
     final element = context.method;
     final typeSystem = context.mapperClass.library.typeSystem;
@@ -140,6 +145,7 @@ class MethodSignatureLookup with AliasesMixin {
         candidate.usage,
         arguments,
         effectiveTarget,
+        hasDefaultValue: hasDefaultValue,
       );
       if (reason == null) {
         matches.add(candidate);
@@ -227,9 +233,13 @@ class MethodSignatureLookup with AliasesMixin {
     TypeSystem typeSystem,
     MapperUsage usage,
     List<SourceArgument> arguments,
-    DartType? target,
-  ) {
+    DartType? target, {
+    required bool hasDefaultValue,
+  }) {
     final parameters = usage.parameters;
+    if (parameters.any((parameter) => parameter.isNamed)) {
+      return 'declares named parameter(s), which generated calls cannot pass';
+    }
     if (parameters.length != arguments.length) {
       return 'takes ${parameters.length} parameter(s), '
           '${arguments.length} source(s) given';
@@ -267,8 +277,10 @@ class MethodSignatureLookup with AliasesMixin {
           'assignable to parameter ${i + 1} (${_typeName(parameterType)})';
     }
 
-    if (target != null &&
-        !typeSystem.isAssignableTo(usage.returnType, target)) {
+    final returnType = hasDefaultValue
+        ? typeSystem.promoteToNonNull(usage.returnType)
+        : usage.returnType;
+    if (target != null && !typeSystem.isAssignableTo(returnType, target)) {
       return 'returns ${_typeName(usage.returnType)}, not assignable to '
           'the target ${_typeName(target)}';
     }

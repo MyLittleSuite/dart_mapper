@@ -425,3 +425,92 @@ abstract class MsNoMatchMapper {
   @Mapping(source: 'orderField,orderDescending', target: 'ordering')
   MsSettings from(MsSettingsDTO from);
 }
+
+// ----- named parameters, nullable results, ignored targets -----
+
+class MsNamedConverter {
+  const MsNamedConverter();
+
+  MsOrdering from({required String? field, required bool descending}) =>
+      MsOrdering(field: MsOrderField.name, descending: descending);
+}
+
+// Generated calls pass the arguments positionally: a method with named
+// parameters cannot be called.
+@ShouldThrow(
+  "No mapper method found for @Mapping(target: 'ordering') with source (String? from.orderField, bool from.orderDescending) returning MsOrdering.\n"
+  "Rejected candidates:\n"
+  "  - MsNamedConverter.from(String? field, bool descending): declares named parameter(s), which generated calls cannot pass\n"
+  "Fix: Add a mapper method (in the mapper or in a mapper listed in uses) taking these parameters in this order and returning a value assignable to the target, or use callable.",
+)
+@Mapper(uses: {MsNamedConverter})
+abstract class MsNamedMapper {
+  @Mapping(source: 'orderField,orderDescending', target: 'ordering')
+  MsSettings from(MsSettingsDTO from);
+}
+
+class MsLabeled {
+  final String label;
+
+  const MsLabeled({required this.label});
+}
+
+class MsNullableLabelConverter {
+  const MsNullableLabelConverter();
+
+  String? label(String? field, bool descending) =>
+      field == null ? null : '$field ${descending ? 'desc' : 'asc'}';
+}
+
+// A defaultValue replaces the null a method may return.
+@ShouldGenerate(
+  r'''class MsNullableResultMapperImpl extends MsNullableResultMapper {
+  MsNullableResultMapperImpl({required this.msNullableLabelConverter});
+
+  final MsNullableLabelConverter msNullableLabelConverter;
+
+  @override
+  MsLabeled from(MsSettingsDTO from) {
+    return MsLabeled(
+      label:
+          msNullableLabelConverter.label(
+            from.orderField,
+            from.orderDescending,
+          ) ??
+          'none',
+    );
+  }
+}''',
+  contains: true,
+)
+@Mapper(uses: {MsNullableLabelConverter})
+abstract class MsNullableResultMapper {
+  @Mapping(
+    source: 'orderField,orderDescending',
+    target: 'label',
+    defaultValue: 'none',
+  )
+  MsLabeled from(MsSettingsDTO from);
+}
+
+// An ignored target is never emitted: no method is looked up for it.
+@ShouldGenerate(
+  r'''class MsIgnoredCommaMapperImpl extends MsIgnoredCommaMapper {
+  MsIgnoredCommaMapperImpl();
+
+  @override
+  MsOptionalSettings from(MsSettingsDTO from) {
+    return MsOptionalSettings(ordering: null);
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class MsIgnoredCommaMapper {
+  @Mapping(
+    source: 'orderField,orderDescending',
+    target: 'ordering',
+    ignore: true,
+  )
+  MsOptionalSettings from(MsSettingsDTO from);
+}

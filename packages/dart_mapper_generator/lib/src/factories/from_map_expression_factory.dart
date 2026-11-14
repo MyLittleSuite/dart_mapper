@@ -103,17 +103,25 @@ class FromMapExpressionFactory extends ExpressionFactory {
         ),
     ];
 
-    final call = refer(context.expressionMappingMethod!.name).call(arguments);
+    final method = context.expressionMappingMethod!;
+    var call = refer(method.name).call(arguments);
     final defaultValue = context.defaultValue;
-    if (defaultValue == null) {
-      return call;
+    if (defaultValue != null) {
+      // Only mapper methods carry a defaultValue: applied to the call result.
+      call = call.ifNullThen(
+        context.counterpartField.type.isDartCoreString
+            ? literalString(defaultValue)
+            : CodeExpression(Code(defaultValue)),
+      );
     }
 
-    // Only mapper methods carry a defaultValue: applied to the call result.
-    return call.ifNullThen(
-      context.counterpartField.type.isDartCoreString
-          ? literalString(defaultValue)
-          : CodeExpression(Code(defaultValue)),
+    // The value of a built value is assigned to a builder setter as a builder.
+    return _wrapBuilt(
+      context,
+      call,
+      method,
+      context.counterpartField.type,
+      direct: true,
     );
   }
 

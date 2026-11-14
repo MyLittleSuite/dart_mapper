@@ -124,6 +124,13 @@ class MmLabelConverter {
       '${field ?? 'none'} ${descending ? 'desc' : 'asc'}';
 }
 
+class MmNullableLabelConverter {
+  const MmNullableLabelConverter();
+
+  String? label(String? field, bool descending) =>
+      field == null ? null : '$field ${descending ? 'desc' : 'asc'}';
+}
+
 class MmStrictConverter {
   const MmStrictConverter();
 
@@ -515,28 +522,28 @@ abstract class MmToMapOwnMethodMapper {
 
 @ShouldGenerate(
   r'''class MmToMapDefaultMapperImpl extends MmToMapDefaultMapper {
-  MmToMapDefaultMapperImpl({required this.mmLabelConverter});
+  MmToMapDefaultMapperImpl({required this.mmNullableLabelConverter});
 
-  final MmLabelConverter mmLabelConverter;
+  final MmNullableLabelConverter mmNullableLabelConverter;
 
   @override
   Map<String, dynamic> toMap(MmSettingsDto dto) {
     return {
       'title': dto.title,
       'ordering':
-          mmLabelConverter.label(dto.orderField, dto.orderDescending) ??
-          '\'none\'',
+          mmNullableLabelConverter.label(dto.orderField, dto.orderDescending) ??
+          'none',
     };
   }
 }''',
   contains: true,
 )
-@Mapper(uses: {MmLabelConverter})
+@Mapper(uses: {MmNullableLabelConverter})
 abstract class MmToMapDefaultMapper {
   @Mapping(
     target: 'ordering',
     source: 'orderField,orderDescending',
-    defaultValue: "'none'",
+    defaultValue: 'none',
   )
   @Mapping(target: 'orderField', ignore: true)
   @Mapping(target: 'orderDescending', ignore: true)

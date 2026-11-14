@@ -332,6 +332,7 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
           ],
           targetType: type,
           qualifiedBy: config.qualifiedBy[name],
+          hasDefaultValue: config.defaultValues[name] != null,
         );
 
         return Binding(

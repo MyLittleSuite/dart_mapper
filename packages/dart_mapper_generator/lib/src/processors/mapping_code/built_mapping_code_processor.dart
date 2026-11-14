@@ -77,7 +77,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
                   .map(
                     (b) => (
                       b.target.name,
-                      _buildExpression(method, b),
+                      _buildExpression(method, b, context.importAliases),
                     ),
                   )
                   .toList(growable: false),
@@ -99,7 +99,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
                         .map(
                           (b) => (
                             b.target.name,
-                            _buildExpression(method, b),
+                            _buildExpression(method, b, context.importAliases),
                           ),
                         )
                         .toList(growable: false),
@@ -113,7 +113,11 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
     );
   }
 
-  Expression _buildExpression(BindableMappingMethod method, Binding binding) {
+  Expression _buildExpression(
+    BindableMappingMethod method,
+    Binding binding,
+    Map<Uri, String>? importAliases,
+  ) {
     final targetClass = method.returnType!.element!.classElement;
 
     var result = expressionStrategyDispatcher.get(method.behavior).create(
@@ -125,6 +129,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
             ignored: binding.ignored,
             forceNonNull: binding.forceNonNull,
             expressionMappingMethod: binding.expressionMappingMethod,
+            importAliases: importAliases,
             extraMappingMethod: binding.extraMappingMethod,
             defaultValue: binding.defaultValue,
             constant: binding.constant,

@@ -323,7 +323,18 @@ abstract class BmDotStrictMapper {
 
   @override
   BmOrdering order(String? field, bool descending) {
-    return BmOrdering(field: field, descending: descending);
+    return BmOrdering(field: orderFieldOf(field), descending: descending);
+  }
+
+  @override
+  BmOrderField orderFieldOf([String? value]) {
+    return switch (value) {
+      null => BmOrderField.name,
+      '<NULL>' => BmOrderField.name,
+      'date' => BmOrderField.date,
+      // ignore:unreachable_switch_case
+      _ => BmOrderField.name,
+    };
   }
 }''',
   contains: true,
@@ -334,9 +345,73 @@ abstract class BmOwnMethodMapper {
   BmSettings from(BmSettingsDTO dto);
 
   BmOrdering order(String? field, bool descending);
+
+  @ValueMapping(source: ValueMapping.nullValue, target: 'name')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'name')
+  BmOrderField orderFieldOf(String? value);
+}
+
+// ----- conditionExpression -----
+
+@ShouldGenerate(
+  r'''class BmConditionMapperImpl extends BmConditionMapper {
+  BmConditionMapperImpl();
+
+  @override
+  BmLabeled from(BmNameDTO dto) {
+    return BmLabeled(
+      (b) => b
+        ..id = dto.name
+        ..label = dto.number > 0 ? dto.name ?? 'none' : 'none',
+    );
+  }
+}''',
+  contains: true,
+)
+@Mapper()
+abstract class BmConditionMapper {
+  @Mapping(target: 'id', source: 'name')
+  @Mapping(
+    target: 'label',
+    source: 'name',
+    conditionExpression: 'dto.number > 0',
+    defaultValue: 'none',
+  )
+  BmLabeled from(BmNameDTO dto);
 }
 
 // ----- qualifiedBy -----
+
+// A nullable link of the path and a qualifiedBy method taking null: the
+// method is called with the source as is, not rejected for the nullable chain.
+@Mapper()
+abstract class BmSizeLabelMapper {
+  String describe(int? size) => size == null ? 'none' : '$size';
+}
+
+@ShouldGenerate(
+  r'''class BmQualifiedChainMapperImpl extends BmQualifiedChainMapper {
+  BmQualifiedChainMapperImpl({required this.bmSizeLabelMapper});
+
+  final BmSizeLabelMapper bmSizeLabelMapper;
+
+  @override
+  BmLabeled from(BmSettingsDTO dto) {
+    return BmLabeled(
+      (b) => b
+        ..label = bmSizeLabelMapper.describe(dto.page?.size)
+        ..id = 'fixed',
+    );
+  }
+}''',
+  contains: true,
+)
+@Mapper(uses: {BmSizeLabelMapper})
+abstract class BmQualifiedChainMapper {
+  @Mapping(target: 'id', constant: 'fixed')
+  @Mapping(source: 'page.size', target: 'label', qualifiedBy: 'describe')
+  BmLabeled from(BmSettingsDTO dto);
+}
 
 @ShouldGenerate(
   r'''class BmQualifiedMapperImpl extends BmQualifiedMapper {

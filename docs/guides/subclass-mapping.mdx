@@ -230,10 +230,10 @@ abstract class DrawingMapper {
 }
 ```
 
-When the mapper declares several dispatch methods for the same sealed type (for example two discriminator keys for two payload versions), pick one with [`qualifiedBy`](/guides/mapper-methods#qualifiedby):
+When the mapper declares several dispatch methods for the same sealed type (for example two discriminator keys for two payload versions), pick one with [`qualifiedBy`](/guides/mapper-methods#qualifiedby). On a collection it selects the converter of its elements:
 
 ```dart
-@Mapping(target: 'shape', qualifiedBy: 'shapeFromV2')
+@Mapping(target: 'shapes', qualifiedBy: 'shapeFromV2')
 Drawing fromMap(Map<String, dynamic> map);
 ```
 
