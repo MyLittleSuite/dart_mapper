@@ -42,6 +42,7 @@
         { "title": "Callable Mapping", "href": "/guides/callable-mapping" },
         { "title": "Freezed Support", "href": "/guides/freezed-support" },
         { "title": "Built Value Support", "href": "/guides/built-value-support" },
+        { "title": "Fast Immutable Collections Support", "href": "/guides/fast-immutable-collections" },
         { "title": "Collections", "href": "/guides/collections" },
         { "title": "Map Mapping", "href": "/guides/map-mapping" },
         { "title": "Generic Mapping", "href": "/guides/generics" }

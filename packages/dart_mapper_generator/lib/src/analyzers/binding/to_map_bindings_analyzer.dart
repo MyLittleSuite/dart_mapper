@@ -777,9 +777,9 @@ class _ToMapBuilder {
         final changed = wireItem != item;
         if (changed) {
           result = session.typeProvider.listType(wireItem);
-        } else if (plain.isBuiltList) {
+        } else if (plain.isBuiltList || plain.isFicIList) {
           result = session.typeProvider.listType(item);
-        } else if (plain.isBuiltSet) {
+        } else if (plain.isBuiltSet || plain.isFicISet) {
           result = session.typeProvider.setType(item);
         } else {
           result = plain;
@@ -793,7 +793,7 @@ class _ToMapBuilder {
         final wireKey = generics[0].isEnum ? session.stringType : generics[0];
         final wireValue = _wire(generics[1], extra);
         final changed = wireKey != generics[0] || wireValue != generics[1];
-        result = changed || plain.isBuiltMap
+        result = changed || plain.isBuiltMap || plain.isFicIMap
             ? session.typeProvider.mapType(wireKey, wireValue)
             : plain;
       }

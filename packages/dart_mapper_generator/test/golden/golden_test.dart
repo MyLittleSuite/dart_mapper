@@ -425,4 +425,18 @@ void main() async {
     'to_map_coderabbit_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(toMapCodeRabbitErrorReader, generator);
+
+  // Group: collections of fast_immutable_collections (#93)
+  final ficReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'fast_immutable_collections_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(ficReader, generator);
+
+  // Group: collections of fast_immutable_collections imported with a prefix
+  final ficAliasReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'fast_immutable_collections_alias_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(ficAliasReader, generator);
 }

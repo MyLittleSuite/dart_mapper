@@ -1,3 +1,16 @@
+## 1.3.0
+
+- Feature: support for the collections of [fast_immutable_collections](https://pub.dev/packages/fast_immutable_collections): `IList`, `ISet`, `IMap`, `IMapOfSets`, `ListSet` and `ListMap` fields are mapped to and from `dart:core` and built collections, in standard, Freezed and Built Value classes, and in class ↔ `Map` mappings (`IList`, `ISet`, `IMap`). Immutable collections of the same type are shared instead of being copied (#93)
+- Feature: a hand-written method converting a whole map (`IMap<K, B> convert(Map<K, A> map)`) is called as it is, as for iterables
+- Fix: `BuiltList`, `BuiltSet` and `BuiltMap` targets whose items are converted by a generated method received the builders of the items instead of the items
+- Fix: a `BuiltMap` source mapped to a `Map` target is converted with `toMap()`
+- Fix: a `BuiltList` / `BuiltSet` target is built according to its own type, not the one of the source (`List` → `BuiltSet`), and the dead `?? []` fallback is no longer generated for non-nullable sources
+- Fix: import prefixes are applied in the mappings of Built Value targets
+- Fix: `BuiltList`, `BuiltSet` and `BuiltMap` fields of standard and Freezed classes are built (`BuiltList.of(...)`) instead of receiving a `List` or a `Map`
+- Fix: the items of the sets of an `IMapOfSets` are converted from and to `Map<K, Set<V>>`, `IMap<K, ISet<V>>`, `ListMap` and `BuiltMap` too, and these targets are constructed instead of receiving the `IMapOfSets`
+- Fix: the sets of an `IMapOfSets` are converted to the set type of the target map (`IMap<K, Set<V>>`, `Map<K, ISet<V>>`) and left as they are for an `Iterable` one
+- Fix: the default of an `IMap` field read from a `Map` is applied after the conversion of the source map
+
 ## 1.2.1
 
 - Fix: the constructor that builds the target no longer depends on the order of declaration. Public constructors are preferred over private ones (a Freezed class without fields, with `const Foo._()` next to `const factory Foo()`, is built with `Foo()`), factories over generative constructors of abstract classes, then the most parameters and the unnamed constructor. A target whose only constructors are private to another library raises `InaccessibleConstructorError` instead of generating code that does not compile (#117)

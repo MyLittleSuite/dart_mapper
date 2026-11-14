@@ -78,7 +78,7 @@ abstract class Field {
         required: required,
         nullable: nullable,
       );
-    } else if (type.isMap) {
+    } else if (type.isMap || type.isFicIMapOfSets) {
       return MapField(
         name: name,
         type: type,

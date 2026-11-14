@@ -139,9 +139,9 @@ class ToMapExpressionFactory extends ExpressionFactory {
     if (sourceItem == null || wireItem == null) return (source, false);
 
     if (_same(sourceItem, wireItem)) {
-      final plainName = sourceType.isBuiltList
+      final plainName = sourceType.isBuiltList || sourceType.isFicIList
           ? 'toList'
-          : sourceType.isBuiltSet
+          : sourceType.isBuiltSet || sourceType.isFicISet
               ? 'toSet'
               : null;
       if (plainName == null) return (source, false);
@@ -195,15 +195,24 @@ class ToMapExpressionFactory extends ExpressionFactory {
     final keyChanged = !_same(sourceGenerics[0], wireGenerics[0]);
     final valueChanged = !_same(sourceGenerics[1], wireGenerics[1]);
 
+    // Built and immutable maps are stored as plain maps.
     final built = sourceType.isBuiltMap;
-    if (!keyChanged && !valueChanged) {
-      if (!built) return (source, false);
+    final immutable = sourceType.isFicIMap;
+    Expression plain() {
+      if (immutable) {
+        return nullable
+            ? source.nullSafeProperty('unlock')
+            : source.property('unlock');
+      }
 
-      return (
-        (nullable ? source.nullSafeProperty('toMap') : source.property('toMap'))
-            .call([]),
-        false,
-      );
+      return (nullable
+              ? source.nullSafeProperty('toMap')
+              : source.property('toMap'))
+          .call([]);
+    }
+
+    if (!keyChanged && !valueChanged) {
+      return (built || immutable ? plain() : source, false);
     }
 
     final suffix = depth == 0 ? '' : '$depth';
@@ -229,11 +238,8 @@ class ToMapExpressionFactory extends ExpressionFactory {
 
     Expression base = source;
     var nullAware = nullable;
-    if (built) {
-      base = (nullable
-              ? source.nullSafeProperty('toMap')
-              : source.property('toMap'))
-          .call([]);
+    if (built || immutable) {
+      base = plain();
       nullAware = false;
     }
 

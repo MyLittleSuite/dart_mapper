@@ -76,7 +76,8 @@ bool isMapCustomClass(DartType type) {
       !type.isIterable &&
       !type.isMap &&
       !type.isPrimitive &&
-      !type.isLibraryBuilt;
+      !type.isLibraryBuilt &&
+      !type.isLibraryFic;
 }
 
 /// The single converter lookup of class <-> Map mappings.

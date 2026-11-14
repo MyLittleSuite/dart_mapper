@@ -32,6 +32,7 @@ import 'package:dart_mapper_generator/src/extensions/expression.dart';
 import 'package:dart_mapper_generator/src/extensions/mapping_method.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/map_expressions.dart';
+import 'package:dart_mapper_generator/src/misc/strings.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_entry_field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
@@ -480,7 +481,17 @@ class FromMapExpressionFactory extends ExpressionFactory {
         {},
         [refer(elementName)],
       );
-      result = mapped.property(isSet ? 'toSet' : 'toList').call([]);
+      result = mapped
+          .property(
+            type.isFicIList
+                ? 'toIList'
+                : type.isFicISet
+                    ? 'toISet'
+                    : isSet
+                        ? 'toSet'
+                        : 'toList',
+          )
+          .call([]);
     }
 
     if (type.isBuiltList || type.isBuiltSet) {
@@ -489,6 +500,12 @@ class FromMapExpressionFactory extends ExpressionFactory {
       result = _isBuiltTarget(context)
           ? refer(builder).call([result])
           : refer(built).property('of').call([result]);
+    } else if (identity && type.isFicIList) {
+      result = result.property('toIList').call([]);
+    } else if (identity && type.isFicISet) {
+      result = result.property('toISet').call([]);
+    } else if (type.isFicListSet) {
+      result = _ficReference(context, type).property('of').call([result]);
     }
 
     return _guard(raw, nullable, defaultExpression, result,
@@ -514,6 +531,9 @@ class FromMapExpressionFactory extends ExpressionFactory {
         : context.resolveType(value, withNullability: value.isNullable);
     final convertsKey = key != null && key.isEnum;
     final convertsValue = extra != null || _needsConversion(value);
+    // An `IMap` is not a `Map`: its default cannot be the fallback of the
+    // source map, it is the fallback of the converted one.
+    final folded = type.isFicIMap ? null : defaultExpression;
 
     Expression result;
     if (!convertsKey && !convertsValue) {
@@ -523,7 +543,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
           ..types.addAll([refer(keyName), refer(valueName)]),
       ).newInstanceNamed(
         'from',
-        [_container(raw, 'Map', defaultExpression, parenthesized: false)],
+        [_container(raw, 'Map', folded, parenthesized: false)],
       );
     } else {
       final keyExpression = convertsKey
@@ -541,7 +561,7 @@ class FromMapExpressionFactory extends ExpressionFactory {
               extra: extra,
             );
 
-      result = _container(raw, 'Map', defaultExpression).property('map').call(
+      result = _container(raw, 'Map', folded).property('map').call(
         [
           Method(
             (b) => b
@@ -562,11 +582,21 @@ class FromMapExpressionFactory extends ExpressionFactory {
       result = _isBuiltTarget(context)
           ? refer('MapBuilder').call([result])
           : refer('BuiltMap').property('of').call([result]);
+    } else if (type.isFicIMap) {
+      result = result.property('toIMap').call([]);
+    } else if (type.isFicListMap) {
+      result = _ficReference(context, type).property('of').call([result]);
     }
 
     return _guard(raw, nullable, defaultExpression, result,
-        defaultFolded: true);
+        defaultFolded: !type.isFicIMap);
   }
+
+  /// The class of the fast_immutable_collections collection [type], with
+  /// the prefix of its import.
+  Expression _ficReference(ExpressionContext context, DartType type) => refer(
+        chainDot([context.resolvePrefix(type), type.element?.name]),
+      );
 
   /// `raw as Iterable`, or `(raw as Iterable? ?? default)` when a default is given.
   Expression _container(
@@ -647,5 +677,6 @@ bool needsGeneratedMapping(DartType type) {
       !type.isDartCoreObject &&
       !type.isIterable &&
       !type.isMap &&
+      !type.isLibraryFic &&
       element.library?.isInSdk != true;
 }

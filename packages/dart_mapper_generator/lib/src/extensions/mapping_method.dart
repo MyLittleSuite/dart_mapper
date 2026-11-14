@@ -24,11 +24,13 @@
  */
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/internal_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapping_behavior.dart';
 
 extension MappingMethodExtension on MappingMethod {
   /// The type of the first parameter of this method, when known.
@@ -42,5 +44,19 @@ extension MappingMethodExtension on MappingMethod {
         CallableMappingMethod(:final parameters) =>
           parameters.firstOrNull?.field.type,
         _ => null,
+      };
+
+  /// Whether this method returns the builder of a built_value class instead
+  /// of the class itself, as the generated private methods do.
+  bool get returnsBuilder => switch (this) {
+        BindableMappingMethod(
+          isOverride: false,
+          :final behavior,
+          :final returnType
+        ) =>
+          behavior == MappingBehavior.built ||
+              (behavior == MappingBehavior.fromMap &&
+                  returnType?.isBuiltValue == true),
+        _ => false,
       };
 }

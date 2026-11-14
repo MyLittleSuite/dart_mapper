@@ -112,6 +112,10 @@ abstract class UserMapper {
 
 Freezed classes may contain enum fields defined with the `@freezed` annotation. These resolve automatically. Use `@ValueMapping` on the mapper method if the source and target enums have different constant names.
 
+## Fast Immutable Collections
+
+Freezed classes often hold the collections of [fast_immutable_collections](https://pub.dev/packages/fast_immutable_collections) (`IList`, `ISet`, `IMap`, ...). They are mapped to and from standard and built collections automatically. See the [Fast Immutable Collections support guide](/guides/fast-immutable-collections#freezed-classes).
+
 ## Run the Generator
 
 ```sh
@@ -123,4 +127,5 @@ dart run build_runner watch
 ## See Also
 
 - [Built Value support guide](/guides/built-value-support)
+- [Fast Immutable Collections support guide](/guides/fast-immutable-collections)
 - [Getting Started](/getting-started)
