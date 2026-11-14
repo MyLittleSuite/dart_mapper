@@ -16,6 +16,7 @@ const Mapping({
   bool ignore = false,
   bool forceNonNull = false,
   MappingCallable? callable,
+  String? qualifiedBy,
   String? defaultValue,
   String? constant,
   String? expression,
@@ -28,10 +29,11 @@ const Mapping({
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `target` | `String` | — (required) | Name of the target field to configure. A dotted name (`'address.street'`) configures a property of a nested target object, or a nested key of a target map. |
-| `source` | `String?` | `null` | Name of the source field. Use dot notation for nested access (`'address.city'`). Defaults to the target field name if omitted. |
+| `source` | `String?` | `null` | Name of the source field or of a method parameter. Use dot notation for nested access (`'address.city'`). Comma-separated names (`'first,last'`) pass several values to a `callable` or to a mapper method. Defaults to the target field name if omitted. |
 | `ignore` | `bool` | `false` | When `true`, the target field is skipped entirely. The target class must handle the missing value (e.g., with a default or nullable type). |
-| `forceNonNull` | `bool` | `false` | When `true`, force-unwraps a nullable source field. Use when you know the source will not be null at runtime. |
+| `forceNonNull` | `bool` | `false` | When `true`, force-unwraps a nullable source field. Use when you know the source will not be null at runtime. Not allowed on a comma-separated `source` without `callable`. |
 | `callable` | `MappingCallable?` | `null` | A function reference that computes the target field value. The function receives the source parameter(s) and returns the target field value. |
+| `qualifiedBy` | `String?` | `null` | Selects the mapper method that converts the source(s), as `'methodName'` or `'MapperClass.methodName'`. The signature is still checked. Cannot combine with `callable`, `expression`, `constant`, or `ignore`. |
 | `defaultValue` | `String?` | `null` | A Dart expression string used as the value when the source field is `null`. Examples: `"'unknown'"`, `"0"`, `"false"`. |
 | `constant` | `String?` | `null` | A constant Dart expression emitted as the target field value regardless of the source. Examples: `"'v1'"`, `"42"`. |
 | `expression` | `String?` | `null` | A raw Dart expression emitted verbatim. Access source parameters by their declared names. Cannot combine with `source`, `defaultValue`, `constant`, or `callable`. |
@@ -100,6 +102,31 @@ abstract class UserMapper {
 
 See [Callable Mapping guide](/guides/callable-mapping) for multi-argument callables.
 
+## Several Sources and Mapper Methods
+
+A comma-separated `source` combines several values. With `callable` they are the arguments of the function. Without `callable`, the generator looks for a mapper method (in `uses` first, then in the mapper itself) whose parameters accept them, in order:
+
+```dart
+@Mapper(uses: {OrderingMapper})
+abstract class SettingsMapper {
+  @Mapping(source: 'orderField,orderDescending', target: 'ordering')
+  Settings from(SettingsDTO dto);
+}
+```
+
+Generated: `ordering: orderingMapper.from(dto.orderField, dto.orderDescending)`. If more than one method fits, choose with `qualifiedBy`:
+
+```dart
+@Mapping(
+  source: 'orderField,orderDescending',
+  target: 'ordering',
+  qualifiedBy: 'OrderingMapper.fromFlat',
+)
+Settings from(SettingsDTO dto);
+```
+
+`qualifiedBy` also picks one converter for a single source when several have the same signature. See the [Mapper Methods guide](/guides/mapper-methods).
+
 ## Expression
 
 Emit a raw Dart expression directly:
@@ -146,6 +173,20 @@ These combinations are **not allowed** and produce a build-time error:
 | `expression` + `callable` | Both compute the value — ambiguous |
 | `conditionExpression` + `constant` | Condition needs source access |
 | `conditionExpression` + `callable` | Both control the output flow |
+| `qualifiedBy` + `callable` | Both select how the value is computed |
+| `qualifiedBy` + `expression` | Expression renders a value verbatim |
+| `qualifiedBy` + `constant` | Constant is always set |
+| `qualifiedBy` + `ignore` | The field is skipped |
+| `forceNonNull` + comma-separated `source` without `callable` | The mapper method receives the nullable values itself |
+
+Valid combinations with a comma-separated `source` resolved by a mapper method:
+
+| Combination | Behavior |
+|-------------|----------|
+| `qualifiedBy` | picks the method by name |
+| `defaultValue` | applied with `??` to the method result |
+| `conditionExpression` | wraps the call |
+| dotted `target` | the call builds the nested property |
 
 ## With Maps
 
@@ -167,5 +208,6 @@ See the [Map Mapping guide](/guides/map-mapping).
 - [Expressions guide](/guides/expressions) — `expression:` deep dive
 - [Conditional Expressions guide](/guides/conditional-expressions) — `conditionExpression:` deep dive
 - [Callable Mapping guide](/guides/callable-mapping) — `callable:` deep dive
+- [Mapper Methods guide](/guides/mapper-methods) — comma sources via mapper methods, `qualifiedBy:`, parameters as sources
 - [Defaults & Constants guide](/guides/defaults-and-constants) — `defaultValue:` and `constant:`
 - [Map Mapping guide](/guides/map-mapping) — `@Mapping` on `Map<String, dynamic>` methods

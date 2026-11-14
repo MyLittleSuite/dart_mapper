@@ -36,7 +36,6 @@ import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/field/map_entry_field.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/bindable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
-import 'package:dart_mapper_generator/src/models/mapper/mapping/method/callable_mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/generated_private_mapping_method.dart';
 
 /// Builds the expressions reading a value out of a map (Map -> class).
@@ -100,11 +99,22 @@ class FromMapExpressionFactory extends ExpressionFactory {
             fields[i],
             _sourceRead(fields[i], chains?[i]),
           ),
-          _parameterType(context.expressionMappingMethod!, i),
+          context.expressionMappingMethod!.parameterTypeAt(i),
         ),
     ];
 
-    return refer(context.expressionMappingMethod!.name).call(arguments);
+    final call = refer(context.expressionMappingMethod!.name).call(arguments);
+    final defaultValue = context.defaultValue;
+    if (defaultValue == null) {
+      return call;
+    }
+
+    // Only mapper methods carry a defaultValue: applied to the call result.
+    return call.ifNullThen(
+      context.counterpartField.type.isDartCoreString
+          ? literalString(defaultValue)
+          : CodeExpression(Code(defaultValue)),
+    );
   }
 
   /// `forceNonNull` unwraps a nullable typed map value before it is used.
@@ -120,11 +130,6 @@ class FromMapExpressionFactory extends ExpressionFactory {
               source.nullable
           ? read.nullChecked
           : read;
-
-  DartType? _parameterType(MappingMethod method, int index) =>
-      method is CallableMappingMethod
-          ? method.parameters.elementAtOrNull(index)?.field.type
-          : null;
 
   /// Typed map values (`Map<String, Object?>`) do not flow into the typed
   /// parameter of a callable: they are cast to it. `dynamic` values do.

@@ -38,9 +38,7 @@ import 'package:dart_mapper_example/freezed/models/user_jto.dart';
 
 part 'freezed_mapper.g.dart';
 
-CoordDTO _toCoordDTO(dynamic coord) {
-  assert(coord is Coord);
-
+CoordDTO _toCoordDTO(Coord coord) {
   return CoordDTO(lat: coord.lat, lon: coord.lon);
 }
 
@@ -76,7 +74,8 @@ abstract class FreezedAnyRemainingStatusMapper {
 
 @Mapper()
 abstract class FreezedAnyUnmappedStatusMapper {
-  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
+  @ValueMapping(
+      source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   FrzTargetStatus? convert(FrzSourceStatus source);
 }
 

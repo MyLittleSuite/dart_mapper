@@ -1,0 +1,163 @@
+---
+title: "Mapper Methods as Sources"
+description: Resolve comma-separated sources through a mapper method, pick it with qualifiedBy, and use method parameters as sources.
+---
+
+# Mapper Methods as Sources
+
+A comma-separated `source` combines several values into one target field. It can be resolved by a [`callable`](/guides/callable-mapping) or, without `callable`, by a **mapper method**: a method of one of the `uses` mappers, or of the mapper itself. Unlike a top-level callable, a mapper method can use the other mappers of its class.
+
+## The Problem
+
+A DTO stores an ordering as two flat fields, the model holds one typed value:
+
+```dart
+class SettingsDTO {
+  final String? orderField; // enum name, may be unknown or null
+  final bool orderDescending;
+  const SettingsDTO({this.orderField, required this.orderDescending});
+}
+
+class Settings {
+  final Ordering ordering; // Ordering(field: OrderField, descending: bool)
+  const Settings({required this.ordering});
+}
+
+@Mapper()
+abstract class OrderFieldMapper {
+  @ValueMapping(source: ValueMapping.nullValue, target: 'name')
+  @ValueMapping(source: ValueMapping.anyRemaining, target: 'name')
+  OrderField from(String? value);
+
+  String to(OrderField field);
+}
+```
+
+A callable is a top-level function: it cannot reach `OrderFieldMapper`. A raw `expression` is an unchecked string.
+
+## Comma Sources Resolved by a Method
+
+Declare the combining method in a mapper, and point `source` at the fields:
+
+```dart
+@Mapper(uses: {OrderFieldMapper})
+abstract class OrderingMapper {
+  Ordering from(String? field, bool descending);
+}
+
+@Mapper(uses: {OrderingMapper})
+abstract class SettingsMapper {
+  @Mapping(source: 'orderField,orderDescending', target: 'ordering')
+  Settings from(SettingsDTO from);
+}
+```
+
+Generated:
+
+```dart
+return Settings(
+  ordering: orderingMapper.from(from.orderField, from.orderDescending),
+);
+```
+
+The generator looks for a method such that:
+
+- it has the same number of parameters as the sources, in the same **order**;
+- every source type is assignable to its parameter type;
+- its return type is assignable to the target type;
+- nullability is strict: a nullable source (a nullable field, or a `?.` link in a dot-notation path) needs a nullable parameter.
+
+It searches the `uses` mappers first, then the methods of the mapper itself. The method being generated is never a candidate.
+
+## qualifiedBy
+
+`qualifiedBy` picks the method by name, `'methodName'` or `'MapperClass.methodName'`. The signature is still checked.
+
+```dart
+@Mapping(
+  source: 'orderField,orderDescending',
+  target: 'ordering',
+  qualifiedBy: 'OrderingMapper.fromFlat',
+)
+Settings from(SettingsDTO from);
+```
+
+It also works on a single source, to choose one converter among several with the same signature:
+
+```dart
+@Mapping(source: 'created', target: 'created', qualifiedBy: 'toIso')
+EventDTO toDto(Event event);
+```
+
+`qualifiedBy` cannot be combined with `callable`, `expression`, `constant` or `ignore`. It is inherited with [`@InheritConfiguration`](/annotations/inherit-configuration).
+
+## Method Parameters as Sources
+
+A parameter of the mapper method is a source too. It binds to the target property with the same name, and it can be named in `source`, also inside a comma-separated list. This makes the `OrderingMapper` above fully declarative: `field` goes through `OrderFieldMapper.from`, `descending` is copied.
+
+It also removes the need for an `expression` to forward a plain parameter:
+
+```dart
+@Mapper()
+abstract class SettingsMapper {
+  // before: @Mapping(target: 'id', expression: 'id')
+  SettingsDTO fromCreate(CreateSettings from, String id);
+}
+```
+
+Generated:
+
+```dart
+return SettingsDTO(
+  id: id,
+  title: from.title,
+);
+```
+
+Precedence, so existing mappers keep generating the same code:
+
+1. an explicit `@Mapping`;
+2. a property of a source parameter (the usual auto-mapping);
+3. a parameter with the same name as the target.
+
+A bare `source: 'x'` that names both a parameter and a property of another parameter is ambiguous, with the same error as in [Multi-Source Mapping](/guides/multi-source).
+
+## Combining with Other Options
+
+| Feature | Behavior |
+|---------|----------|
+| Source dot notation (`a.x,b.y`) | each part is resolved as usual; a nullable link makes the argument nullable |
+| Multi-source methods | bare parts are resolved across the parameters |
+| Target dot notation (`target: 'ordering.field'`) | the call builds the nested property |
+| `defaultValue` | applied with `??` to the call result |
+| `conditionExpression` | wraps the call as usual |
+| `forceNonNull` | **not allowed** on a comma source without `callable` (build error) |
+| `expression`, `constant`, `ignore`, `callable` | cannot be combined with `qualifiedBy` (build error) |
+| `@InheritInverseConfiguration` | a comma-separated mapping is not inverted, as with callables |
+| Class to Map, Map to class | supported, see the [Map Mapping guide](/guides/map-mapping) |
+| Built Value | supported, see the [Built Value guide](/guides/built-value-support) |
+
+## Callable or Mapper Method
+
+| Prefer | When |
+|--------|------|
+| mapper method | the value needs another mapper (`uses`), you want the signature checked against the sources, or the logic is reusable |
+| `callable` | a small top-level function is enough and needs no mapper |
+
+## Build Errors
+
+| Situation | Error |
+|-----------|-------|
+| no method fits | `NoMatchingMappingMethodError`: lists every rejected candidate with the reason (arity, type of argument N, a nullable argument, return type) |
+| more than one method fits | `AmbiguousMappingMethodError`: lists the matches and suggests `qualifiedBy` |
+| `qualifiedBy` names no method | `UnknownQualifiedMethodError`: lists the available methods |
+| `qualifiedBy` names a method with the wrong signature | the same as no match, for that method only |
+| `forceNonNull` on a comma source without `callable` | `InvalidCommaSeparatedSourceError` |
+| `qualifiedBy` with `callable`, `expression`, `constant` or `ignore` | `InvalidMappingCombinationError` |
+
+## See Also
+
+- [@Mapping annotation reference](/annotations/mapping)
+- [Callable Mapping guide](/guides/callable-mapping)
+- [Multi-Source Mapping guide](/guides/multi-source)
+- [Map Mapping guide](/guides/map-mapping)

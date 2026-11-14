@@ -32,6 +32,8 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.da
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/binding/map_converter_lookup.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/mapping_method/method_signature_lookup.dart';
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/incompatible_map_value_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_map_source_parameter_error.dart';
@@ -195,6 +197,7 @@ class _Config {
   final Map<String, String> constants;
   final Map<String, String> expressions;
   final Map<String, String> conditions;
+  final Map<String, String> qualifiedBy;
 
   const _Config({
     this.renamingMap = const {},
@@ -206,6 +209,7 @@ class _Config {
     this.constants = const {},
     this.expressions = const {},
     this.conditions = const {},
+    this.qualifiedBy = const {},
   });
 
   factory _Config.from(BindingsAnalyzerContext context) => _Config(
@@ -218,6 +222,7 @@ class _Config {
         constants: context.constantMap,
         expressions: context.expressionMap,
         conditions: context.conditionExpressionMap,
+        qualifiedBy: context.qualifiedByMap,
       );
 }
 
@@ -240,7 +245,7 @@ class _Resolved {
 /// State shared between the builders of a method and of the private methods
 /// generated for its nested classes.
 class _Session {
-  final AnalyzerContext context;
+  final MethodAnalyzerContext context;
   final Element element;
   final Map<String, GeneratedPrivateMappingMethod> generated = {};
   final Set<String> inProgress = {};
@@ -306,10 +311,18 @@ class _ToMapBuilder {
       if (!entry.value.contains(',')) continue;
       if (bound.contains(key) || config.ignored.contains(key)) continue;
       final callable = config.callables[key];
-      if (callable == null) continue;
 
       final parts = entry.value.split(',').map((p) => p.trim()).toList();
       final resolved = parts.map(_resolve).toList(growable: false);
+
+      if (callable == null) {
+        add(
+          _unorderedOffset,
+          _bindMethod(key, parts, resolved),
+        );
+        continue;
+      }
+
       _checkCallable(key, callable);
 
       add(
@@ -507,8 +520,7 @@ class _ToMapBuilder {
       return false;
     }
 
-    return [element, ...element.allSupertypes.map((type) => type.element)]
-        .any(
+    return [element, ...element.allSupertypes.map((type) => type.element)].any(
       (candidate) => candidate.fields.any(
         (field) =>
             !field.isStatic && field.name == name && field.getter != null,
@@ -652,6 +664,64 @@ class _ToMapBuilder {
         element: session.element,
       );
 
+  /// The binding of a comma-separated source without callable: the mapper
+  /// method accepting the sources, whose result is stored in the map.
+  Binding _bindMethod(
+      String key, List<String> parts, List<_Resolved> resolved) {
+    final defaultValue = config.defaults[key];
+    final condition = config.conditions[key];
+
+    final method = MethodSignatureLookup(session.context).find(
+      target: key,
+      arguments: [
+        for (var i = 0; i < resolved.length; i++)
+          SourceArgument(
+            type: resolved[i].field.type,
+            description: parts[i],
+            nullableChain: resolved[i].chain?.any((link) => link.$2) ?? false,
+          ),
+      ],
+      targetType: _isFree ? null : valueType,
+      qualifiedBy: config.qualifiedBy[key],
+    );
+
+    if (condition != null && !_acceptsNull && defaultValue == null) {
+      throw InvalidGenerationSourceError(
+        "conditionExpression on non-nullable map value '$key': "
+        "requires a defaultValue or a nullable map value type.\n"
+        "Fix: Add defaultValue: '...' to the @Mapping annotation, or make the map value type nullable.",
+        element: session.element,
+      );
+    }
+
+    return Binding(
+      source: resolved.first.field,
+      sources: resolved.map((r) => r.field).toList(growable: false),
+      sourceAccessChains: resolved.map((r) => r.chain).toList(growable: false),
+      target: _target(key, method.returnType ?? session.dynamicType),
+      sourcesMappingMethod: method,
+      defaultValue: defaultValue,
+      conditionExpression: condition,
+    );
+  }
+
+  /// The converter picked by `qualifiedBy`, looked up on the item type of
+  /// collections like declared converters are. Null values are guarded by the
+  /// expression factory, so the argument is looked up as a non-null value.
+  MappingMethod _qualified(String key, Field source, DartType type) =>
+      MethodSignatureLookup(session.context).find(
+        target: key,
+        arguments: [
+          SourceArgument(
+            type: _leafOf(type),
+            description: source.instance == null
+                ? source.name
+                : '${source.instance!.name}.${source.name}',
+          ),
+        ],
+        qualifiedBy: config.qualifiedBy[key],
+      );
+
   Binding _bind(String key, Field source, List<(String, bool)>? chain) {
     final callable = config.callables[key];
     final forceNonNull = config.forceNonNull.contains(key);
@@ -686,11 +756,16 @@ class _ToMapBuilder {
       type = _nullable(type);
     }
 
-    MappingMethod? extra = _findConverter(type);
-    if (extra == null) {
-      final leaf = _leafOf(type);
-      if (leaf != type) {
-        extra = _findConverter(leaf);
+    MappingMethod? extra;
+    if (config.qualifiedBy.containsKey(key)) {
+      extra = _qualified(key, source, type);
+    } else {
+      extra = _findConverter(type);
+      if (extra == null) {
+        final leaf = _leafOf(type);
+        if (leaf != type) {
+          extra = _findConverter(leaf);
+        }
       }
     }
 
