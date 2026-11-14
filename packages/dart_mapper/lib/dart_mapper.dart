@@ -25,6 +25,7 @@
 
 library;
 
+export 'src/discriminator_key.dart';
 export 'src/inherit_configuration.dart';
 export 'src/inherit_inverse_configuration.dart';
 export 'src/mapper.dart';

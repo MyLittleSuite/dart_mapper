@@ -15,7 +15,7 @@ MapStruct-style object mapping for Dart. Define type-safe mappings declaratively
 - Dot notation for nested property access
 - Expression-based computed fields
 - Conditional mapping with fallback values
-- Subclass mapping with Dart 3 pattern matching
+- Subclass mapping with Dart 3 pattern matching, including `Map` ↔ sealed class hierarchies via a discriminator
 - Default values and constants
 - Callable functions for custom mapping logic
 - Class ↔ `Map<String, dynamic>` mapping (Firestore, Realtime Database, JSON-like payloads)

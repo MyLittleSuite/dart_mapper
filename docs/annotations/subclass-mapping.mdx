@@ -1,6 +1,6 @@
 ---
 title: "@SubclassMapping"
-description: Routes subclass source values to subclass target types in a sealed-class hierarchy.
+description: Routes subclass source values to subclass target types, or Map discriminator values to subclasses, in a class hierarchy.
 ---
 
 # @SubclassMapping
@@ -11,8 +11,9 @@ Instructs `dart_mapper` to dispatch the mapping to a different target subtype de
 
 ```dart
 const SubclassMapping({
-  required Type source,
-  required Type target,
+  Type? source,
+  Type? target,
+  Object? discriminatorValue,
 })
 ```
 
@@ -20,8 +21,9 @@ const SubclassMapping({
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `source` | `Type` | The source subclass type to match at runtime. |
-| `target` | `Type` | The target subclass type to produce for the matched source. |
+| `source` | `Type?` | The source subclass type to match at runtime. Required for class → class and class → Map; omitted when the source is a `Map`. |
+| `target` | `Type?` | The target subclass type to produce for the matched source. Required for class → class and Map → class; omitted when the target is a `Map`. |
+| `discriminatorValue` | `Object?` | The value identifying the subclass in the `Map`. Required when one side is a `Map` (together with [`@DiscriminatorKey`](/annotations/discriminator-key)), forbidden for class → class. |
 
 ## Usage
 
@@ -63,7 +65,7 @@ ShapeDto toDto(Shape shape) {
 
 - Each `source` type listed must be a concrete subtype of the method's source parameter type.
 - Each `target` type listed must be a concrete subtype of the method's return type.
-- Additional mapping methods for the subclass pairs are generated automatically by the mapper. You do not have to declare them.
+- For class → class dispatch, the mapping methods for the subclass pairs are generated automatically by the mapper. You do not have to declare them. [Map dispatch](#map--class-hierarchy) is different: its delegates must be declared.
 - The parent mapping method (`toDto(Shape shape)`) must be **abstract** — the generator overwrites it completely.
 
 ## Field-Level Customization
@@ -84,6 +86,37 @@ abstract class ShapeMapper {
 
 When an explicit method for a subclass pair exists the generator uses it; otherwise it auto-generates one.
 
+## Map ↔ Class Hierarchy
+
+When one side of the method is a `Map`, the subclass is selected by a discriminator entry in the map. Declare the key once with [`@DiscriminatorKey`](/annotations/discriminator-key) and the value on each `@SubclassMapping`. The side that is a `Map` is omitted:
+
+| Direction | Parameters |
+|-----------|------------|
+| class → class | `source` and `target`, no `discriminatorValue` |
+| Map → class | `target` and `discriminatorValue` |
+| class → Map | `source` and `discriminatorValue` |
+
+```dart
+@DiscriminatorKey('type')
+@SubclassMapping(target: Circle, discriminatorValue: 'circle')
+@SubclassMapping(target: Rect, discriminatorValue: 'rect')
+Shape fromMap(Map<String, dynamic> map);
+
+@InheritInverseConfiguration()
+Map<String, dynamic> toMap(Shape shape);
+
+// Delegates, required for Map dispatch
+Circle toCircle(Map<String, dynamic> map);
+Rect toRect(Map<String, dynamic> map);
+Map<String, dynamic> fromCircle(Circle circle);
+Map<String, dynamic> fromRect(Rect rect);
+```
+
+Unlike class → class, Map dispatch does not generate the per-subclass methods: you must declare one delegate for each subclass, otherwise generation fails with `NoSubclassMappingMethodError`.
+
+Supported values are `String`, `int`, `double`, `num`, `bool` and Dart enum constants (stored by name). All values of a method must have the same type and be unique. A missing, misplaced or invalid parameter is a compile-time error.
+
 ## See Also
 
 - [Subclass Mapping guide](/guides/subclass-mapping) — full walkthrough with sealed classes
+- [@DiscriminatorKey](/annotations/discriminator-key)

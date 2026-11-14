@@ -25,6 +25,7 @@
         { "title": "@Mapping", "href": "/annotations/mapping" },
         { "title": "@ValueMapping", "href": "/annotations/value-mapping" },
         { "title": "@SubclassMapping", "href": "/annotations/subclass-mapping" },
+        { "title": "@DiscriminatorKey", "href": "/annotations/discriminator-key" },
         { "title": "@InheritConfiguration", "href": "/annotations/inherit-configuration" },
         { "title": "@InheritInverseConfiguration", "href": "/annotations/inherit-inverse-configuration" }
       ]

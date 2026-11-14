@@ -1,3 +1,9 @@
+## 1.3.0
+
+- Feature: new `@DiscriminatorKey` annotation declaring the `Map` key that holds the discriminator of a `@SubclassMapping` dispatch method (#119)
+- `SubclassMapping.source` and `SubclassMapping.target` are now optional: the side that is a `Map` is omitted in Map ↔ class hierarchy mappings (#119)
+- `SubclassMapping` has a new `discriminatorValue` parameter identifying the subclass in the `Map` (`String`, `int`, `double`, `num`, `bool` or enum constants) (#119)
+
 ## 1.2.0
 
 - Document target dot notation for nested target objects (implemented in dart_mapper_generator 1.2.0); no annotation changes

@@ -602,14 +602,26 @@ Profile fromMap(Map<String, dynamic> map) {
 
 Computed getters of a Built Value class are not keys unless mapped explicitly. Reading a nullable typed map value (`Map<String, String?>`) into a non-null built field needs `forceNonNull` (`b..id = map['id']!`) or `defaultValue`; otherwise the build fails with `TargetFieldRequiresNonOptionalSourceFieldError`, as for any other target.
 
-Abstract targets are supported when they can be instantiated through a factory constructor, which is how Freezed classes (`UserDTO`) and Built Value classes (`Profile`) work. A sealed class, or an abstract class without a usable factory constructor, as the target of a Map → class method is a compile-time error. See [issue #119](https://github.com/MyLittleSuite/dart_mapper/issues/119).
+Abstract targets are supported when they can be instantiated through a factory constructor, which is how Freezed classes (`UserDTO`) and Built Value classes (`Profile`) work. A sealed class, or an abstract class without a usable factory constructor, as the target of a Map → class method needs a discriminator: see [Map ↔ class hierarchy](#map--class-hierarchy-discriminator) below. Without `@DiscriminatorKey` and `@SubclassMapping` it is a compile-time error.
+
+## Map ↔ class hierarchy (discriminator)
+
+A `Map` holding one of several subclasses of a sealed or abstract class can be mapped with `@DiscriminatorKey` and `@SubclassMapping(discriminatorValue: ...)`. The generator reads (Map → class) or writes (class → Map) the discriminator entry and dispatches to a delegate method per subclass:
+
+```dart
+@DiscriminatorKey('type')
+@SubclassMapping(target: Circle, discriminatorValue: 'circle')
+@SubclassMapping(target: Rect, discriminatorValue: 'rect')
+Shape fromMap(Map<String, dynamic> map);
+```
+
+See the [Subclass Mapping guide](/guides/subclass-mapping#map--class-hierarchy-discriminator) for the full walkthrough, enum discriminators, inverse inheritance and nested sealed fields.
 
 ## Limitations
 
 | Limitation | Tracking |
 |------------|----------|
 | Target dot notation building a Built Value class | not planned |
-| Sealed classes and discriminator-based Map → class | [#119](https://github.com/MyLittleSuite/dart_mapper/issues/119) |
 | Collection-level mapping methods | [#120](https://github.com/MyLittleSuite/dart_mapper/issues/120) |
 | Global key naming strategy | not planned |
 | Map → Map methods | use `callable` |
@@ -627,7 +639,7 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 | Non-null target field read from a `Map<String, T?>` without `forceNonNull` or `defaultValue` | `TargetFieldRequiresNonOptionalSourceFieldError` | `Target field 'id' of 'FmHolderNullableSource' in 'FmTypedNullableMapper.fromNullable' requires a non-nullable source, but the source field is nullable.` |
 | Same, for a Built Value target | `TargetFieldRequiresNonOptionalSourceFieldError` | `Target field 'id' of 'FmBuiltDeckAbstract' in 'FmBuiltNullableMapper.fromMap' requires a non-nullable source, but the source field is nullable.` |
 | A `dart:core` `Map` is both source and return type, whatever the key type (`Map<int, X> convert(Map<String, dynamic> map)`) | `MapToMapMappingNotSupportedError` | `Method 'convert' maps a Map to a Map, which is not supported.` |
-| The target of a Map → class method is sealed, or abstract without a usable factory constructor ([#119](https://github.com/MyLittleSuite/dart_mapper/issues/119)) | `FromMapTargetNotInstantiableError` | `Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.` |
+| The target of a Map → class method is sealed, or abstract without a usable factory constructor, and the method has no `@DiscriminatorKey` + `@SubclassMapping` | `FromMapTargetNotInstantiableError` | `Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.` |
 | A dotted target of a class target is unknown, goes through a non-class or non-instantiable type, builds a Built Value class, has an empty segment, or is also mapped as a whole value | `InvalidNestedTargetError` | `Invalid @Mapping target 'address.country': 'country' is not a constructor parameter of 'Address' (available: street, city).` |
 | A whole key and one of its sub-keys are both mapped, or a dotted target has an empty segment | `MapKeyPathConflictError` | `Invalid @Mapping target 'address.nickname': 'address' is already mapped as a whole value.` / `Invalid @Mapping target 'address..id': it contains an empty segment.` |
 | More than one converter matches the same type and direction | `AmbiguousMapConverterError` | `Ambiguous mapping for type 'DateTime': multiple methods are candidates (this.toMillis, this.toIso).` |
@@ -646,6 +658,8 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 ## See Also
 
 - [@Mapping annotation reference](/annotations/mapping)
+- [Subclass Mapping guide](/guides/subclass-mapping)
+- [@DiscriminatorKey](/annotations/discriminator-key)
 - [Dot Notation guide](/guides/dot-notation)
 - [Multi-Source Mapping guide](/guides/multi-source)
 - [Collections guide](/guides/collections)

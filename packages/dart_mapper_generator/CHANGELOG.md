@@ -1,3 +1,11 @@
+## 1.3.0
+
+- Feature: Map ↔ sealed/abstract class hierarchy mapping via a discriminator, integrated with `@SubclassMapping`. The key is declared with `@DiscriminatorKey` and the value per subclass with `@SubclassMapping(discriminatorValue: ...)`; values can be `String`, `int`, `double`, `num`, `bool` or enum constants (stored by name). Map → class generates a switch with a wildcard arm throwing `ArgumentError` on unknown values; class → Map writes the discriminator last (overriding a same-named key produced by the delegate) (#119)
+- Feature: `@InheritInverseConfiguration` / `@InheritConfiguration` inherit `@DiscriminatorKey` and `@SubclassMapping`s (the inverse swaps source/target and keeps the values), for Map ↔ class hierarchies and class ↔ class
+- Feature: sealed/abstract typed fields nested in a Map ↔ class mapping (e.g. `List<Shape>`) are converted through the declared dispatch method
+- Compile-time errors for invalid discriminator configurations (missing or empty key, missing/forbidden/duplicate/mixed/unsupported values, wrong side given, missing delegate)
+- `FromMapTargetNotInstantiableError` now hints at `@DiscriminatorKey` + `@SubclassMapping` for sealed/abstract targets of a Map → class method
+
 ## 1.2.1
 
 - Fix: the constructor that builds the target no longer depends on the order of declaration. Public constructors are preferred over private ones (a Freezed class without fields, with `const Foo._()` next to `const factory Foo()`, is built with `Foo()`), factories over generative constructors of abstract classes, then the most parameters and the unnamed constructor. A target whose only constructors are private to another library raises `InaccessibleConstructorError` instead of generating code that does not compile (#117)

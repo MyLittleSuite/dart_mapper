@@ -36,9 +36,10 @@ class FromMapTargetNotInstantiableError extends InvalidGenerationSourceError {
           "Cannot map a Map to '${targetClass.name}': the class is "
           "${targetClass.isSealed ? 'sealed' : 'abstract'} and cannot be "
           "instantiated.\n"
-          "Mapping to sealed classes or to classes selected by a "
-          "discriminator key is not supported yet (tracked in issue #119).\n"
-          "Fix: Map to a concrete class.",
+          "Fix: Map to a concrete class, or select the subclass with a "
+          "discriminator key by annotating the method with "
+          "@DiscriminatorKey('key') and one @SubclassMapping(target: "
+          "Subclass, discriminatorValue: ...) per subclass.",
           element: element,
         );
 }
