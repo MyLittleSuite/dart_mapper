@@ -34,18 +34,69 @@ extension ClassElementExtension on ClassElement {
     'runtimeType',
   };
 
+  /// The constructor the generated code calls to build this class.
+  ///
+  /// In order of priority:
+  /// 1. for an abstract class, factories before generative constructors,
+  ///    which cannot be called on it;
+  /// 2. public constructors before private ones, so a private constructor
+  ///    (`Foo._()`) is picked only when the class has no public one;
+  /// 3. the constructor with the most parameters;
+  /// 4. the unnamed constructor before the named ones;
+  /// 5. the name, so that the choice never depends on the order in which the
+  ///    constructors are declared.
+  ///
+  /// Whether a private constructor can be called depends on the library of
+  /// the mapper: callers that know it check it with [isAccessibleFrom].
   ConstructorElement get mainConstructor {
-    final constructor = (constructors
-          ..sort(
-            (a, b) => a.formalParameters.length.compareTo(b.formalParameters.length) * -1,
-          ))
-        .firstOrNull;
+    final constructor =
+        ([...constructors]..sort(_compareConstructors)).firstOrNull;
     if (constructor == null) {
       throw NoConstructorsAvailableError(this);
     }
 
     return constructor;
   }
+
+  int _compareConstructors(ConstructorElement a, ConstructorElement b) {
+    int rank(bool preferA, bool preferB) =>
+        preferA == preferB ? 0 : (preferA ? -1 : 1);
+
+    if (isAbstract) {
+      final byFactory = rank(a.isFactory, b.isFactory);
+      if (byFactory != 0) {
+        return byFactory;
+      }
+    }
+
+    final byVisibility = rank(!a.isPrivate, !b.isPrivate);
+    if (byVisibility != 0) {
+      return byVisibility;
+    }
+
+    final byArity =
+        b.formalParameters.length.compareTo(a.formalParameters.length);
+    if (byArity != 0) {
+      return byArity;
+    }
+
+    final unnamed = unnamedConstructor;
+    final byUnnamed = rank(a == unnamed, b == unnamed);
+    if (byUnnamed != 0) {
+      return byUnnamed;
+    }
+
+    return (a.name ?? '').compareTo(b.name ?? '');
+  }
+
+  /// Whether the code generated in [library] can call [constructor] of this
+  /// class: a private constructor, or any constructor of a private class, can
+  /// only be called from the library that declares it.
+  bool isAccessibleFrom(
+    ConstructorElement constructor,
+    LibraryElement library,
+  ) =>
+      (!constructor.isPrivate && !isPrivate) || constructor.library == library;
 
   List<FormalParameterElement> get constructorParameters =>
       mainConstructor.formalParameters;
@@ -72,7 +123,8 @@ extension ClassElementExtension on ClassElement {
       return field;
     }
 
-    final getter = getterElements.where((element) => element.name == name).firstOrNull;
+    final getter =
+        getterElements.where((element) => element.name == name).firstOrNull;
     if (getter != null) {
       return getter;
     }

@@ -102,6 +102,13 @@ void main() async {
   );
   testAnnotatedElements<Mapper>(nestedTargetReader, generator);
 
+  // Group: Constructor selection (issue #117)
+  final constructorSelectionReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'constructor_selection_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(constructorSelectionReader, generator);
+
   // Group: Mixed
   final mixedReader = await initializeLibraryReaderForDirectory(
     'test/golden/src',

@@ -73,6 +73,8 @@ abstract class UserMapper {
 
 The generator detects that `User` is a freezed class and uses its factory constructor in the generated output.
 
+The private constructor that Freezed requires to add members or extend a class (`const User._();`) is never called, wherever it is declared: the generator prefers public constructors and uses a private one only when the class has no public constructor and is declared in the same library as the mapper. Otherwise the build fails with `InaccessibleConstructorError`.
+
 ## Generated Code
 
 ```dart

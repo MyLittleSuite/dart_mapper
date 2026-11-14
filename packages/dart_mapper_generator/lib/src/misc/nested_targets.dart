@@ -25,6 +25,7 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:dart_mapper_generator/src/exceptions/inaccessible_constructor_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_nested_target_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
@@ -126,6 +127,13 @@ Map<String, TargetParam> resolveTargetParams(
   if (targetClass == null) {
     return const {};
   }
+  if (library != null) {
+    validateConstructorAccessible(
+      targetClass,
+      library: library,
+      element: element,
+    );
+  }
 
   final result = <String, TargetParam>{
     ..._parametersOf(targetClass, targetType, ''),
@@ -226,6 +234,23 @@ Map<String, TargetParam> resolveTargetParams(
   return result;
 }
 
+/// Throws [InaccessibleConstructorError] when the constructor the generated
+/// code would call to build [targetClass] cannot be called from [library].
+void validateConstructorAccessible(
+  ClassElement targetClass, {
+  required LibraryElement library,
+  Element? element,
+}) {
+  final constructor = targetClass.mainConstructor;
+  if (!targetClass.isAccessibleFrom(constructor, library)) {
+    throw InaccessibleConstructorError(
+      targetClass: targetClass,
+      constructor: constructor,
+      element: element,
+    );
+  }
+}
+
 void _validateAccessible(
   ClassElement nestedClass, {
   required LibraryElement library,
@@ -234,8 +259,7 @@ void _validateAccessible(
   required Element? element,
 }) {
   final constructor = nestedClass.mainConstructor;
-  if ((constructor.isPrivate || nestedClass.isPrivate) &&
-      constructor.library != library) {
+  if (!nestedClass.isAccessibleFrom(constructor, library)) {
     throw InvalidNestedTargetError(
       target: target,
       description: "the constructor '${constructor.displayName}' of "

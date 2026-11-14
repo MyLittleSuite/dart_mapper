@@ -221,6 +221,11 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
         element: run.method,
       );
     }
+    validateConstructorAccessible(
+      targetClass,
+      library: run.library,
+      element: run.method,
+    );
   }
 
   List<_Target> _targets(ClassElement targetClass, bool isBuilt) {
