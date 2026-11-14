@@ -124,7 +124,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
             currentMethod: method,
             ignored: binding.ignored,
             forceNonNull: binding.forceNonNull,
-            expressionMappingMethod: binding.callableMappingMethod,
+            expressionMappingMethod: binding.expressionMappingMethod,
             extraMappingMethod: binding.extraMappingMethod,
             defaultValue: binding.defaultValue,
             constant: binding.constant,
@@ -147,7 +147,8 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
           element: targetClass,
         );
       }
-      final condition = CodeExpression(Code(resolveConditionExpression(binding.conditionExpression!)));
+      final condition = CodeExpression(
+          Code(resolveConditionExpression(binding.conditionExpression!)));
       final falseExpr = binding.defaultValue != null
           ? (binding.target.type.isDartCoreString
               ? literalString(binding.defaultValue!)

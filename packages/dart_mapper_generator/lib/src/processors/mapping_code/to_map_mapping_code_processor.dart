@@ -94,7 +94,7 @@ class ToMapMappingCodeProcessor extends ComponentProcessor<Code> {
             ignored: binding.ignored,
             forceNonNull: binding.forceNonNull,
             currentMethod: method,
-            expressionMappingMethod: binding.callableMappingMethod,
+            expressionMappingMethod: binding.expressionMappingMethod,
             extraMappingMethod: binding.extraMappingMethod,
             importAliases: context.importAliases,
             defaultValue: binding.defaultValue,

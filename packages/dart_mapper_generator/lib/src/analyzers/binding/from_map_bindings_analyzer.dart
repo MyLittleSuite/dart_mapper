@@ -32,6 +32,7 @@ import 'package:dart_mapper_generator/src/analyzers/binding/map_converter_lookup
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/mapping_method/method_signature_lookup.dart';
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/from_map_target_not_instantiable_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/incompatible_map_value_type_error.dart';
@@ -312,12 +313,38 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
     final sourcePath = config.sources[name];
     final callable = config.callables[name];
 
-    // Multi-argument callable: `source: 'a,b'`.
-    if (sourcePath != null && sourcePath.contains(',') && callable != null) {
-      final resolved = sourcePath
+    // Multi-argument callable or mapper method: `source: 'a,b'`.
+    if (sourcePath != null && sourcePath.contains(',')) {
+      final parts = sourcePath
           .split(',')
-          .map((part) => _resolve(run, params, part.trim(), name))
+          .map((part) => part.trim())
           .toList(growable: false);
+      final resolved = parts
+          .map((part) => _resolve(run, params, part, name))
+          .toList(growable: false);
+
+      if (callable == null) {
+        final method = MethodSignatureLookup(run.context).find(
+          target: name,
+          arguments: [
+            for (var i = 0; i < resolved.length; i++)
+              _argument(run, resolved[i], parts[i]),
+          ],
+          targetType: type,
+          qualifiedBy: config.qualifiedBy[name],
+        );
+
+        return Binding(
+          source: resolved.first.field,
+          sources: resolved.map((r) => r.field).toList(growable: false),
+          sourceAccessChains:
+              resolved.map((r) => r.chain).toList(growable: false),
+          target: targetField,
+          sourcesMappingMethod: method,
+          defaultValue: config.defaultValues[name],
+          conditionExpression: config.conditionExpressions[name],
+        );
+      }
 
       return Binding(
         source: resolved.first.field,
@@ -343,8 +370,15 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       );
     }
 
+    final qualifiedBy = config.qualifiedBy[name];
+
     MappingMethod? extra;
-    if (source is MapEntryField) {
+    if (qualifiedBy != null) {
+      extra = _qualified(run, source, targetField, qualifiedBy, type);
+      if (source is MapEntryField) {
+        _validateAgainstValueType(run, source, targetField, extra);
+      }
+    } else if (source is MapEntryField) {
       extra = _extraFor(run, type, visiting);
       _validateAgainstValueType(run, source, targetField, extra);
     } else if (!config.ignored.contains(name)) {
@@ -385,6 +419,69 @@ class FromMapBindingsAnalyzer extends Analyzer<List<Binding>> {
       defaultValue: defaultValue,
       accessChain: resolved.chain,
       conditionExpression: config.conditionExpressions[name],
+    );
+  }
+
+  /// The argument [resolved] stands for in a mapper method lookup. Untyped
+  /// map values match any parameter and are cast by the expression factory.
+  SourceArgument _argument(_Run run, _Resolved resolved, String description) {
+    final field = resolved.field;
+    if (field is MapEntryField) {
+      final valueType = field.valueType;
+
+      return SourceArgument(
+        type: valueType ?? run.dynamicType,
+        description: description,
+        untyped: valueType == null,
+      );
+    }
+
+    return SourceArgument(
+      type: field.type,
+      description: description,
+      nullableChain: resolved.chain?.any((link) => link.$2) ?? false,
+    );
+  }
+
+  /// The converter picked by `qualifiedBy` for the single [source].
+  /// Like declared converters it works on the elements of collections; null
+  /// values are guarded by the expression factory, so the argument is looked
+  /// up as a non-null value.
+  MappingMethod _qualified(
+    _Run run,
+    Field source,
+    Field target,
+    String qualifiedBy,
+    DartType type,
+  ) {
+    final DartType argumentType;
+    final bool untyped;
+    if (source is MapEntryField) {
+      final valueType = source.valueType;
+      untyped = valueType == null;
+      argumentType = valueType == null
+          ? run.dynamicType
+          : run.typeSystem.promoteToNonNull(_leaf(valueType));
+    } else {
+      untyped = false;
+      argumentType = run.typeSystem.promoteToNonNull(_leaf(source.type));
+    }
+
+    final leaf = _leaf(type);
+
+    return MethodSignatureLookup(run.context).find(
+      target: target.name,
+      arguments: [
+        SourceArgument(
+          type: argumentType,
+          description: source is MapEntryField
+              ? "${source.instance!.name}['${source.keys.join("']['")}']"
+              : source.name,
+          untyped: untyped,
+        ),
+      ],
+      targetType: leaf is DynamicType ? null : leaf,
+      qualifiedBy: qualifiedBy,
     );
   }
 
@@ -825,6 +922,7 @@ class _Config {
   final Map<String, String> constants;
   final Map<String, String> expressions;
   final Map<String, String> conditionExpressions;
+  final Map<String, String> qualifiedBy;
 
   /// Every target named by a `@Mapping`, even one with no other setting
   /// (`@Mapping(target: 'address.street')`).
@@ -839,6 +937,7 @@ class _Config {
     this.constants = const {},
     this.expressions = const {},
     this.conditionExpressions = const {},
+    this.qualifiedBy = const {},
     this.mentioned = const {},
   });
 
@@ -853,6 +952,7 @@ class _Config {
         constants: context.constantMap,
         expressions: context.expressionMap,
         conditionExpressions: context.conditionExpressionMap,
+        qualifiedBy: context.qualifiedByMap,
         mentioned: context.configuredTargets,
       );
 
@@ -887,6 +987,7 @@ class _Config {
       constants: map(constants),
       expressions: map(expressions),
       conditionExpressions: map(conditionExpressions),
+      qualifiedBy: map(qualifiedBy),
       mentioned: set(mentioned),
     );
   }
@@ -901,5 +1002,6 @@ class _Config {
         ...constants.keys,
         ...expressions.keys,
         ...conditionExpressions.keys,
+        ...qualifiedBy.keys,
       };
 }

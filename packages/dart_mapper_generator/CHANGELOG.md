@@ -1,3 +1,12 @@
+## Unreleased
+
+- Feature: a comma-separated `source` without `callable` is resolved through a mapper method: the generator looks (`uses` mappers first, then the mapper itself) for a method whose parameters accept the sources in order and whose return type fits the target. Works in class, Map (class ↔ Map) and Built Value mappings; source dot notation, target dot notation, `defaultValue` and `conditionExpression` apply to the call. Nullability is strict: a nullable source needs a nullable parameter (#126)
+- Feature: `@Mapping(qualifiedBy: ...)` picks the method by name (`'method'` or `'Class.method'`) for comma-separated sources and for single-source converters (also in Map mappings, where it resolves `AmbiguousMapConverterError`)
+- Feature: method parameters are sources: a parameter binds to the target property with the same name and can be named in `source`, also in a comma-separated list. `SettingsDTO fromCreate(CreateSettings from, String id)` needs no `expression: 'id'`. Precedence: explicit `@Mapping`, then property of a source parameter, then parameter name
+- Feature: new build errors `NoMatchingMappingMethodError` (lists the rejected candidates with the reason), `AmbiguousMappingMethodError` (suggests `qualifiedBy`) and `UnknownQualifiedMethodError` (lists the available methods)
+- Breaking (build error only): `forceNonNull` on a comma-separated `source` without `callable` is an error; `qualifiedBy` combined with `callable`, `expression`, `constant` or `ignore` raises `InvalidMappingCombinationError`
+- Docs: callable examples show typed parameters instead of `dynamic`; new "Mapper Methods as Sources" guide
+
 ## 1.2.1
 
 - Fix: the constructor that builds the target no longer depends on the order of declaration. Public constructors are preferred over private ones (a Freezed class without fields, with `const Foo._()` next to `const factory Foo()`, is built with `Foo()`), factories over generative constructors of abstract classes, then the most parameters and the unnamed constructor. A target whose only constructors are private to another library raises `InaccessibleConstructorError` instead of generating code that does not compile (#117)

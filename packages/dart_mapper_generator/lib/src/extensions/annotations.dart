@@ -53,7 +53,12 @@ extension MappingAnnotation on Mapping {
           .where(
             (annotation) => inverse
                 ? annotation.getField('source')?.toStringValue() != null &&
-                    annotation.getField('target')?.toStringValue() != null
+                    annotation.getField('target')?.toStringValue() != null &&
+                    // A comma-separated mapping cannot be inverted.
+                    !annotation
+                        .getField('source')!
+                        .toStringValue()!
+                        .contains(',')
                 : true,
           )
           .map(
@@ -72,7 +77,12 @@ extension MappingAnnotation on Mapping {
                   annotation.getField('defaultValue')?.toStringValue(),
               constant: annotation.getField('constant')?.toStringValue(),
               expression: annotation.getField('expression')?.toStringValue(),
-              conditionExpression: annotation.getField('conditionExpression')?.toStringValue(),
+              conditionExpression:
+                  annotation.getField('conditionExpression')?.toStringValue(),
+              // The method that converts one way does not convert the other way.
+              qualifiedBy: inverse
+                  ? null
+                  : annotation.getField('qualifiedBy')?.toStringValue(),
             ),
           );
 }

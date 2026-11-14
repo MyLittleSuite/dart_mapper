@@ -18,6 +18,7 @@ MapStruct-style object mapping for Dart. Define type-safe mappings declaratively
 - Subclass mapping with Dart 3 pattern matching
 - Default values and constants
 - Callable functions for custom mapping logic
+- Comma-separated sources resolved through mapper methods, `qualifiedBy`, method parameters as sources
 - Class ↔ `Map<String, dynamic>` mapping (Firestore, Realtime Database, JSON-like payloads)
 - Collection support (`List`, `Set`, `Map`, `BuiltList`, `BuiltSet`, `BuiltMap`)
 - Configuration inheritance (`@InheritConfiguration`, `@InheritInverseConfiguration`)

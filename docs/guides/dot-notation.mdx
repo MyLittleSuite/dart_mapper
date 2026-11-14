@@ -155,6 +155,22 @@ Map<String, dynamic> toMap(Contact contact) {
 }
 ```
 
+## Dot Paths in Comma-Separated Sources
+
+Each part of a comma-separated `source` can be a dot path. The parts are resolved as above and passed, in order, to a `callable` or to a mapper method (see the [Mapper Methods guide](/guides/mapper-methods)):
+
+```dart
+@Mapper(uses: {RouteMapper})
+abstract class TripMapper {
+  @Mapping(source: 'origin.city,destination.city', target: 'route')
+  Trip toTrip(Booking booking);
+}
+```
+
+Generated: `route: routeMapper.from(booking.origin.city, booking.destination.city)`.
+
+A nullable link in a path (`origin?.city`) makes that argument nullable, so the parameter of the method must be nullable too (`Route from(String? origin, String destination)`). Otherwise the build fails and names the argument. A `callable` receives the same values and is type-checked by Dart.
+
 ## Target Dot Notation (Nested Target Objects)
 
 When the **target** is a class, a dotted `target` builds the nested object of that class from flat source fields (or flat map keys). It works for class to class and Map to class methods:
@@ -259,4 +275,5 @@ See the [Map Mapping guide](/guides/map-mapping) for details.
 
 - [@Mapping annotation reference](/annotations/mapping)
 - [Multi-Source Mapping guide](/guides/multi-source)
+- [Mapper Methods guide](/guides/mapper-methods)
 - [Map Mapping guide](/guides/map-mapping)

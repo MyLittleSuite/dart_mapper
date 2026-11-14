@@ -43,4 +43,19 @@ extension MappingMethodExtension on MappingMethod {
           parameters.firstOrNull?.field.type,
         _ => null,
       };
+
+  /// The type of the parameter at [index] of this method, when known: the
+  /// callable, the mapper method (external or internal) or the bindable
+  /// method it stands for.
+  DartType? parameterTypeAt(int index) => switch (this) {
+        ExternalMappingMethod(:final mapperUsage) =>
+          mapperUsage.parameters.elementAtOrNull(index)?.field.type,
+        InternalMappingMethod(:final mapperUsage) =>
+          mapperUsage.parameters.elementAtOrNull(index)?.field.type,
+        BindableMappingMethod(:final parameters) =>
+          parameters.elementAtOrNull(index)?.field.type,
+        CallableMappingMethod(:final parameters) =>
+          parameters.elementAtOrNull(index)?.field.type,
+        _ => null,
+      };
 }

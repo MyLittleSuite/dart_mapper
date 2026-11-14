@@ -37,7 +37,8 @@ class AmbiguousMapConverterError extends InvalidGenerationSourceError {
           "Ambiguous mapping for type '$type': multiple methods are "
           "candidates (${candidates.join(', ')}).\n"
           "Fix: Keep a single candidate per type, or select the one to use "
-          "with @Mapping(target: '...', callable: yourFunction).",
+          "with @Mapping(target: '...', qualifiedBy: 'methodName') or "
+          "@Mapping(target: '...', callable: yourFunction).",
           element: element,
         );
 }

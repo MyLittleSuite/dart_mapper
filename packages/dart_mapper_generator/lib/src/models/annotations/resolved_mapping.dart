@@ -35,6 +35,7 @@ class ResolvedMapping {
   final String? constant;
   final String? expression;
   final String? conditionExpression;
+  final String? qualifiedBy;
 
   const ResolvedMapping({
     required this.target,
@@ -46,6 +47,7 @@ class ResolvedMapping {
     this.constant,
     this.expression,
     this.conditionExpression,
+    this.qualifiedBy,
   });
 
   @override
@@ -58,6 +60,7 @@ class ResolvedMapping {
       'defaultValue: $defaultValue, '
       'constant: $constant, '
       'expression: $expression, '
-      'conditionExpression: $conditionExpression'
+      'conditionExpression: $conditionExpression, '
+      'qualifiedBy: $qualifiedBy'
       '}';
 }

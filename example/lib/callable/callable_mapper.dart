@@ -63,7 +63,7 @@ abstract class BuiltObject implements Built<BuiltObject, BuiltObjectBuilder> {
       [void updates(BuiltObjectBuilder b)]) = _$BuiltObject;
 }
 
-int _convertPrice(dynamic price) {
+int _convertPrice(int price) {
   return price * 2;
 }
 

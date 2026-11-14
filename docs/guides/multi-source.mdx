@@ -84,6 +84,45 @@ abstract class ResultMapper {
 }
 ```
 
+## Parameters as Sources
+
+A parameter is a source too. It binds to the target property with the same name, so no `expression` is needed to forward it:
+
+```dart
+class CreateUser {
+  final String name;
+  const CreateUser({required this.name});
+}
+
+class UserDTO {
+  final String id;
+  final String name;
+  const UserDTO({required this.id, required this.name});
+}
+
+@Mapper()
+abstract class UserMapper {
+  UserDTO fromCreate(CreateUser from, String id);
+}
+```
+
+Generated:
+
+```dart
+@override
+UserDTO fromCreate(CreateUser from, String id) {
+  return UserDTO(id: id, name: from.name);
+}
+```
+
+A parameter can also be named in `source`, including inside a comma-separated list (see the [Mapper Methods guide](/guides/mapper-methods)). Precedence, so existing mappers keep generating the same code:
+
+1. an explicit `@Mapping`;
+2. a property of a source parameter (the usual auto-mapping);
+3. a parameter with the same name as the target.
+
+If a bare `source: 'x'` names a parameter and also a property of another parameter, the ambiguity error above applies; qualify it (`source: 'param.x'`).
+
 ## Combining with @Mapping
 
 Any `@Mapping` annotation applies to the combined view of all sources. Field renames, ignores, expressions, and dot-notation all work normally with multi-source methods:
@@ -120,5 +159,6 @@ See the [Map Mapping guide](/guides/map-mapping) for the full rules.
 ## See Also
 
 - [Dot Notation guide](/guides/dot-notation) — `source: 'param.nested.field'`
+- [Mapper Methods guide](/guides/mapper-methods) — parameters in comma-separated sources, `qualifiedBy`
 - [Expressions guide](/guides/expressions) — reference multiple parameters in expressions
 - [Map Mapping guide](/guides/map-mapping) — `Map` parameters

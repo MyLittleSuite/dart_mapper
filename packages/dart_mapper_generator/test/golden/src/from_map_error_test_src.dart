@@ -175,7 +175,7 @@ abstract class FmTypedNullableMapper {
 
 @ShouldThrow(
   "Ambiguous mapping for type 'DateTime': multiple methods are candidates (fmAmbiguousConverters.fromMillis, fmAmbiguousConverters.fromIso).\n"
-  "Fix: Keep a single candidate per type, or select the one to use with @Mapping(target: '...', callable: yourFunction).",
+  "Fix: Keep a single candidate per type, or select the one to use with @Mapping(target: '...', qualifiedBy: 'methodName') or @Mapping(target: '...', callable: yourFunction).",
 )
 @Mapper(uses: {FmAmbiguousConverters})
 abstract class FmAmbiguousConverterMapper {
