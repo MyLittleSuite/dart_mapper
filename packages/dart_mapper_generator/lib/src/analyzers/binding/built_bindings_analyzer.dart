@@ -118,13 +118,19 @@ class BuiltBindingsAnalyzer extends Analyzer<List<Binding>> {
       }
       final qualifiedBy = qualifiedByMap[targetName];
       if (qualifiedBy != null) {
+        // forceNonNull unwraps the source: the method is looked up as for a
+        // non-null value.
+        final forceNonNull = forceNonNullTargets.contains(targetName);
         return lookup.find(
           target: targetName,
           arguments: [
             SourceArgument(
-              type: source.type,
+              type: forceNonNull
+                  ? context.mapperClass.library.typeSystem
+                      .promoteToNonNull(source.type)
+                  : source.type,
               description: description,
-              nullableChain: nullableChain,
+              nullableChain: !forceNonNull && nullableChain,
             ),
           ],
           targetType: target.type,

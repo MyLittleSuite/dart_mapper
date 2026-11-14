@@ -382,6 +382,43 @@ abstract class BmConditionMapper {
 
 // ----- qualifiedBy -----
 
+// forceNonNull unwraps the nullable source: a method taking a non-null value
+// is a match.
+@Mapper()
+abstract class BmStrictLabelMapper {
+  String describe(String value) => value;
+}
+
+@ShouldGenerate(
+  r'''class BmQualifiedForceNonNullMapperImpl extends BmQualifiedForceNonNullMapper {
+  BmQualifiedForceNonNullMapperImpl({required this.bmStrictLabelMapper});
+
+  final BmStrictLabelMapper bmStrictLabelMapper;
+
+  @override
+  BmLabeled from(BmSettingsDTO dto) {
+    return BmLabeled(
+      (b) => b
+        ..id = 'fixed'
+        ..label = bmStrictLabelMapper.describe(dto.orderField!),
+    );
+  }
+}''',
+  contains: true,
+)
+@Mapper(uses: {BmStrictLabelMapper})
+abstract class BmQualifiedForceNonNullMapper {
+  @Mapping(target: 'id', constant: 'fixed')
+  @Mapping(
+    source: 'orderField',
+    target: 'label',
+    qualifiedBy: 'describe',
+    forceNonNull: true,
+  )
+  BmLabeled from(BmSettingsDTO dto);
+}
+
+
 // A nullable link of the path and a qualifiedBy method taking null: the
 // method is called with the source as is, not rejected for the nullable chain.
 @Mapper()

@@ -514,3 +514,16 @@ abstract class MsIgnoredCommaMapper {
   )
   MsOptionalSettings from(MsSettingsDTO from);
 }
+
+// A part naming both a parameter and a property of another parameter is
+// ambiguous, as a bare `source` is.
+@ShouldThrow(
+  "Ambiguous source field 'title' found in multiple parameters: from, title.\n"
+  "When multiple source parameters share a field name, you must qualify the source explicitly.\n"
+  "Fix: Add @Mapping(target: 'ordering', source: 'from.title') to specify which parameter to use.",
+)
+@Mapper()
+abstract class MsAmbiguousPartMapper {
+  @Mapping(source: 'orderField,title', target: 'ordering')
+  MsSettings from(MsSettingsDTO from, String title);
+}

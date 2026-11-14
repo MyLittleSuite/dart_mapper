@@ -232,6 +232,21 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
             }
           }
 
+          // A part naming both a parameter and a getter of a parameter is
+          // ambiguous.
+          final namedParameter =
+              method.formalParameters.where((p) => p.name == part).firstOrNull;
+          if (matchedParam != null &&
+              matchedGetter != null &&
+              namedParameter != null) {
+            throw AmbiguousSourceFieldError(
+              fieldName: part,
+              parameterNames: [matchedParam.name!, namedParameter.name!],
+              targetName: targetName,
+              element: method,
+            );
+          }
+
           if (matchedParam == null || matchedGetter == null) {
             // Not a getter: the name of a method parameter.
             final parameter = method.formalParameters
