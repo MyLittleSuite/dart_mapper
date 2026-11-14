@@ -69,6 +69,14 @@ The generator looks for a method such that:
 
 It searches the `uses` mappers first, then the methods of the mapper itself. The method being generated is never a candidate.
 
+When several methods fit, the ones returning **exactly** the target type win over the ones returning a subtype of it. A `@SubclassMapping` dispatch method (`Shape shapeOf(Map<String, dynamic> map, String layer)`) is therefore chosen over its delegates (`Circle toCircle(Map<String, dynamic> map, String layer)`), which take the same parameters:
+
+```dart
+@Mapping(source: 'shape,layer', target: 'shape')
+Layered fromDTO(LayeredDTO dto);
+// generated: shape: shapeOf(dto.shape, dto.layer)
+```
+
 ## qualifiedBy
 
 `qualifiedBy` picks the method by name, `'methodName'` or `'MapperClass.methodName'`. The signature is still checked.

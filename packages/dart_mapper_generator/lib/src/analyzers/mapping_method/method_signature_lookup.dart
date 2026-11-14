@@ -29,6 +29,7 @@ import 'package:dart_mapper_generator/src/analyzers/contexts/method_analyzer_con
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_mapping_method_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/no_matching_mapping_method_error.dart';
 import 'package:dart_mapper_generator/src/exceptions/unknown_qualified_method_error.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/mixins/aliases_mixin.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
@@ -82,7 +83,9 @@ class SourceArgument {
 /// ```
 ///
 /// Mapper methods that are not matched by uses are searched only when no
-/// `uses` candidate matches, so a `uses` method wins over an own one.
+/// `uses` candidate matches, so a `uses` method wins over an own one. Among
+/// several matches, the ones returning exactly the target type win over the
+/// ones returning a subtype of it.
 class MethodSignatureLookup with AliasesMixin {
   final MethodAnalyzerContext context;
 
@@ -161,9 +164,27 @@ class MethodSignatureLookup with AliasesMixin {
 
     // `uses` mappers come first: an own method is a candidate only when no
     // used mapper matches.
-    final chosen = matches.any((match) => match.external)
+    var chosen = matches.any((match) => match.external)
         ? matches.where((match) => match.external).toList(growable: false)
         : matches;
+
+    // A method returning exactly the target type wins over one returning a
+    // subtype: the dispatch method of a sealed hierarchy (`Shape`) and its
+    // delegates (`Circle`, `Rect`) often take the same parameters.
+    if (chosen.length > 1 && effectiveTarget != null) {
+      final exact = chosen
+          .where(
+            (match) => match.usage.returnType.same(
+              effectiveTarget,
+              aliases: importAliases,
+              useNullability: false,
+            ),
+          )
+          .toList(growable: false);
+      if (exact.isNotEmpty) {
+        chosen = exact;
+      }
+    }
     if (chosen.length > 1) {
       throw AmbiguousMappingMethodError(
         target: target,

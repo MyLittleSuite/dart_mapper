@@ -482,4 +482,12 @@ void main() async {
     'qualified_by_test_src.dart',
   );
   testAnnotatedElements<Mapper>(qualifiedByReader, generator);
+
+  // Group: mapper methods with @SubclassMapping dispatch methods
+  final discriminatorMapperMethodsReader =
+      await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'discriminator_mapper_methods_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(discriminatorMapperMethodsReader, generator);
 }

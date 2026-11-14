@@ -230,6 +230,15 @@ abstract class DrawingMapper {
 }
 ```
 
+When the mapper declares several dispatch methods for the same sealed type (for example two discriminator keys for two payload versions), pick one with [`qualifiedBy`](/guides/mapper-methods#qualifiedby):
+
+```dart
+@Mapping(target: 'shape', qualifiedBy: 'shapeFromV2')
+Drawing fromMap(Map<String, dynamic> map);
+```
+
+A dispatch method is an ordinary mapper method: it can also resolve a [comma-separated source](/guides/mapper-methods), auxiliary parameters included.
+
 ### Compile-time errors
 
 Every misconfiguration fails the build with a dedicated error:
