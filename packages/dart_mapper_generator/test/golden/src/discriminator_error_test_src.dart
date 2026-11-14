@@ -430,6 +430,42 @@ abstract class NullableAuxiliaryParameterDelegateMapper {
 
 @ShouldThrow(
   "No mapping method found for @SubclassMapping(source: Circle) on method 'toMap'. "
+  "Add a method with signature: Map<String, dynamic> method(Circle source).",
+)
+@Mapper()
+abstract class NamedParameterToMapDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(source: Circle, discriminatorValue: 'circle')
+  Map<String, dynamic> toMap(Shape shape);
+  Map<String, dynamic> fromCircle({required Circle circle});
+}
+
+@ShouldThrow(
+  "No mapping method found for @SubclassMapping(source: Circle) on method 'toMap'. "
+  "Add a method with signature: Map<String, int> method(Circle source).",
+)
+@Mapper()
+abstract class NullableValueToMapDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(source: Circle, discriminatorValue: 1)
+  Map<String, int> toMap(Shape shape);
+  Map<String, int?> fromCircle(Circle circle);
+}
+
+@ShouldThrow(
+  "No mapping method found for @SubclassMapping(source: Circle) on method 'toMap'. "
+  "Add a method with signature: Map<String, Object> method(Circle source).",
+)
+@Mapper()
+abstract class NullableValueToObjectMapDelegateMapper {
+  @DiscriminatorKey('type')
+  @SubclassMapping(source: Circle, discriminatorValue: 'circle')
+  Map<String, Object> toMap(Shape shape);
+  Map<String, int?> fromCircle(Circle circle);
+}
+
+@ShouldThrow(
+  "No mapping method found for @SubclassMapping(source: Circle) on method 'toMap'. "
   "Add a method with signature: Map<String, num> method(Circle source).",
 )
 @Mapper()

@@ -574,6 +574,11 @@ class SubclassMappingAnalyzer {
 
   /// Resolves the method turning [sourceType] into a `Map` assignable to the
   /// return type of the dispatch [method].
+  ///
+  /// Only delegates taking the subclass as a positional parameter are
+  /// considered, as the dispatch calls them positionally. The nullability of
+  /// the delegate `Map` itself is ignored (a null result is not spread), while
+  /// the one of its keys and values is checked.
   MethodElement _resolveToMapDelegate({
     required AnalyzerContext context,
     required MethodElement method,
@@ -582,6 +587,7 @@ class SubclassMappingAnalyzer {
     final candidates = context.mapperClass.methods
         .where((m) => m != method)
         .where((m) => m.formalParameters.length == 1)
+        .where((m) => m.formalParameters.first.isPositional)
         .where((m) => m.formalParameters.first.type.same(
               sourceType,
               useNullability: false,
@@ -589,30 +595,13 @@ class SubclassMappingAnalyzer {
         .toList(growable: false);
 
     final system = context.mapperClass.library.typeSystem;
-    final returnType = method.returnType;
-    final returnValue = returnType is InterfaceType
-        ? returnType.typeArguments.elementAtOrNull(1)
-        : null;
+    final returnType = system.promoteToNonNull(method.returnType);
 
-    bool assignable(DartType type) {
-      if (type.same(returnType, useNullability: false)) {
-        return true;
-      }
-      if (!type.isStringKeyedMap || type is! InterfaceType) {
-        return false;
-      }
+    bool exact(DartType type) => system.promoteToNonNull(type) == returnType;
+    bool assignable(DartType type) =>
+        system.isAssignableTo(system.promoteToNonNull(type), returnType);
 
-      final value = type.typeArguments.elementAtOrNull(1);
-      return returnValue == null ||
-          returnValue is DynamicType ||
-          returnValue.isDartCoreObject ||
-          value is DynamicType ||
-          (value != null && system.isAssignableTo(value, returnValue));
-    }
-
-    final match = candidates
-            .where((m) => m.returnType.same(returnType, useNullability: false))
-            .firstOrNull ??
+    final match = candidates.where((m) => exact(m.returnType)).firstOrNull ??
         candidates.where((m) => assignable(m.returnType)).firstOrNull;
     if (match == null) {
       throw NoSubclassMappingMethodError.toMap(
