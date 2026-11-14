@@ -108,16 +108,22 @@ abstract class BuiltValueMapperWithUses {
   ReviewDTO toReviewDTO(Review review);
 }
 
-UserDTOBuilder? _mapUserManually(dynamic user) {
-  return UserDTOBuilder()..replace(UserDTO((b) => b..id = user.id));
+UserDTOBuilder? _mapUserManually(User? user) {
+  return user == null
+      ? null
+      : (UserDTOBuilder()..replace(UserDTO((b) => b..id = user.id)));
 }
 
-ListBuilder<UserDTO>? _mapUserManuallyList(dynamic user) {
-  return ListBuilder([UserDTO((b) => b..id = user.id)]);
+ListBuilder<UserDTO>? _mapUserManuallyList(List<User>? users) {
+  return ListBuilder([
+    for (final user in users ?? <User>[]) UserDTO((b) => b..id = user.id),
+  ]);
 }
 
-SetBuilder<UserDTO>? _mapUserManuallySet(dynamic user) {
-  return SetBuilder([UserDTO((b) => b..id = user.id)]);
+SetBuilder<UserDTO>? _mapUserManuallySet(Set<User>? users) {
+  return SetBuilder([
+    for (final user in users ?? <User>{}) UserDTO((b) => b..id = user.id),
+  ]);
 }
 
 @Mapper()
@@ -142,7 +148,8 @@ abstract class BVAnyRemainingStatusMapper {
 abstract class BVAnyUnmappedStatusMapper {
   const BVAnyUnmappedStatusMapper();
 
-  @ValueMapping(source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
+  @ValueMapping(
+      source: ValueMapping.anyUnmapped, target: ValueMapping.nullValue)
   BVTargetStatus? convert(BVSourceStatus source);
 }
 

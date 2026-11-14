@@ -1,3 +1,9 @@
+## Unreleased
+
+- Feature: `Mapping.qualifiedBy` selects the mapper method that converts the source(s), as `'methodName'` or `'MapperClass.methodName'`. Cannot be combined with `callable`, `expression`, `constant` or `ignore` (#126)
+- Docs: a comma-separated `source` is no longer callable-only; it can be resolved by a mapper method (see dart_mapper_generator)
+- Docs: callable examples declare typed parameters instead of `dynamic`
+
 ## 1.3.0
 
 - Feature: new `@DiscriminatorKey` annotation declaring the `Map` key that holds the discriminator of a `@SubclassMapping` dispatch method (#119)

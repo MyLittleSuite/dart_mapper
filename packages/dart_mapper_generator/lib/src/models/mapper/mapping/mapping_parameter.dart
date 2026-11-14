@@ -30,21 +30,27 @@ class MappingParameter {
   final Field field;
   final bool isNullable;
 
+  /// Whether the parameter is named (`{required String a}`): generated calls
+  /// pass their arguments positionally and cannot reach it.
+  final bool isNamed;
+
   MappingParameter({
     required this.field,
     required this.isNullable,
+    this.isNamed = false,
   });
 
   factory MappingParameter.from(FormalParameterElement element) {
     assert(element.name != null, 'FormalParameterElement name is null');
 
     return MappingParameter(
-        field: Field.from(
-          name: element.name!,
-          type: element.type,
-        ),
-        isNullable: element.isOptional,
-      );
+      field: Field.from(
+        name: element.name!,
+        type: element.type,
+      ),
+      isNullable: element.isOptional,
+      isNamed: element.isNamed,
+    );
   }
 
   @override

@@ -26,6 +26,7 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:source_gen/source_gen.dart' show InvalidGenerationSourceError;
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
+import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
 import 'package:dart_mapper_generator/src/factories/expression_factory.dart';
 import 'package:dart_mapper_generator/src/misc/blocks.dart';
@@ -77,7 +78,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
                   .map(
                     (b) => (
                       b.target.name,
-                      _buildExpression(method, b),
+                      _buildExpression(method, b, context),
                     ),
                   )
                   .toList(growable: false),
@@ -99,7 +100,7 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
                         .map(
                           (b) => (
                             b.target.name,
-                            _buildExpression(method, b),
+                            _buildExpression(method, b, context),
                           ),
                         )
                         .toList(growable: false),
@@ -113,7 +114,11 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
     );
   }
 
-  Expression _buildExpression(BindableMappingMethod method, Binding binding) {
+  Expression _buildExpression(
+    BindableMappingMethod method,
+    Binding binding,
+    ProcessorContext context,
+  ) {
     final targetClass = method.returnType!.element!.classElement;
 
     var result = expressionStrategyDispatcher.get(method.behavior).create(
@@ -124,7 +129,8 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
             currentMethod: method,
             ignored: binding.ignored,
             forceNonNull: binding.forceNonNull,
-            expressionMappingMethod: binding.callableMappingMethod,
+            expressionMappingMethod: binding.expressionMappingMethod,
+            importAliases: context.importAliases,
             extraMappingMethod: binding.extraMappingMethod,
             defaultValue: binding.defaultValue,
             constant: binding.constant,
@@ -147,12 +153,21 @@ class BuiltMappingCodeProcessor extends ComponentProcessor<Code> {
           element: targetClass,
         );
       }
-      final condition = CodeExpression(Code(resolveConditionExpression(binding.conditionExpression!)));
-      final falseExpr = binding.defaultValue != null
+      final condition = CodeExpression(
+          Code(resolveConditionExpression(binding.conditionExpression!)));
+      Expression falseExpr = binding.defaultValue != null
           ? (binding.target.type.isDartCoreString
               ? literalString(binding.defaultValue!)
               : CodeExpression(Code(binding.defaultValue!)))
           : literalNull;
+      // A built value is assigned to its builder setter as a builder.
+      if (binding.defaultValue != null && binding.target.type.isBuiltValue) {
+        final constructor =
+            binding.target.type.element!.classElement.mainConstructor;
+        falseExpr = refer(
+          [context.resolveConstructor(constructor), 'Builder'].join(),
+        ).newInstance([]).cascade('replace').call([falseExpr]).parenthesized;
+      }
       result = condition.conditional(result, falseExpr);
     }
 

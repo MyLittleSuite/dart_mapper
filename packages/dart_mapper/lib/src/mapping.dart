@@ -67,6 +67,17 @@ class Mapping {
   /// `${source.name}.length > 5` wraps only `source.name`.
   final String? conditionExpression;
 
+  /// Selects the mapper method used to convert the source (or, with a
+  /// comma-separated [source], to combine the sources into the target).
+  ///
+  /// Either `'methodName'` or `'MapperClass.methodName'` (a mapper listed in
+  /// `uses`, or the mapper itself). The signature of the method is still
+  /// checked against the source and target types.
+  ///
+  /// Useful to pick one converter among several with the same signature.
+  /// Cannot be combined with callable, expression, constant, or ignore.
+  final String? qualifiedBy;
+
   const Mapping({
     required this.target,
     this.source,
@@ -77,5 +88,6 @@ class Mapping {
     this.constant,
     this.expression,
     this.conditionExpression,
+    this.qualifiedBy,
   });
 }

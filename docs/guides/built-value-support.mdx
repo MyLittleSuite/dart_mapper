@@ -158,6 +158,20 @@ abstract class UserMapper {
 }
 ```
 
+### Several Sources
+
+A comma-separated `source` works with Built Value classes, with a `callable` or, as for plain classes, resolved through a mapper method (`uses` first, then the mapper itself) selected by `qualifiedBy` when several fit:
+
+```dart
+@Mapper(uses: {OrderingMapper})
+abstract class SettingsMapper {
+  @Mapping(source: 'orderField,orderDescending', target: 'ordering')
+  SettingsBuilt from(SettingsDTO dto);
+}
+```
+
+See the [Mapper Methods guide](/guides/mapper-methods).
+
 ## Run the Generator
 
 ```sh
@@ -168,3 +182,4 @@ dart run build_runner build
 
 - [Freezed Support guide](/guides/freezed-support)
 - [Collections guide](/guides/collections)
+- [Mapper Methods guide](/guides/mapper-methods)

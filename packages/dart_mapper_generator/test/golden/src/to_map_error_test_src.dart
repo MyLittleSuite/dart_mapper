@@ -140,7 +140,7 @@ abstract class EmptySegmentMapper {
 // More than one converter for the same type.
 @ShouldThrow(
     "Ambiguous mapping for type 'DateTime': multiple methods are candidates (this.toMillis, this.toIso).\n"
-    "Fix: Keep a single candidate per type, or select the one to use with @Mapping(target: '...', callable: yourFunction).",
+    "Fix: Keep a single candidate per type, or select the one to use with @Mapping(target: '...', qualifiedBy: 'methodName') or @Mapping(target: '...', callable: yourFunction).",
 )
 @Mapper()
 abstract class AmbiguousConverterMapper {

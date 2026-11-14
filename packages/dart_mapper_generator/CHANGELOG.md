@@ -1,3 +1,13 @@
+## Unreleased
+
+- Feature: a comma-separated `source` without `callable` is resolved through a mapper method: the generator looks (`uses` mappers first, then the mapper itself) for a method whose parameters accept the sources in order and whose return type fits the target. Works in class, Map (class ↔ Map) and Built Value mappings; source dot notation, target dot notation, `defaultValue` and `conditionExpression` apply to the call. Nullability is strict: a nullable source needs a nullable parameter (#126)
+- Feature: `@Mapping(qualifiedBy: ...)` picks the method by name (`'method'` or `'Class.method'`) for comma-separated sources and for single-source converters (also in Map mappings, where it resolves `AmbiguousMapConverterError`)
+- Among several matching methods, the ones returning exactly the target type win over the ones returning a subtype, so a `@SubclassMapping` dispatch method is chosen over its delegates; `qualifiedBy` also picks among several dispatch methods of the same sealed type
+- Feature: method parameters are sources: a parameter binds to the target property with the same name and can be named in `source`, also in a comma-separated list. `SettingsDTO fromCreate(CreateSettings from, String id)` needs no `expression: 'id'`. Precedence: explicit `@Mapping`, then property of a source parameter, then parameter name
+- Feature: new build errors `NoMatchingMappingMethodError` (lists the rejected candidates with the reason), `AmbiguousMappingMethodError` (suggests `qualifiedBy`) and `UnknownQualifiedMethodError` (lists the available methods)
+- Breaking (build error only): `forceNonNull` on a comma-separated `source` without `callable` is an error; `qualifiedBy` combined with `callable`, `expression`, `constant` or `ignore` raises `InvalidMappingCombinationError`
+- Docs: callable examples show typed parameters instead of `dynamic`; new "Mapper Methods as Sources" guide
+
 ## 1.3.0
 
 - Feature: Map ↔ sealed/abstract class hierarchy mapping via a discriminator, integrated with `@SubclassMapping`. The key is declared with `@DiscriminatorKey` and the value per subclass with `@SubclassMapping(discriminatorValue: ...)`; values can be `String`, `int`, `double`, `num`, `bool` or enum constants (stored by name). Map → class generates a switch with a wildcard arm throwing `ArgumentError` on unknown values; class → Map writes the discriminator last (overriding a same-named key produced by the delegate) (#119)

@@ -52,8 +52,18 @@ class MappingProcessor extends ComponentProcessor<Method> {
     }
 
     final method = context.currentMethod;
-    final requiredParameters = method.parameters.where((p) => !p.isNullable);
-    final optionalParameters = method.parameters.where((p) => p.isNullable);
+    // Nullable parameters are optional, after the required ones. When a
+    // nullable one precedes a required one, that would reorder the parameters
+    // and break the override: all stay required, in their declared order.
+    final lastRequired = method.parameters.lastIndexWhere((p) => !p.isNullable);
+    final firstNullable = method.parameters.indexWhere((p) => p.isNullable);
+    final reorders = firstNullable >= 0 && firstNullable < lastRequired;
+    final requiredParameters = reorders
+        ? method.parameters
+        : method.parameters.where((p) => !p.isNullable);
+    final optionalParameters = reorders
+        ? <MappingParameter>[]
+        : method.parameters.where((p) => p.isNullable);
 
     return Method(
       (builder) {
