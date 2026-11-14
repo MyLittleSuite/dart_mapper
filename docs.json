@@ -40,6 +40,7 @@
         { "title": "Subclass Mapping", "href": "/guides/subclass-mapping" },
         { "title": "Defaults & Constants", "href": "/guides/defaults-and-constants" },
         { "title": "Callable Mapping", "href": "/guides/callable-mapping" },
+        { "title": "Mapper Methods as Sources", "href": "/guides/mapper-methods" },
         { "title": "Freezed Support", "href": "/guides/freezed-support" },
         { "title": "Built Value Support", "href": "/guides/built-value-support" },
         { "title": "Collections", "href": "/guides/collections" },

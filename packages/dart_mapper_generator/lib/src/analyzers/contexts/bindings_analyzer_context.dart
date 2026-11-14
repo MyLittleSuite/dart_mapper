@@ -81,6 +81,17 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
             ),
       );
 
+  /// The `qualifiedBy` of every target that sets one (`'method'` or
+  /// `'Class.method'`), inherited ones included.
+  Map<String, String> get qualifiedByMap => Map.fromEntries(
+        _renamingMappings
+            .where((annotation) => annotation.qualifiedBy != null)
+            .map(
+              (annotation) =>
+                  MapEntry(annotation.target, annotation.qualifiedBy!),
+            ),
+      );
+
   Map<String, String> get expressionMap => Map.fromEntries(
         _renamingMappings
             .where((annotation) => annotation.expression != null)
@@ -147,11 +158,28 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
         constant: first((a) => a.constant),
         expression: first((a) => a.expression),
         conditionExpression: first((a) => a.conditionExpression),
+        qualifiedBy: first((a) => a.qualifiedBy),
       );
     });
   }
 
   void _validateMappingCombination(ResolvedMapping annotation) {
+    if (annotation.qualifiedBy != null) {
+      final conflicting = [
+        if (annotation.callable != null) 'callable',
+        if (annotation.expression != null) 'expression',
+        if (annotation.constant != null) 'constant',
+        if (annotation.ignore) 'ignore',
+      ];
+      if (conflicting.isNotEmpty) {
+        throw InvalidMappingCombinationError(
+          target: annotation.target,
+          conflictDescription:
+              'qualifiedBy cannot be combined with ${conflicting.first}',
+          element: method,
+        );
+      }
+    }
     if (annotation.constant != null) {
       if (annotation.source != null) {
         throw InvalidMappingCombinationError(
@@ -240,11 +268,16 @@ class BindingsAnalyzerContext extends MethodAnalyzerContext {
     }
   }
 
+  /// Rejects the settings that cannot be combined with a comma-separated
+  /// source. A comma-separated source without `callable` is resolved through
+  /// a mapper method (see `MethodSignatureLookup`), whose result is never
+  /// unwrapped, so `forceNonNull` has no meaning there.
   void validateCommaSeparatedSource() {
-    for (final annotation in _renamingMappings) {
+    for (final annotation in _combinedByTarget(_renamingMappings)) {
       if (annotation.source != null &&
           annotation.source!.contains(',') &&
-          annotation.callable == null) {
+          annotation.callable == null &&
+          annotation.forceNonNull) {
         throw InvalidCommaSeparatedSourceError(
           target: annotation.target,
           element: method,

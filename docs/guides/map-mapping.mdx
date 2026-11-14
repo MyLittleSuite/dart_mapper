@@ -232,6 +232,13 @@ Freezed `@Default(...)` values are **not** read automatically. Use `defaultValue
 Map<String, dynamic> toMap(ProfileDTO dto);
 ```
 
+The callables declare typed parameters, the way they are meant to be written:
+
+```dart
+String shout(String id) => id.toUpperCase();
+String join(String id, String? nickname) => '$id/${nickname ?? ''}';
+```
+
 Generated:
 
 ```dart
@@ -250,6 +257,32 @@ return {
 A `constant` is a Dart expression emitted verbatim, as in every other mapping: write `"'profile'"` for a string, `'2'` for a number and `'DateTime(2020)'` for any other expression. The generator never guesses whether a value is a string.
 
 On the read side the same attributes generate `code: 7` (`constant`), `upperCase(map['nickname'])` (`callable`; with a typed or `Object?` source the argument is cast to the parameter type: `upperCase(map['nickname'] as String)`), `joinNames(map['first'], map['last'])` (`callable` with `source: 'first,last'`), `slug: 'x-${map['name']}'` (`expression`), and `map.containsKey('nick') ? map['nick'] as String? : null` (`conditionExpression`). Ignoring a required nullable target passes `null`; ignoring an optional one omits the argument.
+
+### Comma sources via mapper methods
+
+Without `callable`, a comma-separated `source` is resolved through a mapper method (`uses` first, then the mapper itself) whose parameters accept the values in order:
+
+```dart
+@Mapper(uses: {OrderingMapper})
+abstract class SettingsMapper {
+  @Mapping(source: 'orderField,orderDescending', target: 'ordering')
+  Settings fromMap(Map<String, dynamic> map);
+
+  @Mapping(source: 'ordering.field,ordering.descending', target: 'order')
+  Map<String, dynamic> toMap(Settings settings);
+}
+```
+
+Generated (Map to class):
+
+```dart
+ordering: orderingMapper.from(
+  map['orderField'] as String?,
+  map['orderDescending'] as bool,
+),
+```
+
+An untyped map value (`dynamic`, `Object?`) matches a parameter of any type and is cast to the parameter type, like for typed callables. Values of a typed map (`Map<String, V>`) must be assignable to the parameters. Class to Map matches on the parameters, and the method may return any type assignable to the map value type. `forceNonNull` is not allowed on a comma source without `callable`. See the [Mapper Methods guide](/guides/mapper-methods).
 
 ## Nested Classes, Collections, and Maps
 
@@ -412,7 +445,12 @@ Precedence:
 
 The same rules apply to class → Map and Map → class: for instance, a mapper declaring both `int toMillis(DateTime d)` and `DateTime fromMillis(int ms)` writes `'at': toMillis(dto.at)` and reads `at: fromMillis(map['at'] as int)`, while an `int count` field is just `'count': dto.count` and `map['count'] as int`.
 
-If more than one candidate matches the same type and direction, the build fails with an ambiguity error; use [`callable`](/guides/callable-mapping) to choose explicitly.
+If more than one candidate matches the same type and direction, the build fails with an ambiguity error. Choose one with `qualifiedBy` (`'methodName'` or `'MapperClass.methodName'`), which also works on a single source:
+
+```dart
+@Mapping(source: 'at', target: 'at', qualifiedBy: 'toMillis')
+Map<String, dynamic> toMap(EventDTO dto);
+```
 
 ## Dot Notation
 
@@ -630,7 +668,10 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 | The target of a Map → class method is sealed, or abstract without a usable factory constructor ([#119](https://github.com/MyLittleSuite/dart_mapper/issues/119)) | `FromMapTargetNotInstantiableError` | `Cannot map a Map to 'FmShape': the class is sealed and cannot be instantiated.` |
 | A dotted target of a class target is unknown, goes through a non-class or non-instantiable type, builds a Built Value class, has an empty segment, or is also mapped as a whole value | `InvalidNestedTargetError` | `Invalid @Mapping target 'address.country': 'country' is not a constructor parameter of 'Address' (available: street, city).` |
 | A whole key and one of its sub-keys are both mapped, or a dotted target has an empty segment | `MapKeyPathConflictError` | `Invalid @Mapping target 'address.nickname': 'address' is already mapped as a whole value.` / `Invalid @Mapping target 'address..id': it contains an empty segment.` |
-| More than one converter matches the same type and direction | `AmbiguousMapConverterError` | `Ambiguous mapping for type 'DateTime': multiple methods are candidates (this.toMillis, this.toIso).` |
+| More than one converter matches the same type and direction (choose with `qualifiedBy`) | `AmbiguousMapConverterError` | `Ambiguous mapping for type 'DateTime': multiple methods are candidates (this.toMillis, this.toIso).` |
+| A comma source without `callable` matches no mapper method | `NoMatchingMappingMethodError` | lists every rejected candidate with the reason (arity, argument type, nullable argument, return type) |
+| A comma source matches more than one mapper method | `AmbiguousMappingMethodError` | lists the matches and suggests `qualifiedBy` |
+| `qualifiedBy` names no method | `UnknownQualifiedMethodError` | lists the available methods |
 | The same field exists in several source parameters | `AmbiguousSourceFieldError` | `Ambiguous source field 'id' found in multiple parameters: user, other.` |
 | A dotted source path starts with a field that exists in several source parameters | `AmbiguousSourceFieldError` | `Ambiguous source field 'address' found in multiple parameters: man, woman.` (suggests `source: 'man.address.city'`) |
 | `@InheritConfiguration` / `@InheritInverseConfiguration` finds several Map methods with different signatures and none matches exactly | `AmbiguousInheritConfigurationError` | `Ambiguous inherited configuration for method 'fromRealtime': multiple methods are candidates (toFirestore, toRealtime).` |
@@ -650,4 +691,5 @@ The build fails with a clear message (and a `Fix:` hint) in these cases:
 - [Multi-Source Mapping guide](/guides/multi-source)
 - [Collections guide](/guides/collections)
 - [Callable Mapping guide](/guides/callable-mapping)
+- [Mapper Methods guide](/guides/mapper-methods)
 - [@InheritInverseConfiguration](/annotations/inherit-inverse-configuration)

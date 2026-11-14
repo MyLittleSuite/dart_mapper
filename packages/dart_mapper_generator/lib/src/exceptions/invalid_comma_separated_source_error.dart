@@ -31,11 +31,11 @@ class InvalidCommaSeparatedSourceError extends InvalidGenerationSourceError {
     required String target,
     required Element element,
   }) : super(
-          "Comma-separated source values in @Mapping(target: '$target') are only valid "
-          "when callable is set.\n"
-          "Without a callable function, source must reference a single field or "
-          "use dot notation for nested access.\n"
-          "Fix: Either add a callable function or use a single source field.",
+          "forceNonNull cannot be used with a comma-separated source in "
+          "@Mapping(target: '$target') when no callable is set.\n"
+          "The sources are combined by a mapper method, whose result is "
+          "returned as is.\n"
+          "Fix: Remove forceNonNull, or set a callable.",
           element: element,
         );
 }

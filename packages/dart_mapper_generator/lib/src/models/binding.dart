@@ -35,6 +35,12 @@ class Binding {
   final bool forceNonNull;
   final CallableMappingMethod? callableMappingMethod;
   final MappingMethod? extraMappingMethod;
+
+  /// The mapper method (an `ExternalMappingMethod` or an
+  /// `InternalMappingMethod`) that combines the [sources] of a comma-separated
+  /// source, chosen by `MethodSignatureLookup`. Never set together with
+  /// [callableMappingMethod]; see [expressionMappingMethod].
+  final MappingMethod? sourcesMappingMethod;
   final String? defaultValue;
   final String? constant;
   final String? expression;
@@ -55,6 +61,7 @@ class Binding {
     this.forceNonNull = false,
     this.callableMappingMethod,
     this.extraMappingMethod,
+    this.sourcesMappingMethod,
     this.defaultValue,
     this.constant,
     this.expression,
@@ -75,6 +82,7 @@ class Binding {
         forceNonNull: forceNonNull,
         callableMappingMethod: callableMappingMethod,
         extraMappingMethod: extraMappingMethod,
+        sourcesMappingMethod: sourcesMappingMethod,
         defaultValue: defaultValue,
         constant: constant,
         expression: expression,
@@ -84,6 +92,12 @@ class Binding {
         sourceAccessChains: sourceAccessChains,
         nestedBindings: nestedBindings,
       );
+
+  /// The method called to compute the target value from the sources: the
+  /// callable, or the mapper method found for a comma-separated source.
+  /// Processors pass it to `ExpressionContext.expressionMappingMethod`.
+  MappingMethod? get expressionMappingMethod =>
+      callableMappingMethod ?? sourcesMappingMethod;
 
   Iterable<MappingMethod> get mappingMethods sync* {
     yield* nestedBindings?.expand((binding) => binding.mappingMethods) ??
@@ -107,6 +121,7 @@ class Binding {
       'forceNonNull: $forceNonNull, '
       'callableMappingMethod: $callableMappingMethod, '
       'extraMappingMethod: $extraMappingMethod, '
+      'sourcesMappingMethod: $sourcesMappingMethod, '
       'defaultValue: $defaultValue, '
       'constant: $constant, '
       'expression: $expression, '

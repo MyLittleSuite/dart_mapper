@@ -425,4 +425,47 @@ void main() async {
     'to_map_coderabbit_error_test_src.dart',
   );
   testAnnotatedElements<Mapper>(toMapCodeRabbitErrorReader, generator);
+
+  // Group: validation of qualifiedBy and of comma-separated method sources
+  final qualifiedByValidationReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'qualified_by_validation_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(qualifiedByValidationReader, generator);
+
+  // Group: comma-separated sources resolved through mapper methods
+  final multiSourceMethodReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'multi_source_method_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(multiSourceMethodReader, generator);
+
+  // Group: comma-separated sources and qualifiedBy on built_value targets
+  final builtMultiSourceReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'built_multi_source_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(builtMultiSourceReader, generator);
+
+  // Group: comma-separated sources resolved by a mapper method and qualifiedBy
+  // in Map -> class and class -> Map mappings
+  final mapMultiSourceMethodReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'map_multi_source_method_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(mapMultiSourceMethodReader, generator);
+
+  // Group: method parameters used as sources
+  final parameterSourceReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'parameter_source_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(parameterSourceReader, generator);
+
+  // Group: qualifiedBy
+  final qualifiedByReader = await initializeLibraryReaderForDirectory(
+    'test/golden/src',
+    'qualified_by_test_src.dart',
+  );
+  testAnnotatedElements<Mapper>(qualifiedByReader, generator);
 }

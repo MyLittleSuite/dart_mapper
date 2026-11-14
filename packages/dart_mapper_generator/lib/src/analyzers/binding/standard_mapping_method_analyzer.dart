@@ -29,15 +29,19 @@ import 'package:dart_mapper_generator/src/analyzers/analyzer.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/bindings_analyzer_context.dart';
 import 'package:dart_mapper_generator/src/analyzers/contexts/fields_analyzer_context.dart';
+import 'package:dart_mapper_generator/src/analyzers/mapping_method/method_signature_lookup.dart';
 import 'package:dart_mapper_generator/src/exceptions/ambiguous_source_field_error.dart';
 import 'package:dart_mapper_generator/src/extensions/class_element.dart';
 import 'package:dart_mapper_generator/src/extensions/dart_type.dart';
 import 'package:dart_mapper_generator/src/extensions/element.dart';
+import 'package:dart_mapper_generator/src/extensions/mapping_method.dart';
 import 'package:dart_mapper_generator/src/misc/nested_targets.dart';
 import 'package:dart_mapper_generator/src/models/binding.dart';
 import 'package:dart_mapper_generator/src/models/field/field.dart';
 import 'package:dart_mapper_generator/src/models/instance.dart';
 import 'package:dart_mapper_generator/src/models/mapper/mapping/method/bases/mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/external_mapping_method.dart';
+import 'package:dart_mapper_generator/src/models/mapper/mapping/method/internal_mapping_method.dart';
 import 'package:dart_mapper_generator/src/exceptions/invalid_comma_separated_source_part_error.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -67,6 +71,7 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     final ignoredTargets = context.ignoredTargets;
     final forceNonNullTargets = context.forceNonNullTargets;
     final callableMap = context.callableMap;
+    final qualifiedByMap = context.qualifiedByMap;
     final defaultValueMap = context.defaultValueMap;
     final constantMap = context.constantMap;
     final expressionMap = context.expressionMap;
@@ -80,7 +85,8 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     if (isMultiSource) {
       for (final param in method.formalParameters) {
         final sourceClass = param.type.element?.classElementOrNull;
-        for (final getter in sourceClass?.getterElements ?? <VariableElement>[]) {
+        for (final getter
+            in sourceClass?.getterElements ?? <VariableElement>[]) {
           if (getter.name != null && param.name != null) {
             fieldToParams.update(
               getter.name!,
@@ -103,9 +109,28 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     );
     final nestedRoots = nestedTargetRoots(context.configuredTargets);
 
-    // --- Step 0: Process comma-source callable targets ---
+    // A bare `source` naming both a parameter and a getter of a parameter is
+    // ambiguous.
+    for (final source in renamingMapReversed.values) {
+      if (source.contains(',') || source.contains('.')) continue;
+      final isParameter =
+          method.formalParameters.any((param) => param.name == source);
+      final params = fieldToParams[source];
+      if (isParameter && (params != null && params.isNotEmpty)) {
+        throw AmbiguousSourceFieldError(
+          fieldName: source,
+          parameterNames: [...params, source],
+          element: method,
+        );
+      }
+    }
+
+    final lookup = MethodSignatureLookup(context);
+
+    // --- Step 0: Process comma-separated sources ---
     // Must run before Step 1 so that targets with comma+dot sources (e.g. "a.x,b.y")
-    // are bound here and skipped by Step 1's dot-check.
+    // are bound here and skipped by Step 1's dot-check. The sources are passed
+    // to the callable, or to the mapper method that accepts them.
     for (final entry in renamingMapReversed.entries) {
       final targetName = entry.key;
       final sourceExpression = entry.value;
@@ -113,13 +138,33 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       if (!sourceExpression.contains(',')) continue;
       if (boundTargets.contains(targetName)) continue;
 
-      // validateCommaSeparatedSource() already guarantees callable is present when ',' appears.
-      // Be defensive: skip if callableMap has no entry (should never happen post-validation).
-      final callableMappingMethod = callableMap[targetName];
-      if (callableMappingMethod == null) continue;
-
       final resolvedTargetParam = targetParam[targetName];
       if (resolvedTargetParam == null) continue;
+
+      final targetField = Field.from(
+        name: targetName,
+        type: resolvedTargetParam.type,
+        required: resolvedTargetParam.isRequired,
+        nullable: resolvedTargetParam.type.isNullable,
+      );
+
+      final callableMappingMethod = callableMap[targetName];
+      if (callableMappingMethod == null &&
+          ignoredTargets.contains(targetName)) {
+        bindings.add(
+          Binding(
+            source: Field.from(
+              name: targetName,
+              type: resolvedTargetParam.type,
+              nullable: true,
+            ),
+            target: targetField,
+            ignored: true,
+          ),
+        );
+        boundTargets.add(targetName);
+        continue;
+      }
 
       final parts = sourceExpression.split(',').map((p) => p.trim()).toList();
       final resolvedSources = <Field>[];
@@ -188,11 +233,20 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
           }
 
           if (matchedParam == null || matchedGetter == null) {
-            throw InvalidCommaSeparatedSourcePartError(
-              part: part,
-              target: targetName,
-              element: method,
-            );
+            // Not a getter: the name of a method parameter.
+            final parameter = method.formalParameters
+                .where((p) => p.name == part)
+                .firstOrNull;
+            if (parameter == null) {
+              throw InvalidCommaSeparatedSourcePartError(
+                part: part,
+                target: targetName,
+                element: method,
+              );
+            }
+            resolvedSources.add(_parameterField(parameter));
+            resolvedChains.add(null);
+            continue;
           }
 
           resolvedSources.add(
@@ -208,22 +262,34 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
         }
       }
 
-      final targetField = Field.from(
-        name: targetName,
-        type: resolvedTargetParam.type,
-        required: resolvedTargetParam.isRequired,
-        nullable: resolvedTargetParam.type.isNullable,
-      );
+      if (resolvedSources.isEmpty) continue;
+
+      // Without a callable, the mapper method taking the sources is looked up.
+      final sourcesMappingMethod = callableMappingMethod == null
+          ? lookup.find(
+              target: targetName,
+              arguments: [
+                for (var i = 0; i < resolvedSources.length; i++)
+                  _argument(resolvedSources[i], resolvedChains[i]),
+              ],
+              targetType: resolvedTargetParam.type,
+              qualifiedBy: qualifiedByMap[targetName],
+            )
+          : null;
 
       bindings.add(
         Binding(
-          source: resolvedSources.first, // keeps existing nullability guard working
+          source:
+              resolvedSources.first, // keeps existing nullability guard working
           sources: resolvedSources,
           target: targetField,
           callableMappingMethod: callableMappingMethod,
+          sourcesMappingMethod: sourcesMappingMethod,
           sourceAccessChains: resolvedChains,
-          // Multi-arg callable owns nullability — suppress nullability throw (same as
-          // callable+dot-path today). forceNonNull not needed.
+          defaultValue: defaultValueMap[targetName],
+          conditionExpression: conditionExpressionMap[targetName],
+          // The callable / method owns nullability — suppress nullability
+          // throw (same as callable+dot-path today). forceNonNull not needed.
         ),
       );
       boundTargets.add(targetName);
@@ -294,10 +360,12 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       final dotConstant = constantMap[targetName];
       final dotDefault = defaultValueMap[targetName];
       if (dotConstant != null) {
-        _validateValueType(dotConstant, resolvedTargetParam.type, targetName, method);
+        _validateValueType(
+            dotConstant, resolvedTargetParam.type, targetName, method);
       }
       if (dotDefault != null) {
-        _validateValueType(dotDefault, resolvedTargetParam.type, targetName, method);
+        _validateValueType(
+            dotDefault, resolvedTargetParam.type, targetName, method);
       }
 
       // Per D-07: if the resolved source is nullable (due to nullable intermediates)
@@ -306,11 +374,24 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       final resolvedIsNullable = resolvedField.nullable || chainHasNullable;
       final isIgnored = ignoredTargets.contains(targetName);
       final callableMappingMethod = callableMap[targetName];
+      // Ignored targets must not synthesize a nested converter: analyzing
+      // it would surface binding errors for a mapping that is never emitted.
+      final (extraMappingMethod, sourcesMappingMethod) =
+          callableMappingMethod == null && !isIgnored
+              ? _converter(
+                  context: context,
+                  lookup: lookup,
+                  source: resolvedField,
+                  chain: accessChain,
+                  target: targetField,
+                )
+              : (null, null);
       if (resolvedIsNullable &&
           !targetField.nullable &&
           !forceNonNullTargets.contains(targetName) &&
           defaultValueMap[targetName] == null &&
-          callableMappingMethod == null) {
+          callableMappingMethod == null &&
+          sourcesMappingMethod == null) {
         throw InvalidGenerationSourceError(
           "Target field '$targetName' is non-nullable but the dot notation source "
           "'$sourceExpression' may be null (nullable intermediate in chain).\n"
@@ -318,21 +399,6 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
           element: method,
         );
       }
-      // Ignored targets must not synthesize a nested converter: analyzing
-      // it would surface binding errors for a mapping that is never emitted.
-      final extraMappingMethod = callableMappingMethod == null && !isIgnored
-          ? extraMappingMethodAnalyzer.analyze(
-              FieldsAnalyzerContext(
-                mapperAnnotation: context.mapperAnnotation,
-                mapperUsages: context.mapperUsages,
-                internalMapperUsages: context.internalMapperUsages,
-                mapperClass: context.mapperClass,
-                importAliases: context.importAliases,
-                source: resolvedField,
-                target: targetField,
-              ),
-            )
-          : null;
 
       bindings.add(
         Binding(
@@ -342,6 +408,10 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
           forceNonNull: forceNonNullTargets.contains(targetName),
           callableMappingMethod: callableMappingMethod,
           extraMappingMethod: extraMappingMethod,
+          sourcesMappingMethod: sourcesMappingMethod,
+          sources: sourcesMappingMethod == null ? null : [resolvedField],
+          sourceAccessChains:
+              sourcesMappingMethod == null ? null : [accessChain],
           defaultValue: defaultValueMap[targetName],
           accessChain: accessChain,
           conditionExpression: conditionExpressionMap[targetName],
@@ -369,7 +439,8 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
       );
 
       // Validate constant type compatibility.
-      _validateValueType(constantValue, resolvedTargetParam.type, targetName, method);
+      _validateValueType(
+          constantValue, resolvedTargetParam.type, targetName, method);
 
       final placeholderSource = Field.from(
         name: targetName,
@@ -492,35 +563,37 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
 
             final sourceField = Field.from(
               name: sourceClassParam.name!,
-              type: sourceSubstituted?[sourceClassParam.name!] ?? sourceClassParam.type,
+              type: sourceSubstituted?[sourceClassParam.name!] ??
+                  sourceClassParam.type,
               required: sourceClassParam.isRequired,
-              nullable: (sourceSubstituted?[sourceClassParam.name!] ?? sourceClassParam.type).isNullable,
+              nullable: (sourceSubstituted?[sourceClassParam.name!] ??
+                      sourceClassParam.type)
+                  .isNullable,
               instance: Instance(name: sourceMethodParam.name!),
             );
             final targetField = Field.from(
               name: targetClassParamName,
-              type: targetSubstituted?[targetClassParamName] ?? resolvedTargetParam.type,
+              type: targetSubstituted?[targetClassParamName] ??
+                  resolvedTargetParam.type,
               required: resolvedTargetParam.isRequired,
-              nullable: (targetSubstituted?[targetClassParamName] ?? resolvedTargetParam.type).isNullable,
+              nullable: (targetSubstituted?[targetClassParamName] ??
+                      resolvedTargetParam.type)
+                  .isNullable,
             );
 
             final isIgnored = ignoredTargets.contains(targetClassParamName);
             final callableMappingMethod = callableMap[targetClassParamName];
             // Ignored targets must not synthesize a nested converter: analyzing
             // it would surface binding errors for a mapping that is never emitted.
-            final extraMappingMethod = callableMappingMethod == null && !isIgnored
-                ? extraMappingMethodAnalyzer.analyze(
-                    FieldsAnalyzerContext(
-                      mapperAnnotation: context.mapperAnnotation,
-                      mapperUsages: context.mapperUsages,
-                      internalMapperUsages: context.internalMapperUsages,
-                      mapperClass: context.mapperClass,
-                      importAliases: context.importAliases,
-                      source: sourceField,
-                      target: targetField,
-                    ),
-                  )
-                : null;
+            final (extraMappingMethod, sourcesMappingMethod) =
+                callableMappingMethod == null && !isIgnored
+                    ? _converter(
+                        context: context,
+                        lookup: lookup,
+                        source: sourceField,
+                        target: targetField,
+                      )
+                    : (null, null);
 
             bindings.add(
               Binding(
@@ -531,13 +604,76 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
                     forceNonNullTargets.contains(targetClassParamName),
                 callableMappingMethod: callableMappingMethod,
                 extraMappingMethod: extraMappingMethod,
+                sourcesMappingMethod: sourcesMappingMethod,
+                sources: sourcesMappingMethod == null ? null : [sourceField],
+                sourceAccessChains:
+                    sourcesMappingMethod == null ? null : [null],
                 defaultValue: defaultValueMap[targetClassParamName],
-                conditionExpression: conditionExpressionMap[targetClassParamName],
+                conditionExpression:
+                    conditionExpressionMap[targetClassParamName],
               ),
             );
             boundTargets.add(targetClassParamName);
           }
         }
+      }
+    }
+
+    // --- Step 4: Bind the method parameters to the targets named like them ---
+    // Last in the precedence: explicit @Mapping > getter of a source
+    // parameter > parameter name.
+    for (final parameter in method.formalParameters) {
+      final parameterName = parameter.name;
+      if (parameterName == null) continue;
+
+      final targetNames = [
+        ...renamingMap[parameterName] ?? [parameterName],
+        ...?implicitNestedSources[parameterName],
+      ];
+
+      for (final targetName in targetNames) {
+        if (boundTargets.contains(targetName)) continue;
+        if (ignoredTargets.contains(targetName)) continue;
+
+        final resolvedTargetParam = targetParam[targetName];
+        if (resolvedTargetParam == null) continue;
+
+        final sourceField = _parameterField(parameter);
+        final targetField = Field.from(
+          name: targetName,
+          type: targetSubstituted?[targetName] ?? resolvedTargetParam.type,
+          required: resolvedTargetParam.isRequired,
+          nullable: (targetSubstituted?[targetName] ?? resolvedTargetParam.type)
+              .isNullable,
+        );
+
+        final callableMappingMethod = callableMap[targetName];
+        final (extraMappingMethod, sourcesMappingMethod) =
+            callableMappingMethod == null
+                ? _converter(
+                    context: context,
+                    lookup: lookup,
+                    source: sourceField,
+                    target: targetField,
+                    acceptNullableParameter: true,
+                  )
+                : (null, null);
+
+        bindings.add(
+          Binding(
+            source: sourceField,
+            target: targetField,
+            forceNonNull: forceNonNullTargets.contains(targetName),
+            callableMappingMethod: callableMappingMethod,
+            extraMappingMethod: extraMappingMethod,
+            sourcesMappingMethod: sourcesMappingMethod,
+            sources: sourcesMappingMethod == null ? null : [sourceField],
+            sourceAccessChains: sourcesMappingMethod == null ? null : [null],
+            defaultValue: defaultValueMap[targetName],
+            conditionExpression: conditionExpressionMap[targetName],
+          ),
+        );
+        boundTargets.add(targetName);
       }
     }
 
@@ -589,6 +725,92 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
         );
       },
     );
+  }
+
+  /// The [Field] of a method parameter used as a source: it is read by its
+  /// name, not through a getter.
+  Field _parameterField(FormalParameterElement parameter) => Field.from(
+        name: parameter.name!,
+        type: parameter.type,
+        required: parameter.isRequired,
+        nullable: parameter.type.isNullable,
+      );
+
+  SourceArgument _argument(Field source, List<(String, bool)>? chain) {
+    final instance = source.instance?.name ?? '';
+    final path = chain != null && chain.isNotEmpty
+        ? chain.fold(
+            instance,
+            (path, link) => path.isEmpty
+                ? link.$1
+                : '$path${link.$2 ? '?.' : '.'}${link.$1}',
+          )
+        : (instance.isEmpty ? source.name : '$instance.${source.name}');
+
+    return SourceArgument(
+      type: source.type,
+      description: path,
+      nullableChain: chain?.any((e) => e.$2) ?? false,
+    );
+  }
+
+  /// The converter of [source] into [target]: `(extraMappingMethod,
+  /// sourcesMappingMethod)`.
+  ///
+  /// Without `qualifiedBy` it is the converter found by the extra mapping
+  /// method analyzer. With it, the method it names (signature checked). A
+  /// nullable [source] is null-checked before the call, unless the converter
+  /// accepts null (and, for a [acceptNullableParameter] source, is found
+  /// automatically): then it is called with the source as is, as a
+  /// multi-source method is.
+  (MappingMethod?, MappingMethod?) _converter({
+    required BindingsAnalyzerContext context,
+    required MethodSignatureLookup lookup,
+    required Field source,
+    required Field target,
+    List<(String, bool)>? chain,
+    bool acceptNullableParameter = false,
+  }) {
+    final qualifiedBy = context.qualifiedByMap[target.name];
+    final sourceIsNullable =
+        source.nullable || (chain?.any((e) => e.$2) ?? false);
+
+    MappingMethod? method;
+    if (qualifiedBy != null) {
+      final typeSystem = context.mapperClass.library.typeSystem;
+      method = lookup.find(
+        target: target.name,
+        arguments: [
+          SourceArgument(
+            // The call is null-checked when the parameter is not nullable.
+            type: typeSystem.promoteToNonNull(source.type),
+            description: _argument(source, chain).description,
+          ),
+        ],
+        targetType: target.type,
+        qualifiedBy: qualifiedBy,
+      );
+    } else {
+      method = extraMappingMethodAnalyzer.analyze(
+        FieldsAnalyzerContext(
+          mapperAnnotation: context.mapperAnnotation,
+          mapperUsages: context.mapperUsages,
+          internalMapperUsages: context.internalMapperUsages,
+          mapperClass: context.mapperClass,
+          importAliases: context.importAliases,
+          source: source,
+          target: target,
+        ),
+      );
+    }
+
+    final callsNullSafely = method != null &&
+        sourceIsNullable &&
+        (qualifiedBy != null || acceptNullableParameter) &&
+        (method is ExternalMappingMethod || method is InternalMappingMethod) &&
+        method.parameterTypeAt(0)?.isNullable == true;
+
+    return callsNullSafely ? (null, method) : (method, null);
   }
 
   /// Resolves a dot-notation source path like 'address.street' or (in single-source)
@@ -655,7 +877,8 @@ class StandardBindingsAnalyzer extends Analyzer<List<Binding>> {
     Element method,
   ) {
     final targetType = type.getDisplayString();
-    final baseType = type.isDartCoreNull ? null : targetType.replaceAll('?', '');
+    final baseType =
+        type.isDartCoreNull ? null : targetType.replaceAll('?', '');
 
     if (baseType == 'bool') {
       if (value != 'true' && value != 'false') {
