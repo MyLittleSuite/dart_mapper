@@ -96,6 +96,8 @@ mixin AliasesMixin {
 
   String resolveConstructor(ConstructorElement constructor) => chainDot([
         importAliases?[constructor.library.firstFragment.source.uri],
-        constructor.displayName,
+        constructor.name == 'new'
+            ? constructor.enclosingElement.name
+            : constructor.displayName,
       ]);
 }
