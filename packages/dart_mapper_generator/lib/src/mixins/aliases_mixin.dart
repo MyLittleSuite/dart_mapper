@@ -94,8 +94,21 @@ mixin AliasesMixin {
         : display;
   }
 
-  String resolveConstructor(ConstructorElement constructor) => chainDot([
-        importAliases?[constructor.library.firstFragment.source.uri],
-        constructor.displayName,
-      ]);
+  /// The expression that names [constructor]: `Class` for the unnamed
+  /// constructor, `Class.named` for a named one, both prefixed by the import
+  /// alias of the declaring library.
+  ///
+  /// The unnamed constructor is detected through the class instead of through
+  /// its name: its `displayName` is `Class` up to analyzer 13 and `Class.new`
+  /// from analyzer 14, and the analyzer exposes no constant for the `new` name.
+  String resolveConstructor(ConstructorElement constructor) {
+    final enclosing = constructor.enclosingElement;
+    final isUnnamed =
+        constructor.baseElement == enclosing.unnamedConstructor?.baseElement;
+
+    return chainDot([
+      importAliases?[constructor.library.firstFragment.source.uri],
+      isUnnamed ? enclosing.name : constructor.displayName,
+    ]);
+  }
 }
