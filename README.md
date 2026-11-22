@@ -28,11 +28,11 @@ MapStruct-style object mapping for Dart. Define type-safe mappings declaratively
 
 ```yaml
 dependencies:
-  dart_mapper: ^1.0.0
+  dart_mapper: ^1.1.0
 
 dev_dependencies:
   build_runner: ^2.4.8
-  dart_mapper_generator: ^1.0.0
+  dart_mapper_generator: ^1.1.0
 ```
 
 ## Documentation
