@@ -23,6 +23,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// The language version is pinned: source_gen_test formats the generated code
+// with the effective language version of this library, which otherwise follows
+// the running analyzer/SDK, and dart_style changes the layout of some call
+// chains between language versions (3.12 vs 3.13), so the expectations below
+// would depend on the toolchain.
+// @dart=3.9
+
 // Golden test source for Map -> class mapping (MappingBehavior.fromMap).
 //
 // Covers the read side of the class <-> Map mapping: strict casts, nullable
@@ -1546,9 +1553,9 @@ abstract class FmBuiltForceMapper {
         ..cards = ListBuilder(
           (map['cards'] as Iterable)
               .map<FmBuiltCard>(
-                (e) =>
-                    _mapMapToFmBuiltCard(Map<String, dynamic>.from(e as Map))
-                        .build(),
+                (e) => _mapMapToFmBuiltCard(
+                  Map<String, dynamic>.from(e as Map),
+                ).build(),
               )
               .toList(),
         )
