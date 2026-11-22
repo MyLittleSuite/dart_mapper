@@ -1,22 +1,11 @@
-## Unreleased
+## 1.1.0
 
-- Feature: `Mapping.qualifiedBy` selects the mapper method that converts the source(s), as `'methodName'` or `'MapperClass.methodName'`. Cannot be combined with `callable`, `expression`, `constant` or `ignore` (#126)
-- Docs: a comma-separated `source` is no longer callable-only; it can be resolved by a mapper method (see dart_mapper_generator)
-- Docs: callable examples declare typed parameters instead of `dynamic`
-
-## 1.3.0
-
+- Feature: new `Mapping.qualifiedBy` selects the mapper method that converts the source(s), as `'methodName'` or `'MapperClass.methodName'`. Cannot be combined with `callable`, `expression`, `constant` or `ignore` (#126)
 - Feature: new `@DiscriminatorKey` annotation declaring the `Map` key that holds the discriminator of a `@SubclassMapping` dispatch method (#119)
 - `SubclassMapping.source` and `SubclassMapping.target` are now optional: the side that is a `Map` is omitted in Map ↔ class hierarchy mappings (#119)
 - `SubclassMapping` has a new `discriminatorValue` parameter identifying the subclass in the `Map` (`String`, `int`, `double`, `num`, `bool` or enum constants) (#119)
-
-## 1.2.0
-
-- Document target dot notation for nested target objects (implemented in dart_mapper_generator 1.2.0); no annotation changes
-
-## 1.1.0
-
-- Document class ↔ `Map` mapping support (implemented in dart_mapper_generator 1.1.0); no annotation changes
+- Docs: class ↔ `Map` mapping, target dot notation for nested target objects, and a comma-separated `source` resolved by a mapper method (see dart_mapper_generator)
+- Docs: callable examples declare typed parameters instead of `dynamic`
 
 ## 1.0.10
 

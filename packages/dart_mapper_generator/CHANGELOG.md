@@ -1,41 +1,26 @@
-## Unreleased
-
-- Feature: a comma-separated `source` without `callable` is resolved through a mapper method: the generator looks (`uses` mappers first, then the mapper itself) for a method whose parameters accept the sources in order and whose return type fits the target. Works in class, Map (class ↔ Map) and Built Value mappings; source dot notation, target dot notation, `defaultValue` and `conditionExpression` apply to the call. Nullability is strict: a nullable source needs a nullable parameter (#126)
-- Feature: `@Mapping(qualifiedBy: ...)` picks the method by name (`'method'` or `'Class.method'`) for comma-separated sources and for single-source converters (also in Map mappings, where it resolves `AmbiguousMapConverterError`)
-- Among several matching methods, the ones returning exactly the target type win over the ones returning a subtype, so a `@SubclassMapping` dispatch method is chosen over its delegates; `qualifiedBy` also picks among several dispatch methods of the same sealed type
-- Feature: method parameters are sources: a parameter binds to the target property with the same name and can be named in `source`, also in a comma-separated list. `SettingsDTO fromCreate(CreateSettings from, String id)` needs no `expression: 'id'`. Precedence: explicit `@Mapping`, then property of a source parameter, then parameter name
-- Feature: new build errors `NoMatchingMappingMethodError` (lists the rejected candidates with the reason), `AmbiguousMappingMethodError` (suggests `qualifiedBy`) and `UnknownQualifiedMethodError` (lists the available methods)
-- Breaking (build error only): `forceNonNull` on a comma-separated `source` without `callable` is an error; `qualifiedBy` combined with `callable`, `expression`, `constant` or `ignore` raises `InvalidMappingCombinationError`
-- Docs: callable examples show typed parameters instead of `dynamic`; new "Mapper Methods as Sources" guide
-- Compatibility: `analyzer` is now allowed up to `<15.0.0`, so the generator works alongside `freezed ^4` (which requires `analyzer >=13`/`>=14`). The unnamed constructor, reported as `Class.new` by `analyzer` 14, is still emitted as `Class` (and `ClassBuilder` for Built Value); generated code is unchanged
-
-## 1.3.0
-
-- Feature: Map ↔ sealed/abstract class hierarchy mapping via a discriminator, integrated with `@SubclassMapping`. The key is declared with `@DiscriminatorKey` and the value per subclass with `@SubclassMapping(discriminatorValue: ...)`; values can be `String`, `int`, `double`, `num`, `bool` or enum constants (stored by name). Map → class generates a switch with a wildcard arm throwing `ArgumentError` on unknown values; class → Map writes the discriminator last (overriding a same-named key produced by the delegate) (#119)
-- Feature: `@InheritInverseConfiguration` / `@InheritConfiguration` inherit `@DiscriminatorKey` and `@SubclassMapping`s (the inverse swaps source/target and keeps the values), for Map ↔ class hierarchies and class ↔ class
-- Feature: sealed/abstract typed fields nested in a Map ↔ class mapping (e.g. `List<Shape>`) are converted through the declared dispatch method
-- Compile-time errors for invalid discriminator configurations (missing or empty key, missing/forbidden/duplicate/mixed/unsupported values, wrong side given, missing delegate)
-- `FromMapTargetNotInstantiableError` now hints at `@DiscriminatorKey` + `@SubclassMapping` for sealed/abstract targets of a Map → class method
-
-## 1.2.1
-
-- Fix: the constructor that builds the target no longer depends on the order of declaration. Public constructors are preferred over private ones (a Freezed class without fields, with `const Foo._()` next to `const factory Foo()`, is built with `Foo()`), factories over generative constructors of abstract classes, then the most parameters and the unnamed constructor. A target whose only constructors are private to another library raises `InaccessibleConstructorError` instead of generating code that does not compile (#117)
-
-## 1.2.0
-
-- Feature: target dot notation builds nested target objects in class → class and Map → class mappings (`@Mapping(source: 'street', target: 'address.street')` generates `address: Address(street: ...)`), at any depth and with every `@Mapping` option. `@InheritInverseConfiguration` of a class → Map method flattening a nested source now builds the nested object (#118)
-- Breaking (build error only): `MapTargetDotNotationUnsupportedError` is removed; invalid dotted targets of a class target raise `InvalidNestedTargetError`. Dotted targets on class → class methods, previously ignored, now build nested objects
-
 ## 1.1.0
 
 - Feature: class ↔ `Map<String, dynamic>` mapping, detected automatically from the method signature (class → Map when the return type is a `Map<String, ...>`, Map → class when a source parameter is a `Map`). Works with standard classes, Freezed and Built Value
 - Feature: raw `Map`, `Map<Object?, Object?>` and `Map<dynamic, dynamic>` sources (Firebase Realtime Database)
 - Feature: nested classes, collections of classes, `Map<K, X>` fields, enums (by name) and `double` (read via `num`) in map conversions
 - Feature: converters via `@Mapper(uses: ...)` and declared methods (e.g. `DateTime` ↔ epoch milliseconds)
-- Feature: dot notation on map sources, and target dot notation building nested maps (class → Map)
-- Feature: multi-source Map → class methods (e.g. `fromRealtime(Map map, String id)`)
+- Feature: dot notation on map sources, and multi-source Map → class methods (e.g. `fromRealtime(Map map, String id)`)
 - Feature: `@InheritConfiguration` / `@InheritInverseConfiguration` across mapping directions
-- Known limitations: sealed/discriminator targets (#119), collection-level mapping methods (#120)
+- Feature: target dot notation builds nested target objects in class → class, Map → class and class → Map mappings (`@Mapping(source: 'street', target: 'address.street')` generates `address: Address(street: ...)`), at any depth and with every `@Mapping` option. `@InheritInverseConfiguration` of a class → Map method flattening a nested source builds the nested object (#118)
+- Behavior change: dotted targets on class → class methods, previously ignored, now build nested objects; invalid dotted targets of a class target raise `InvalidNestedTargetError`
+- Feature: Map ↔ sealed/abstract class hierarchy mapping via a discriminator, integrated with `@SubclassMapping`. The key is declared with `@DiscriminatorKey` and the value per subclass with `@SubclassMapping(discriminatorValue: ...)`; values can be `String`, `int`, `double`, `num`, `bool` or enum constants (stored by name). Map → class generates a switch with a wildcard arm throwing `ArgumentError` on unknown values; class → Map writes the discriminator last (overriding a same-named key produced by the delegate) (#119)
+- Feature: `@InheritInverseConfiguration` / `@InheritConfiguration` inherit `@DiscriminatorKey` and `@SubclassMapping`s (the inverse swaps source/target and keeps the values), for Map ↔ class hierarchies and class ↔ class
+- Feature: sealed/abstract typed fields nested in a Map ↔ class mapping (e.g. `List<Shape>`) are converted through the declared dispatch method
+- Feature: a comma-separated `source` without `callable` is resolved through a mapper method: the generator looks (`uses` mappers first, then the mapper itself) for a method whose parameters accept the sources in order and whose return type fits the target. Works in class, Map (class ↔ Map) and Built Value mappings; source dot notation, target dot notation, `defaultValue` and `conditionExpression` apply to the call. Nullability is strict: a nullable source needs a nullable parameter (#126)
+- Feature: `@Mapping(qualifiedBy: ...)` picks the method by name (`'method'` or `'Class.method'`) for comma-separated sources and for single-source converters (also in Map mappings, where it resolves `AmbiguousMapConverterError`)
+- Among several matching methods, the ones returning exactly the target type win over the ones returning a subtype, so a `@SubclassMapping` dispatch method is chosen over its delegates; `qualifiedBy` also picks among several dispatch methods of the same sealed type
+- Feature: method parameters are sources: a parameter binds to the target property with the same name and can be named in `source`, also in a comma-separated list. `SettingsDTO fromCreate(CreateSettings from, String id)` needs no `expression: 'id'`. Precedence: explicit `@Mapping`, then property of a source parameter, then parameter name
+- Feature: new build errors `NoMatchingMappingMethodError` (lists the rejected candidates with the reason), `AmbiguousMappingMethodError` (suggests `qualifiedBy`) and `UnknownQualifiedMethodError` (lists the available methods); compile-time errors for invalid discriminator configurations (missing or empty key, missing/forbidden/duplicate/mixed/unsupported values, wrong side given, missing delegate); `FromMapTargetNotInstantiableError` hints at `@DiscriminatorKey` + `@SubclassMapping` for sealed/abstract targets of a Map → class method
+- Breaking (build error only): `forceNonNull` on a comma-separated `source` without `callable` is an error; `qualifiedBy` combined with `callable`, `expression`, `constant` or `ignore` raises `InvalidMappingCombinationError`
+- Fix: the constructor that builds the target no longer depends on the order of declaration. Public constructors are preferred over private ones (a Freezed class without fields, with `const Foo._()` next to `const factory Foo()`, is built with `Foo()`), factories over generative constructors of abstract classes, then the most parameters and the unnamed constructor. A target whose only constructors are private to another library raises `InaccessibleConstructorError` instead of generating code that does not compile (#117)
+- Compatibility: `analyzer` is now allowed up to `<15.0.0`, so the generator works alongside `freezed ^4` (which requires `analyzer >=13`/`>=14`). The unnamed constructor, reported as `Class.new` by `analyzer` 14, is still emitted as `Class` (and `ClassBuilder` for Built Value); generated code is unchanged
+- Docs: callable examples show typed parameters instead of `dynamic`; new "Mapper Methods as Sources" and Map mapping guides
+- Known limitation: collection-level mapping methods (#120)
 
 ## 1.0.10
 
