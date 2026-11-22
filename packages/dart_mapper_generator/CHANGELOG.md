@@ -7,6 +7,7 @@
 - Feature: new build errors `NoMatchingMappingMethodError` (lists the rejected candidates with the reason), `AmbiguousMappingMethodError` (suggests `qualifiedBy`) and `UnknownQualifiedMethodError` (lists the available methods)
 - Breaking (build error only): `forceNonNull` on a comma-separated `source` without `callable` is an error; `qualifiedBy` combined with `callable`, `expression`, `constant` or `ignore` raises `InvalidMappingCombinationError`
 - Docs: callable examples show typed parameters instead of `dynamic`; new "Mapper Methods as Sources" guide
+- Compatibility: `analyzer` is now allowed up to `<15.0.0`, so the generator works alongside `freezed ^4` (which requires `analyzer >=13`/`>=14`). The unnamed constructor, reported as `Class.new` by `analyzer` 14, is still emitted as `Class` (and `ClassBuilder` for Built Value); generated code is unchanged
 
 ## 1.3.0
 
