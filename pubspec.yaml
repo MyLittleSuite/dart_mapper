@@ -1,7 +1,12 @@
 name: dart_mapper_workspace
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
+
+workspace:
+  - example
+  - packages/dart_mapper
+  - packages/dart_mapper_generator
 
 dev_dependencies:
   melos: ^8.0.0
