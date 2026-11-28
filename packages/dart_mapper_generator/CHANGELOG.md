@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Compatibility: `build` is now allowed up to `<6.0.0`, so the generator can be used with `build_runner >=2.17.1` (which requires `build ^5.0.0`)
+
 ## 1.1.0
 
 - Feature: class ↔ `Map<String, dynamic>` mapping, detected automatically from the method signature (class → Map when the return type is a `Map<String, ...>`, Map → class when a source parameter is a `Map`). Works with standard classes, Freezed and Built Value
