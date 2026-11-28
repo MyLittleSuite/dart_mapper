@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Bump version to keep in sync with dart_mapper_generator 1.1.1
+
 ## 1.1.0
 
 - Feature: new `Mapping.qualifiedBy` selects the mapper method that converts the source(s), as `'methodName'` or `'MapperClass.methodName'`. Cannot be combined with `callable`, `expression`, `constant` or `ignore` (#126)
